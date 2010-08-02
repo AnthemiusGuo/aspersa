@@ -1,12 +1,28 @@
 #!/bin/bash
 # This program is part of Aspersa (http://code.google.com/p/aspersa/)
+set +x
 
 # ########################################################################
 # A script to summarize system information in a nice way.
 # Goals: work well on Linux; create a compact diff-able report that is
 # easy to paste into a wiki or email, and easy to scan and compare too.
 #
+# Script contains improvements by True (http://true.nl) addressing:
+#  - Enhanced support for Debian & Ubuntu
+#  - Direct execution like
+#    $ wget -O- http://aspersa.googlecode.com/svn/trunk/summary |bash
+#  - Allow skipping of time-consuming sections using bash environment variable:
+#    $ export ASPERSA_SKIP="MOUNT,NETWORK,PROCESS"; wget -O- http://aspersa.googlecode.com/svn/trunk/summary |bash
+#    You can also just skip: "NETWORK" or "MOUNT,PROCESS"
+#    By default will run all sections
+#  - Disk & Partitioning info (using fdisk)
+#  - Support for a wider range of RAID controllers
+#  - Dell servicetag
+#  - Output in a format that's still human readable, but easier parsable by scripts
+# Diff: http://github.com/true/true-public-scraps/compare/708d964996b7955567b1...master
+#
 # Author: Baron Schwartz
+# Author: Kevin van Zonneveld (kvz@php.net || http://kevin.vanzonneveld.net)
 # ########################################################################
 
 # ########################################################################
@@ -123,7 +139,7 @@ parse_proc_cpuinfo () {
    cores=$((${cores} * ${physical}));
    if [ ${cores} -gt 0 -a $cores -lt $virtual ]; then htt=has; else htt=no; fi
 
-   name_val "Processors" "${physical} physical, ${cores} cores, ${virtual} virtual, ${htt} hyperthreading"
+   name_val "Processors" "physical = ${physical}, cores = ${cores}, virtual = ${virtual}, hyperthreading = ${htt}"
 
    awk -F: '/cpu MHz/{print $2}' /tmp/aspersa \
       | sort | uniq -c > /tmp/aspersa2
@@ -156,7 +172,7 @@ parse_free_minus_b () {
    shorten ${physical} physical
    shorten ${swap} swap
    shorten ${virtual} virtual
-   name_val Used "${physical} physical + ${swap} swap = ${virtual} virtual"
+   name_val Used "physical = ${physical}, swap = ${swap}, virtual = ${virtual}"
 
    buffers=$(awk '/Mem/{print $6}' /tmp/aspersa);
    shorten ${buffers} buffers
@@ -179,7 +195,7 @@ parse_dmidecode_mem_devices () {
    # comes out in this order for each paragraph:
    # $2  Size         2048 MB
    # $3  Form Factor  <OUT OF SPEC>
-   # $4  Locator      DIMM1 
+   # $4  Locator      DIMM1
    # $5  Type         <OUT OF SPEC>
    # $6  Type Detail  Synchronous
    # $7  Speed        667 MHz (1.5 ns)
@@ -286,6 +302,10 @@ parse_filesystems () {
       }" /tmp/aspersa
 }
 
+parse_fdisk () {
+   cat /tmp/aspersa |while read line; do echo "    ${line}"; done
+}
+
 # ##############################################################################
 # Parse the output of dmesg, which should be in /tmp/aspersa, and detect
 # virtualization.
@@ -337,6 +357,8 @@ parse_raid_controller_lspci () {
       echo '3Ware'
    elif grep -q "Hewlett-Packard Company Smart Array" /tmp/aspersa; then
       echo 'HP Smart Array'
+   elif grep -q " RAID bus controller: " /tmp/aspersa; then
+      cat /tmp/aspersa |awk -F: '/RAID bus controller\:/ {print $3" "$5" "$6}'
    fi
 }
 
@@ -508,7 +530,7 @@ parse_lsi_megaraid_bbu_status () {
 # Parse physical devices from the output (saved in /tmp/aspersa) of
 # /opt/MegaRAID/MegaCli/MegaCli64 -LdPdInfo -aALL
 # OR, it will also work with the output of
-# /opt/MegaRAID/MegaCli/MegaCli64 -PDList -aALL 
+# /opt/MegaRAID/MegaCli/MegaCli64 -PDList -aALL
 # ##############################################################################
 parse_lsi_megaraid_devices () {
    echo
@@ -645,14 +667,14 @@ main () {
    export PATH="${PATH}:/usr/StorMan/:/opt/MegaRAID/MegaCli/";
 
    # Set up temporary files.
-   temp_files "check"
+   temp_files "rm"
    temp_files "touch"
    section Aspersa_System_Summary_Report
 
    # ########################################################################
    # General date, time, load, etc
    # ########################################################################
-   name_val "Current date" "`date -u +'%F %T UTC'` (local TZ: `date +'%Z %z'`)"
+   name_val "Date" "`date -u +'%F %T UTC'` (local TZ: `date +'%Z %z'`)"
    name_val "Hostname" `uname -n`
    name_val "Uptime" "`uptime | cut -dp -f2 | cut -c2-`"
    vendor="$(dmidecode -s system-manufacturer 2>/dev/null | sed 's/ *$//g')"
@@ -660,8 +682,10 @@ main () {
       product="$(dmidecode -s system-product-name 2>/dev/null | sed 's/ *$//g')"
       version="$(dmidecode -s system-version 2>/dev/null | sed 's/ *$//g')"
       chassis="$(dmidecode -s chassis-type 2>/dev/null | sed 's/ *$//g')"
-      system="${vendor} ${product} v${version} (${chassis})"
+      system="${vendor}; ${product}; v${version} (${chassis})"
       name_val "System" "${system}";
+      servicetag="$(dmidecode -s system-serial-number 2>/dev/null | sed 's/ *$//g')"
+      name_val "Service Tag" "${servicetag:-Not found}";
    fi
 
    # Try to find all sorts of different files that say what the release is.
@@ -671,8 +695,16 @@ main () {
       release=$(cat /etc/redhat-release);
    elif [ -e /etc/system-release ]; then
       release=$(cat /etc/system-release);
+   elif which lsb_release >/dev/null 2>&1 && test -x "$(which lsb_release)"; then
+      release="$(lsb_release -ds) ($(lsb_release -cs))"
+   elif [ -e /etc/lsb-release ]; then
+      release=$(grep DISTRIB_DESCRIPTION /etc/lsb-release |awk -F'=' '{print $2}' |sed 's#"##g');
    elif [ -e /etc/debian_version ]; then
-      release="Debian-based; version $(cat /etc/debian_version)";
+      release="Debian-based version $(cat /etc/debian_version)";
+      if [ -e /etc/apt/sources.list ]; then
+          code=`cat /etc/apt/sources.list |awk  '/^deb/ {print $3}' |awk -F/ '{print $1}'| awk 'BEGIN {FS="|"}{print $1}' | sort | uniq -c | sort -rn |head -n1 |awk '{print $2}'`
+          release="${release} (${code})"
+      fi
    elif ls /etc/*release 2>/dev/null; then
       if grep -q DISTRIB_DESCRIPTION /etc/*release; then
          release=$(grep DISTRIB_DESCRIPTION /etc/*release | head -n1);
@@ -691,16 +723,21 @@ main () {
    if file -L /bin/sh | grep -q '64-bit'; then
       OS_ARCH='64-bit'
    fi
-   name_val "Architecture" "$CPU_ARCH CPU, $OS_ARCH OS"
+   name_val "Architecture" "CPU = $CPU_ARCH, OS = $OS_ARCH"
 
    # Threading library
    name_val Threading "$(getconf GNU_LIBPTHREAD_VERSION)"
    if [ -f /lib/libc.so.6 ]; then
-      name_val "Compiled by" "$(/lib/libc.so.6 | grep 'Compiled by' | cut -c13-)"
+      name_val "Compiler" "$(/lib/libc.so.6 | grep 'Compiled by' | cut -c13-)"
    fi
 
-   getenforce="$(getenforce 2>&1)";
-   name_val "SELinux" "${getenforce:-Does not exist}";
+   if which getenforce >/dev/null 2>&1 && test -x "$(which getenforce)"; then
+      getenforce="$(getenforce 2>&1)";
+   else
+      getenforce="No SELinux detected";
+   fi
+
+   name_val "SELinux" "${getenforce}";
 
    # ########################################################################
    # Processor/CPU, Memory, Swappiness, dmidecode
@@ -715,12 +752,12 @@ main () {
 
    rss=$(ps -eo rss | awk '/[0-9]/{total += $1 * 1024} END {print total}')
    shorten ${rss} rss
-   name_val Used "${rss} used according to 'ps -eo rss'"
+   name_val Used "${rss}" #  used according to 'ps -eo rss'
 
    name_val Swappiness "$(sysctl vm.swappiness 2>&1)"
-   name_val DirtyPolicy "$(sysctl vm.dirty_ratio 2>&1) $(sysctl vm.dirty_background_ratio 2>&1)"
+   name_val DirtyPolicy "$(sysctl vm.dirty_ratio 2>&1), $(sysctl vm.dirty_background_ratio 2>&1)"
    if sysctl vm.dirty_bytes > /dev/null 2>&1; then
-      name_val DirtyStatus "$(sysctl vm.dirty_bytes 2>&1) $(sysctl vm.dirty_background_bytes 2>&1)"
+      name_val DirtyStatus "$(sysctl vm.dirty_bytes 2>&1), $(sysctl vm.dirty_background_bytes 2>&1)"
    fi
 
    if dmidecode > /tmp/aspersa 2>/dev/null; then
@@ -731,10 +768,21 @@ main () {
    # Disks, RAID, Filesystems
    # ########################################################################
    # TODO: Add info about software RAID
-   section "Mounted_Filesystems"
-   df -hP | sort > /tmp/aspersa2
-   mount | sort | join /tmp/aspersa2 - > /tmp/aspersa
-   parse_filesystems
+   section "Disk_Partioning"
+   echo -n '' > /tmp/aspersa
+   for diskpath in $(ls -al /dev/disk/by-id |grep -v '\-part' |grep '/' |sed 's#\.\.\/##g' |awk '{print "/dev/"$NF}' | sort | uniq); do
+      echo "  = ${diskpath} ==============================="
+      fdisk -l ${diskpath} > /tmp/aspersa 2>/dev/null
+      parse_fdisk
+   done
+   echo -n '' > /tmp/aspersa
+
+   if [[ "${ASPERSA_SKIP}" != *MOUNT* ]]; then
+       section "Mounted_Filesystems"
+       df -hP | sort > /tmp/aspersa2
+       mount | sort | join /tmp/aspersa2 - > /tmp/aspersa
+       parse_filesystems
+   fi
 
    section "Disk_Schedulers_And_Queue_Size"
 
@@ -842,40 +890,45 @@ main () {
    fi
    name_val Technology "${virt:-No virtualization detected}"
 
-   # ########################################################################
-   # Network stuff
-   # ########################################################################
-   section Network_Config
-   if lspci > /tmp/aspersa 2>/dev/null; then
-      parse_ethernet_controller_lspci
-   fi
-   if sysctl net.ipv4.tcp_fin_timeout > /dev/null 2>&1; then
-      name_val "FIN Timeout" "$(sysctl net.ipv4.tcp_fin_timeout)"
-      name_val "Port Range" "$(sysctl net.ipv4.ip_local_port_range)"
+   if [[ "${ASPERSA_SKIP}" != *NETWORK* ]]; then
+       # ########################################################################
+       # Network stuff
+       # ########################################################################
+       section Network_Config
+       if lspci > /tmp/aspersa 2>/dev/null; then
+          parse_ethernet_controller_lspci
+       fi
+       if sysctl net.ipv4.tcp_fin_timeout > /dev/null 2>&1; then
+          name_val "FIN Timeout" "$(sysctl net.ipv4.tcp_fin_timeout)"
+          name_val "Port Range" "$(sysctl net.ipv4.ip_local_port_range)"
+       fi
+
+       # TODO cat /proc/sys/net/ipv4/ip_conntrack_max ; it might be
+       # /proc/sys/net/netfilter/nf_conntrack_max or /proc/sys/net/nf_conntrack_max
+       # in new kernels like Fedora 12?
+
+       section Interface_Statistics
+       if ip -s link > /tmp/aspersa 2>/dev/null; then
+          parse_ip_s_link
+       fi
+
+       section Network_Connections
+       if netstat -antp > /tmp/aspersa 2>/dev/null; then
+          parse_netstat
+       fi
    fi
 
-   # TODO cat /proc/sys/net/ipv4/ip_conntrack_max ; it might be
-   # /proc/sys/net/netfilter/nf_conntrack_max or /proc/sys/net/nf_conntrack_max
-   # in new kernels like Fedora 12?
-
-   section Interface_Statistics
-   if ip -s link > /tmp/aspersa 2>/dev/null; then
-      parse_ip_s_link
+   if [[ "${ASPERSA_SKIP}" != *PROCESS* ]]; then
+       # ########################################################################
+       # Processes, load, etc
+       # ########################################################################
+       section Top_Processes
+       top -bn 1 | sed -e 's# *$##g' -e '/./{H;$!d;}' -e 'x;/PID/!d;' | grep . | head
+       section "Simplified_vmstat_(wait_please)"
+       vmstat 1 5 > /tmp/aspersa
+       format_vmstat
    fi
 
-   section Network_Connections
-   if netstat -antp > /tmp/aspersa 2>/dev/null; then
-      parse_netstat
-   fi
-
-   # ########################################################################
-   # Processes, load, etc
-   # ########################################################################
-   section Top_Processes
-   top -bn 1 | sed -e 's# *$##g' -e '/./{H;$!d;}' -e 'x;/PID/!d;' | grep . | head 
-   section "Simplified_vmstat_(wait_please)"
-   vmstat 1 5 > /tmp/aspersa
-   format_vmstat
 
    # ########################################################################
    # All done.  Signal the end so it's explicit.
@@ -887,4 +940,6 @@ main () {
 
 # Execute the program if it was not included from another file.  This makes it
 # possible to include without executing, and thus test.
-if [ $(basename "$0") = "summary" ]; then main $*; fi
+if [ $(basename "$0") = "summary" ] || [ $(basename "$0") = "bash" ]; then
+    main $*
+fi
