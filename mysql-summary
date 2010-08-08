@@ -175,6 +175,14 @@ parse_mysqld_instances () {
    done
 }
 
+# Tries to find the my.cnf file by examining 'ps' output, which should be in
+# /tmp/aspersa.  You have to specify the port for the instance you are
+# interested in, in case there are multiple instances.
+find_my_cnf_file() {
+   grep '/mysqld' /tmp/aspersa | grep -- "--port=$1" \
+      | awk 'BEGIN{RS=" "; FS="=";} $1 ~ /--defaults-file/ { print $2 }'
+}
+
 # Gets the MySQL system time.  Uses input from /tmp/aspersa-mysql-variables.
 get_mysql_timezone () {
    tz="$(get_var time_zone)"
@@ -605,7 +613,7 @@ main () {
    export PATH="${PATH}:/usr/local/sbin:/usr/sbin:/sbin"
 
    # Set up temporary files.
-   temp_files "check"
+   temp_files "rm"
    temp_files "touch"
 
    # ########################################################################
@@ -907,7 +915,12 @@ main () {
    # If there is a my.cnf in a standard location, see if we can pretty-print it.
    # ########################################################################
    section Configuration_File
-   cnf_file='/etc/my.cnf'
+   ps -ea -o args | grep mysqld > /tmp/aspersa
+   cnf_file=$(find_my_cnf_file ${port});
+   if [ ! -e "${cnf_file}" ]; then
+      name_val "Config File" "Cannot autodetect, trying common locations"
+      cnf_file="/etc/my.cnf";
+   fi
    if [ ! -e "${cnf_file}" ]; then
       cnf_file="/etc/mysql/my.cnf";
    fi
@@ -916,7 +929,7 @@ main () {
       cat "${cnf_file}" > /tmp/aspersa
       pretty_print_cnf_file
    else
-      name_val "Config File" "Not found"
+      name_val "Config File" "Cannot autodetect or find, giving up"
    fi
 
    temp_files "rm"
