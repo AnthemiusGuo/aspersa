@@ -32,6 +32,7 @@ LEN=30
 
    # Get a sample of SHOW INNODB STATUS and SHOW FULL PROCESSLIST right away, so we
    # can get these without interaction with the other commands we're about to run.
+   mysql -e 'SHOW GLOBAL VARIABLES\G'    >> $DEST/$d-variables 2>&1 &
    mysql -e 'SHOW INNODB STATUS\G'    >> $DEST/$d-innodbstatus1 2>&1 &
    mysql -e 'SHOW FULL PROCESSLIST\G' >> $DEST/$d-processlist1  2>&1 &
 
