@@ -705,14 +705,28 @@ main () {
       reply=${reply:-n}
    fi
    if echo "${reply:-n}" | grep -i '^y' > /dev/null ; then
+      # Find out if there are any triggers.  If there are none, we will skip
+      # that option to mysqldump, because when mysqldump checks for them, it can
+      # take a long time, one table at a time.
+      triggers="--loose-skip-triggers"
+      trg=$(mysql -ss -e "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TRIGGERS" 2>/dev/null);
+      if [ "${res}" ]; then
+         if [ "${res}" -gt 0 ]; then
+            triggers="--loose-triggers"
+         fi
+      fi
       mysqldump --all-databases --no-data --skip-comments \
          --skip-add-locks --skip-add-drop-table --compact \
          --skip-lock-all-tables --skip-lock-tables --skip-set-charset \
-         --routines --triggers $* > /tmp/aspersa-mysqldump
-      if [ "$?" -eq 0 ]; then
+         --loose-routines ${triggers} $* > /tmp/aspersa-mysqldump
+      # Test the result by checking the file, not by the exit status, because we
+      # might get partway through and then die, and the info is worth analyzing
+      # anyway.
+      if grep 'SHOW CREATE' /tmp/aspersa-mysqldump >/dev/null 2>&1; then
          format_overall_db_stats
       else
-         echo "Something went wrong, skipping schema analysis"
+         echo "Skipping schema analysis"
+         rm -f /tmp/aspersa-mysqldump
       fi
    else
       echo "Skipping schema analysis"
