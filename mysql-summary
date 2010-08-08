@@ -120,6 +120,11 @@ get_var () {
    echo "${v:-0}"
 }
 
+# Returns true if a variable exists
+var_exists () {
+   grep "$1" /tmp/aspersa-mysql-variables >/dev/null 2>&1;
+}
+
 # gets a value from /tmp/aspersa-mysql-status.  Returns zero if it doesn't
 # exist.
 get_stat () {
@@ -673,9 +678,10 @@ main () {
    # Table cache
    # ########################################################################
    section Table_cache
-   table_cache=$(get_var table_cache)
-   if [ -z "${table_cache}" ]; then
+   if var_exists table_open_cache; then
       table_cache=$(get_var table_open_cache)
+   else
+      table_cache=$(get_var table_cache)
    fi
    name_val Size "${table_cache}"
    open_tables=$(get_stat Open_tables)
