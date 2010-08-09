@@ -776,6 +776,11 @@ main () {
       else
          name_val "Foreign Keys" No
       fi
+      if grep 'PARTITION BY' /tmp/aspersa-mysqldump > /dev/null; then
+         name_val "Partitioning" Yes
+      else
+         name_val "Partitioning" No
+      fi
    fi
    if [ "$(get_stat Ssl_accepts)" -gt 0 ]; then
       name_val "SSL" Yes
@@ -911,7 +916,8 @@ main () {
    done
    for v in \
       join_buffer_size sort_buffer_size read_buffer_size read_rnd_buffer_size \
-      max_heap_table_size tmp_table_size thread_stack;
+      bulk_insert_buffer max_heap_table_size tmp_table_size \
+      max_allowed_packet thread_stack;
    do
       name_val ${v} $(shorten $(get_var ${v}))
    done
