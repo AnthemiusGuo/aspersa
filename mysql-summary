@@ -587,11 +587,30 @@ format_overall_db_stats () {
             }
          }
          fmt = "  %-" mdb "s"
-         printf fmt, "Database";
+         mtlen = 0; # max type length
          for ( i=0;i<num_types;i++ ) {
             type = types[i];
-            fmts[type] = " %" length(type) "s";
-            printf fmts[type], type;
+            if ( length(type) > mtlen ) {
+               mtlen = length(type);
+            }
+         }
+         for ( i=1;i<=mtlen;i++ ) {
+            printf "  %-" mdb "s", "";
+            for ( j=0;j<num_types;j++ ) {
+               type = types[j];
+               if ( i > length(type) ) {
+                  ch = " ";
+               }
+               else {
+                  ch = substr(type, i, 1);
+               }
+               printf(" %3s", ch);
+            }
+            print "";
+         }
+         printf "  %-" mdb "s", "Database";
+         for ( i=0;i<num_types;i++ ) {
+            printf " %3s", "===";
          }
          print "";
          for ( i=0;i<num_dbs;i++ ) {
@@ -599,14 +618,15 @@ format_overall_db_stats () {
             printf fmt, db;
             for ( j=0;j<num_types;j++ ) {
                type = types[j];
-               printf fmts[type], counts[db "," type];
+               printf "%4s", counts[db "," type];
             }
             print "";
          }
       }
    ' /tmp/aspersa-mysqldump > /tmp/aspersa
-   head -n1 /tmp/aspersa
-   tail -n+2 /tmp/aspersa | sort
+   hdr=$(grep -n Database /tmp/aspersa | cut -d: -f1);
+   head -n${hdr} /tmp/aspersa
+   tail -n+$((${hdr} + 1)) /tmp/aspersa | sort
    echo
 
 }
