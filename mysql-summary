@@ -48,19 +48,13 @@ fuzzy_formula='
 # times (gives inconsistent results, maybe adds load on things I don't want to
 # such as RAID controllers).  They must not exist -- if they did, someone would
 # symlink them to /etc/passwd and then run this program as root.  Call this
-# function with "check", "rm", or "touch" as an argument.
+# function with "rm" or "touch" as an argument.
 temp_files() {
    for file in /tmp/aspersa{,-mysql-variables,-mysql-status,-innodb-status} \
          /tmp/aspersa{,-mysql-databases,-mysql-processlist} \
          /tmp/aspersa-mysql{dump,-slave};
    do
       case "$1" in
-      check)
-         if [ -e "${file}" ]; then
-            echo "For security reasons, ${file} must not exist.";
-            exit 1;
-         fi
-         ;;
       touch)
          if ! touch "${file}"; then
             echo "I can't make my temp file ${file}";
