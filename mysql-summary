@@ -1,6 +1,8 @@
 #!/bin/bash
 # This program is part of Aspersa (http://code.google.com/p/aspersa/)
 
+# TODO: parse queries out of processlist and aggregate them.
+
 # ########################################################################
 # A script to summarize MySQL information in a nice way.
 # Goals: work well on Linux; create a compact diff-able report that is
@@ -743,27 +745,34 @@ main () {
       reply=${reply:-n}
    fi
    if echo "${reply:-n}" | grep -i '^y' > /dev/null ; then
-      # Find out if there are any triggers.  If there are none, we will skip
-      # that option to mysqldump, because when mysqldump checks for them, it can
-      # take a long time, one table at a time.
-      triggers="--loose-skip-triggers"
-      trg=$(mysql -ss -e "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TRIGGERS" 2>/dev/null);
-      if [ "${res}" ]; then
-         if [ "${res}" -gt 0 ]; then
-            triggers="--loose-triggers"
+      # If mysqldump supports triggers, then add options for routines.
+      if mysqldump --help --verbose 2>&1 | grep triggers >/dev/null; then
+         trg_arg="--routines"
+      fi
+      if [ "${trg_arg}" ]; then
+         # Find out if there are any triggers.  If there are none, we will skip
+         # that option to mysqldump, because when mysqldump checks for them, it
+         # can take a long time, one table at a time.
+         triggers="--skip-triggers"
+         trg=$(mysql -ss -e "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TRIGGERS" 2>/dev/null);
+         if [ "${res}" ]; then
+            if [ "${res}" -gt 0 ]; then
+               triggers="--triggers"
+            fi
          fi
+         trg_arg="${trg_arg} ${triggers}";
       fi
       mysqldump --all-databases --no-data --skip-comments \
          --skip-add-locks --skip-add-drop-table --compact \
          --skip-lock-all-tables --skip-lock-tables --skip-set-charset \
-         --loose-routines ${triggers} $* > /tmp/aspersa-mysqldump
+         ${trg_arg} $* > /tmp/aspersa-mysqldump
       # Test the result by checking the file, not by the exit status, because we
       # might get partway through and then die, and the info is worth analyzing
       # anyway.
-      if grep 'SHOW CREATE' /tmp/aspersa-mysqldump >/dev/null 2>&1; then
+      if grep 'CREATE DATABASE' /tmp/aspersa-mysqldump >/dev/null 2>&1; then
          format_overall_db_stats
       else
-         echo "Skipping schema analysis"
+         echo "Skipping schema analysis due to apparent error in dump file"
          rm -f /tmp/aspersa-mysqldump
       fi
    else
