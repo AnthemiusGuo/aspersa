@@ -17,6 +17,10 @@
 DEST=~/collected
 # How long to work for, in seconds
 LEN=30
+# Get GDB stack traces?
+GDB="no"
+# Use opcontrol profiling?
+OPC="yes"
 
 # Make sure there's only one of me.
 (
@@ -27,22 +31,31 @@ LEN=30
    echo "Gathering info for $d"
 
    # Getting a GDB stacktrace can be an intensive operation, so do this only if
-   # necessary.  If you want to, then just uncomment these lines.
-   # gdb -ex "set pagination 0" -ex "thread apply all bt" --batch -p $(pidof mysqld) >> $DEST/$d-stacktrace
+   # necessary.  If you want to, then just change the config above.
+   if [ "${GDB}" = "yes" ]; then
+      gdb -ex "set pagination 0" -ex "thread apply all bt" --batch \
+         -p $(pidof mysqld) >> $DEST/$d-stacktrace
+   else
+      echo "Enable GDB config variable in $0" >> $DEST/$d-stacktrace
+   fi
 
-   # Get a sample of SHOW INNODB STATUS and SHOW FULL PROCESSLIST right away, so we
-   # can get these without interaction with the other commands we're about to run.
+   # Get a sample of SHOW INNODB STATUS and SHOW FULL PROCESSLIST right away, so
+   # we can get these without interaction with the other commands we're about to
+   # run.
    mysql -e 'SHOW GLOBAL VARIABLES'   >> $DEST/$d-variables 2>&1 &
    mysql -e 'SHOW INNODB STATUS\G'    >> $DEST/$d-innodbstatus1 2>&1 &
    mysql -e 'SHOW FULL PROCESSLIST\G' >> $DEST/$d-processlist1  2>&1 &
 
    # Next, start oprofile gathering data during the whole rest of this process.
    # The --init should be a no-op if it has already been init-ed.
-   opcontrol --init
-   opcontrol --start --no-vmlinux
+   if opcontrol --init >/dev/null 2>&1; then
+      opcontrol --start --no-vmlinux
+   else
+      OPC="no"
+   fi
 
-   # Grab a few general things first.  Background all of these so we can start them
-   # all up as quickly as possible.
+   # Grab a few general things first.  Background all of these so we can start
+   # them all up as quickly as possible.
    ps -eaf                    >> $DEST/$d-ps 2>&1 &
    top -bn1                   >> $DEST/$d-top 2>&1 &
    vmstat 1 $LEN              >> $DEST/$d-vmstat 2>&1 &
@@ -51,24 +64,26 @@ LEN=30
    mysqladmin_pid=$!
 
    # This loop is a bit redundant to the rest of the stuff, but in some cases we
-   # really need this data, like diskstats.  This loop also defines the time of the
-   # whole job.
+   # really need this data, like diskstats.  This loop also defines the time of
+   # the whole job.
    for a in `seq 1 $LEN`; do
-      date >> $DEST/$d-diskstats; cat /proc/diskstats >> $DEST/$d-diskstats 2>&1;
-      date >> $DEST/$d-procstat;  cat /proc/stat      >> $DEST/$d-procstat 2>&1;
-      date >> $DEST/$d-df;        df -h               >> $DEST/$d-df 2>&1;
-      date >> $DEST/$d-lsof;      lsof | grep mysqld  >> $DEST/$d-lsof 2>&1;
-      date >> $DEST/$d-netstat;   netstat -antp       >> $DEST/$d-netstat 2>&1;
-      sleep 1;
+      date >> $DEST/$d-diskstats; cat /proc/diskstats >> $DEST/$d-diskstats 2>&1
+      date >> $DEST/$d-procstat;  cat /proc/stat      >> $DEST/$d-procstat 2>&1
+      date >> $DEST/$d-df;        df -h               >> $DEST/$d-df 2>&1
+      date >> $DEST/$d-lsof;      lsof | grep mysqld  >> $DEST/$d-lsof 2>&1
+      date >> $DEST/$d-netstat;   netstat -antp       >> $DEST/$d-netstat 2>&1
+      sleep 1
    done
 
-   opcontrol --stop;
-   opcontrol --dump;
-   kill $(pidof oprofiled) 2>/dev/null;
-   opcontrol --save=$d;
-   echo "oprofile data saved to $d; you should now be able to get a  report"
-   echo "by running something like"
-   echo "opreport --demangle=smart --symbols --merge tgid session:$d <binary>"
+   if [ "${OPC}" = "yes" ]; then
+      opcontrol --stop;
+      opcontrol --dump;
+      kill $(pidof oprofiled) 2>/dev/null;
+      opcontrol --save=$d;
+      echo "oprofile data saved to $d; you should now be able to get a  report"
+      echo "by running something like"
+      echo "opreport --demangle=smart --symbols --merge tgid session:$d <bin>"
+   fi
 
    mysql -e 'SHOW INNODB STATUS\G'    >> $DEST/$d-innodbstatus2 2>&1 &
    mysql -e 'SHOW FULL PROCESSLIST\G' >> $DEST/$d-processlist2  2>&1 &
