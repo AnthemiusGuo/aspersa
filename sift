@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# TODO: look at issue 11940 note for example of good summary of status
+
 echo "Samples of disk fill"
 awk '/^\// { print $1 " " $3 }' $1-df | sort | uniq -c
 
@@ -13,7 +15,22 @@ echo
 echo "InnoDB stats"
 grep "Main thread" $1-innodb*
 grep "queries inside" $1-innodb*
-grep -A1 "^Pending" $1-innodb*
+grep -i -A1 "pending" $1-innodb*
+
+echo "InnoDB semaphores: threads are waiting at..."
+awk '
+   /has waited at/ { print $6 " " $7 " " $8 }
+   ' $1-innodb* | sort | uniq -c | sort -rn
+echo "InnoDB semaphores: threads are waiting on..."
+awk '
+   /^[XS]-lock on.*latch/ { print }
+   ' $1-innodb* | sort | uniq -c | sort -rn
+echo "InnoDB semaphores: each thread is blocking how many other threads?"
+awk '
+   /a [^ ]*er .thread id/ { print substr($5, 1, index($5, ")") - 1)}
+   ' $1-innodb* | sort | uniq -c | sort -rn | awk '{printf "%18d blocks %3d others\n", $2, $1}'
+
+exit
 
 # TODO: do both in one pass with associative arrays
 echo
