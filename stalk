@@ -1,9 +1,6 @@
 #!/bin/bash
 # This program is part of Aspersa (http://code.google.com/p/aspersa/)
 
-# TODO: advise if running non-root
-# TODO: never use ~, always use ${HOME}
-
 # ########################################################################
 # A script to watch MySQL and run the 'collect' program when some condition
 # becomes true.  By default, it watches for a too-many-connections condition.
@@ -19,32 +16,39 @@
 # ########################################################################
 # Configuration settings.
 # ########################################################################
-# This is the max number of connections we want to tolerate.  You can pass this
+# This is the max number of <whatever> we want to tolerate.  You can pass this
 # in as the first command-line option if you want.
-THREADS=${1:-100}
-# This is the location of the 'collect' script.
-COLLECT="${HOME}/bin/collect";
+THRESHOLD=${1:-100}
 # This is the interval between checks; pass it as the 2nd command-line option.
-SLEEP=${2:-30}
+INTERVAL=${2:-30}
 # This is the thing to check for.  You can pass this as the third option.
 VARIABLE=${3:-Threads_connected}
+# This is the location of the 'collect' script.
+COLLECT="${HOME}/bin/collect";
+# How long to sleep after collecting?
+SLEEP=600
+
+if [ "$(id -u)" != "0" ]; then
+   echo 'Not running with root privileges!';
+fi
 
 while true; do
    date 
-   threads=""
-   threads=$(mysqladmin ext | grep ${VARIABLE} | awk '{print $4}');
+   threshold=""
+   # If you want to, you can replace this with a custom command.
+   threshold=$(mysqladmin ext | grep ${VARIABLE} | awk '{print $4}');
    execute=no
-   if [ -z "${threads}" ]; then
+   if [ -z "${threshold}" ]; then
       execute="yes" # Oops, couldn't connect, maybe max_connections problem.
-   elif [ ${threads} -gt $THREADS ]; then
+   elif [ ${threshold} -gt ${THRESHOLD} ]; then
       execute="yes"
    fi
    if [ "${execute}" = "yes" ]; then 
-      echo "Executing collection script"
+      echo "Executing collection script; ${VARIABLE} = ${threshold}"
       ${COLLECT}
-      echo "sleeping a while to avoid DOS attack"
-      sleep 600 
-   else
+      echo "sleeping ${SLEEP} seconds to avoid DOS attack"
       sleep ${SLEEP}
+   else
+      sleep ${INTERVAL}
    fi
 done
