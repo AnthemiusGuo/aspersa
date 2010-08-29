@@ -1,28 +1,22 @@
 #!/bin/bash
 # This program is part of Aspersa (http://code.google.com/p/aspersa/)
-set +x
 
 # ########################################################################
 # A script to summarize system information in a nice way.
 # Goals: work well on Linux; create a compact diff-able report that is
 # easy to paste into a wiki or email, and easy to scan and compare too.
 #
-# Script contains improvements by True (http://true.nl) addressing:
-#  - Enhanced support for Debian & Ubuntu
-#  - Direct execution like
-#    $ wget -O- http://aspersa.googlecode.com/svn/trunk/summary |bash
-#  - Allow skipping of time-consuming sections using bash environment variable:
-#    $ export ASPERSA_SKIP="MOUNT,NETWORK,PROCESS"; wget -O- http://aspersa.googlecode.com/svn/trunk/summary |bash
-#    You can also just skip: "NETWORK" or "MOUNT,PROCESS"
-#    By default will run all sections
-#  - Disk & Partitioning info (using fdisk)
-#  - Support for a wider range of RAID controllers
-#  - Dell servicetag
-#  - Output in a format that's still human readable, but easier parsable by scripts
-# Diff: http://github.com/true/true-public-scraps/compare/708d964996b7955567b1...master
+# Usage: $ wget -O- http://aspersa.googlecode.com/svn/trunk/summary |bash
+# Options are set through the ASPERSA_SKIP environment variable.  Set this
+# variable to a comma-separated list of things you want to omit.
+# Options:
+#  MOUNT:   Don't print out mounted filesystems and disk fullness.
+#  NETWORK: Don't print out information on network controllers & config.
+#  PROCESS: Don't print out top processes and vmstat information.
 #
-# Author: Baron Schwartz
-# Author: Kevin van Zonneveld (kvz@php.net || http://kevin.vanzonneveld.net)
+# Authors:
+#  Baron Schwartz
+#  Kevin van Zonneveld (kvz@php.net || http://kevin.vanzonneveld.net)
 # ########################################################################
 
 # ########################################################################
@@ -33,16 +27,10 @@ set +x
 # times (gives inconsistent results, maybe adds load on things I don't want to
 # such as RAID controllers).  They must not exist -- if they did, someone would
 # symlink them to /etc/passwd and then run this program as root.  Call this
-# function with "check", "rm", or "touch" as an argument.
+# function with "rm" or "touch" as an argument.
 temp_files() {
    for file in /tmp/aspersa /tmp/aspersa2; do
       case "$1" in
-      check)
-         if [ -e "${file}" ]; then
-            echo "For security reasons, ${file} must not exist.";
-            exit 1;
-         fi
-         ;;
       touch)
          if ! touch "${file}"; then
             echo "I can't make my temp file ${file}";
@@ -302,8 +290,37 @@ parse_filesystems () {
       }" /tmp/aspersa
 }
 
+# ##############################################################################
+# Parse the output of fdisk -l, which should be in /tmp/aspersa; there might be
+# multiple fdisk -l outputs in the file.
+# ##############################################################################
 parse_fdisk () {
-   cat /tmp/aspersa |while read line; do echo "    ${line}"; done
+   awk '
+      BEGIN {
+         format="%-12s %4s %10s %10s %18s\n";
+         printf(format, "Device", "Type", "Start", "End", "Size");
+         printf(format, "============", "====", "==========", "==========", "==================");
+      }
+      /Disk.*bytes/ {
+         disk = substr($2, 1, length($2) - 1);
+         size = $5;
+         printf(format, disk, "Disk", "", "", size);
+      }
+      /Units/ {
+         units = $9;
+      }
+      /^\/dev/ {
+         if ( $2 == "*" ) {
+            start = $3;
+            end   = $4;
+         }
+         else {
+            start = $2;
+            end   = $3;
+         }
+         printf(format, $1, "Part", start, end, (end - start) * units);
+      }
+   ' /tmp/aspersa
 }
 
 # ##############################################################################
@@ -358,7 +375,7 @@ parse_raid_controller_lspci () {
    elif grep -q "Hewlett-Packard Company Smart Array" /tmp/aspersa; then
       echo 'HP Smart Array'
    elif grep -q " RAID bus controller: " /tmp/aspersa; then
-      cat /tmp/aspersa |awk -F: '/RAID bus controller\:/ {print $3" "$5" "$6}'
+      awk -F: '/RAID bus controller\:/ {print $3" "$5" "$6}' /tmp/aspersa
    fi
 }
 
@@ -695,7 +712,7 @@ main () {
       release=$(cat /etc/redhat-release);
    elif [ -e /etc/system-release ]; then
       release=$(cat /etc/system-release);
-   elif which lsb_release >/dev/null 2>&1 && test -x "$(which lsb_release)"; then
+   elif lsb_release -ds >/dev/null 2>&1; then
       release="$(lsb_release -ds) ($(lsb_release -cs))"
    elif [ -e /etc/lsb-release ]; then
       release=$(grep DISTRIB_DESCRIPTION /etc/lsb-release |awk -F'=' '{print $2}' |sed 's#"##g');
@@ -731,13 +748,10 @@ main () {
       name_val "Compiler" "$(/lib/libc.so.6 | grep 'Compiled by' | cut -c13-)"
    fi
 
-   if which getenforce >/dev/null 2>&1 && test -x "$(which getenforce)"; then
+   if getenforce >/dev/null 2>&1; then
       getenforce="$(getenforce 2>&1)";
-   else
-      getenforce="No SELinux detected";
    fi
-
-   name_val "SELinux" "${getenforce}";
+   name_val "SELinux" "${getenforce:-No SELinux detected}";
 
    # ########################################################################
    # Processor/CPU, Memory, Swappiness, dmidecode
@@ -752,7 +766,7 @@ main () {
 
    rss=$(ps -eo rss | awk '/[0-9]/{total += $1 * 1024} END {print total}')
    shorten ${rss} rss
-   name_val Used "${rss}" #  used according to 'ps -eo rss'
+   name_val Used "${rss}"
 
    name_val Swappiness "$(sysctl vm.swappiness 2>&1)"
    name_val DirtyPolicy "$(sysctl vm.dirty_ratio 2>&1), $(sysctl vm.dirty_background_ratio 2>&1)"
@@ -768,29 +782,27 @@ main () {
    # Disks, RAID, Filesystems
    # ########################################################################
    # TODO: Add info about software RAID
-   section "Disk_Partioning"
-   echo -n '' > /tmp/aspersa
-   for diskpath in $(ls -al /dev/disk/by-id |grep -v '\-part' |grep '/' |sed 's#\.\.\/##g' |awk '{print "/dev/"$NF}' | sort | uniq); do
-      echo "  = ${diskpath} ==============================="
-      fdisk -l ${diskpath} > /tmp/aspersa 2>/dev/null
-      parse_fdisk
-   done
-   echo -n '' > /tmp/aspersa
 
    if [[ "${ASPERSA_SKIP}" != *MOUNT* ]]; then
-       section "Mounted_Filesystems"
-       df -hP | sort > /tmp/aspersa2
-       mount | sort | join /tmp/aspersa2 - > /tmp/aspersa
-       parse_filesystems
+      section "Mounted_Filesystems"
+      df -hP | sort > /tmp/aspersa2
+      mount | sort | join /tmp/aspersa2 - > /tmp/aspersa
+      parse_filesystems
    fi
 
    section "Disk_Schedulers_And_Queue_Size"
 
+   echo "" > /tmp/aspersa
    for disk in $(ls /sys/block/ | grep -v ram | grep -v loop); do
       if [ -e "/sys/block/${disk}/queue/scheduler" ]; then
          name_val "${disk}" "$(cat /sys/block/${disk}/queue/scheduler | grep -o '\[.*\]') $(cat /sys/block/${disk}/queue/nr_requests)"
+         fdisk -l "/dev/${disk}" >> /tmp/aspersa 2>/dev/null
       fi
    done
+
+   # Relies on /tmp/aspersa having data from the Disk Schedulers loop.
+   section "Disk_Partioning"
+   parse_fdisk
 
    section "Kernel_Inode_State"
    for file in dentry-state file-nr inode-nr; do
@@ -891,44 +903,45 @@ main () {
    name_val Technology "${virt:-No virtualization detected}"
 
    if [[ "${ASPERSA_SKIP}" != *NETWORK* ]]; then
-       # ########################################################################
-       # Network stuff
-       # ########################################################################
-       section Network_Config
-       if lspci > /tmp/aspersa 2>/dev/null; then
-          parse_ethernet_controller_lspci
-       fi
-       if sysctl net.ipv4.tcp_fin_timeout > /dev/null 2>&1; then
-          name_val "FIN Timeout" "$(sysctl net.ipv4.tcp_fin_timeout)"
-          name_val "Port Range" "$(sysctl net.ipv4.ip_local_port_range)"
-       fi
+      # #####################################################################
+      # Network stuff
+      # #####################################################################
+      section Network_Config
+      if lspci > /tmp/aspersa 2>/dev/null; then
+         parse_ethernet_controller_lspci
+      fi
+      if sysctl net.ipv4.tcp_fin_timeout > /dev/null 2>&1; then
+         name_val "FIN Timeout" "$(sysctl net.ipv4.tcp_fin_timeout)"
+         name_val "Port Range" "$(sysctl net.ipv4.ip_local_port_range)"
+      fi
 
-       # TODO cat /proc/sys/net/ipv4/ip_conntrack_max ; it might be
-       # /proc/sys/net/netfilter/nf_conntrack_max or /proc/sys/net/nf_conntrack_max
-       # in new kernels like Fedora 12?
+      # TODO cat /proc/sys/net/ipv4/ip_conntrack_max ; it might be
+      # /proc/sys/net/netfilter/nf_conntrack_max or /proc/sys/net/nf_conntrack_max
+      # in new kernels like Fedora 12?
 
-       section Interface_Statistics
-       if ip -s link > /tmp/aspersa 2>/dev/null; then
-          parse_ip_s_link
-       fi
+       
+      # TODO: use fuzzy-rounding
+      section Interface_Statistics
+      if ip -s link > /tmp/aspersa 2>/dev/null; then
+         parse_ip_s_link
+      fi
 
-       section Network_Connections
-       if netstat -antp > /tmp/aspersa 2>/dev/null; then
-          parse_netstat
-       fi
+      section Network_Connections
+      if netstat -antp > /tmp/aspersa 2>/dev/null; then
+         parse_netstat
+      fi
    fi
 
    if [[ "${ASPERSA_SKIP}" != *PROCESS* ]]; then
-       # ########################################################################
-       # Processes, load, etc
-       # ########################################################################
-       section Top_Processes
-       top -bn 1 | sed -e 's# *$##g' -e '/./{H;$!d;}' -e 'x;/PID/!d;' | grep . | head
-       section "Simplified_vmstat_(wait_please)"
-       vmstat 1 5 > /tmp/aspersa
-       format_vmstat
+      # ########################################################################
+      # Processes, load, etc
+      # ########################################################################
+      section Top_Processes
+      top -bn 1 | sed -e 's# *$##g' -e '/./{H;$!d;}' -e 'x;/PID/!d;' | grep . | head
+      section "Simplified_vmstat_(wait_please)"
+      vmstat 1 5 > /tmp/aspersa
+      format_vmstat
    fi
-
 
    # ########################################################################
    # All done.  Signal the end so it's explicit.

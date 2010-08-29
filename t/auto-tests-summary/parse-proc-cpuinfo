@@ -2,7 +2,7 @@
 #parse_proc_cpuinfo
 
 cat <<EOF > $1
-  Processors | 1 physical, 2 cores, 2 virtual, no hyperthreading
+  Processors | physical = 1, cores = 2, virtual = 2, hyperthreading = no
       Speeds | 2x1300.000
       Models | 2xGenuine Intel(R) CPU U7300 @ 1.30GHz
       Caches | 2x3072 KB
