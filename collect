@@ -21,12 +21,24 @@ LEN=30
 GDB="no"
 # Use opcontrol profiling?
 OPC="yes"
+# Bail out if the disk is more than this %full.
+PCT_THRESHOLD=95
+# Bail out if the disk has less than this many MB free.
+MB_THRESHOLD=100
+
+# Make sure the disk isn't getting too full.
+mkdir -p $DEST
+avail=$(df -m -P "${DEST}" | awk '/^\//{print $4}');
+full=$(df -m -P "${DEST}" | awk '/^\//{print $5}' | sed -e 's/%//g');
+if [ "${avail}" -le "${MB_THRESHOLD}" -o "${full}" -ge "${PCT_THRESHOLD}" ]; then
+   echo "Exiting, not enough free space (${full}%, ${avail}MB free)">&2
+   exit 1
+fi
 
 # Make sure there's only one of me.
 (
    flock -x -s 200
 
-   mkdir -p $DEST
    d=$(date +%F-%T | tr :- _);
    echo "Gathering info for $d"
 
