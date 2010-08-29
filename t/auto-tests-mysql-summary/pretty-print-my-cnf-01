@@ -2,6 +2,7 @@
 #pretty_print_cnf_file
 
 cat <<EOF > $1
+
 [mysqld]
 datadir                             = /mnt/data/mysql
 socket                              = /mnt/data/mysql/mysql.sock
@@ -18,13 +19,17 @@ innodb_file_per_table               = 1
 ssl                                 = 1
 server-id                           = 1
 log-bin                             = sl1-bin
+
 [mysql.server]
 user                                = mysql
 basedir                             = /mnt/data
+
 [mysqld_safe]
 log-error                           = /var/log/mysqld.log
 pid-file                            = /var/run/mysqld/mysqld.pid
+
 [mysql]
+
 [xtrabackup]
 target-dir                          = /data/backup
 EOF

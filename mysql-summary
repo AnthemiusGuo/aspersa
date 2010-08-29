@@ -338,6 +338,10 @@ pretty_print_cnf_file () {
          gsub(/[ 	]*$/, "", $2);
          printf("%-35s = %s\n", $1, $2);
       }
+      else if ( $0 ~ /\[/ ) {
+         print "";
+         print $1;
+      }
       else {
          print $1;
       }
