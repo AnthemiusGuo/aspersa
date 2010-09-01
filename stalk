@@ -34,15 +34,20 @@ fi
 
 while true; do
    date 
-   threshold=""
-   # If you want to, you can replace this with a custom command.
-   threshold=$(mysqladmin ext | grep ${VARIABLE} | awk '{print $4}');
+
+   # XXX This is the threshold where we decide whether to execute 'collect'.
+   # XXX Customize this if needed.
    execute=no
+   threshold=""
+   threshold=$(mysqladmin ext | grep ${VARIABLE} | awk '{print $4}');
    if [ -z "${threshold}" ]; then
       execute="yes" # Oops, couldn't connect, maybe max_connections problem.
+      echo "The threshold is empty; something failed?  Exit status is $?"
    elif [ ${threshold} -gt ${THRESHOLD} ]; then
       execute="yes"
    fi
+
+   # XXX Stop customizing here; everything above should be what you need.
    if [ "${execute}" = "yes" ]; then 
       echo "Executing collection script; ${VARIABLE} = ${threshold}"
       ${COLLECT}
