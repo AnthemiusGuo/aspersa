@@ -35,21 +35,21 @@ fi
 while true; do
    date 
 
-   # XXX This is the threshold where we decide whether to execute 'collect'.
-   # XXX Customize this if needed.
-   execute=no
-   threshold=""
-   threshold=$(mysqladmin ext | grep ${VARIABLE} | awk '{print $4}');
-   if [ -z "${threshold}" ]; then
+   # XXX This is where we decide whether to execute 'collect'.
+   # XXX Customize this if needed.  The idea is to generate a number and store
+   # XXX it into $detected, and if $detected > $THRESHOLD, then we'll execute
+   # XXX the collection process.
+   detected=$(mysqladmin ext | grep ${VARIABLE} | awk '{print $4}');
+   if [ -z "${detected}" ]; then
       execute="yes" # Oops, couldn't connect, maybe max_connections problem.
-      echo "The threshold is empty; something failed?  Exit status is $?"
-   elif [ ${threshold} -gt ${THRESHOLD} ]; then
+      echo "The detected value is empty; something failed?  Exit status is $?"
+   elif [ ${detected} -gt ${THRESHOLD} ]; then
       execute="yes"
    fi
 
    # XXX Stop customizing here; everything above should be what you need.
-   if [ "${execute}" = "yes" ]; then 
-      echo "Executing collection script; ${VARIABLE} = ${threshold}"
+   if [ "${execute:-no}" = "yes" ]; then 
+      echo "Executing collection script; ${VARIABLE} = ${detected}"
       ${COLLECT}
       echo "sleeping ${SLEEP} seconds to avoid DOS attack"
       sleep ${SLEEP}
