@@ -41,12 +41,16 @@ fi
 
    d=$(date +%F-%T | tr :- _);
    echo "Gathering info for $d"
+   # Get pidof mysqld; pidof doesn't exist on some systems.  We try our best...
+   p=$(pidof -s mysqld 2>/dev/null);
+   if [ -z "${p}" ]; then
+      p=$(ps -eaf | grep 'mysql[d]' | grep -v mysqld_safe | awk '{print $2}' | head -n1);
+   fi
 
    # Getting a GDB stacktrace can be an intensive operation, so do this only if
    # necessary.  If you want to, then just change the config above.
-   if [ "${GDB}" = "yes" ]; then
-      gdb -ex "set pagination 0" -ex "thread apply all bt" --batch \
-         -p $(pidof mysqld) >> $DEST/$d-stacktrace
+   if [ "${GDB}" = "yes" -a "${p}" ]; then
+      gdb -ex "set pagination 0" -ex "thread apply all bt" --batch -p $p >> $DEST/$d-stacktrace
    else
       echo "Enable GDB config variable in $0" >> $DEST/$d-stacktrace
    fi
@@ -79,11 +83,12 @@ fi
    # really need this data, like diskstats.  This loop also defines the time of
    # the whole job.
    for a in `seq 1 $LEN`; do
-      date '+TS %s' >> $DEST/$d-diskstats; cat /proc/diskstats >> $DEST/$d-diskstats 2>&1
-      date '+TS %s' >> $DEST/$d-procstat;  cat /proc/stat      >> $DEST/$d-procstat 2>&1
-      date '+TS %s' >> $DEST/$d-df;        df -h               >> $DEST/$d-df 2>&1
-      date '+TS %s' >> $DEST/$d-lsof;      lsof | grep mysqld  >> $DEST/$d-lsof 2>&1
-      date '+TS %s' >> $DEST/$d-netstat;   netstat -antp       >> $DEST/$d-netstat 2>&1
+      ts=$(date +%s);
+      echo "TS $ts" >> $DEST/$d-diskstats; cat /proc/diskstats >> $DEST/$d-diskstats 2>&1 &
+      echo "TS $ts" >> $DEST/$d-procstat;  cat /proc/stat      >> $DEST/$d-procstat 2>&1 &
+      echo "TS $ts" >> $DEST/$d-df;        df -h               >> $DEST/$d-df 2>&1 &
+      echo "TS $ts" >> $DEST/$d-lsof;      lsof -p $p -bw      >> $DEST/$d-lsof 2>&1 &
+      echo "TS $ts" >> $DEST/$d-netstat;   netstat -antp       >> $DEST/$d-netstat 2>&1 &
       sleep 1
    done
 
