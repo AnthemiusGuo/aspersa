@@ -381,18 +381,26 @@ main() {
    file="$1"
    mode="$2"
    disk="$3"
+   iter=0;
    while true; do
       case "${mode}" in
          disk|sample|all)
             group_by_${mode} "${file}" "${disk}"
             ;;
          *)
-            echo "Sorry, I don't know what mode you mean.  Try disk|sample|all"
-            echo "Usage: $0 <file> <mode> <pattern>"
+            if [ "${iter}" = "0" ]; then
+               echo "Usage: $0 <file> <mode> <pattern>"
+               echo "          file: a file containing saved diskstats"
+               echo "          mode: one of <disk|sample|all>"
+               echo "       pattern: an awk regex to match disk names"
+               exit
+            fi
+            echo "Sorry, I don't know what mode you mean.  Try <disk|sample|all>."
             ;;
       esac
 
-      if [ ! -t 0 ]; then
+      # Don't be "interactive" unless the user actually has control.
+      if [ ! -t 0 -o ! -t 1 ]; then
          exit;
       fi
 
@@ -418,6 +426,7 @@ main() {
                ;;
          esac
       done
+      iter=$((iter + 1));
    done
 }
 
