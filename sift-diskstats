@@ -51,6 +51,7 @@ awk_parse_line="
       ms_weighted = \$14;
 "
 
+# NOTE: this one is necessary in order to get the device listing.
 awk_get_first_sample="
       # Keep track of the natural order of the devices, so we can print them out
       # nicely later; and also keep the first-ever line of output.  This only
@@ -144,65 +145,117 @@ awk_get_overall_increments="
          ms_spent_writing  = curr[dev \"_ms_spent_writing\"]  - first[dev \"_ms_spent_writing\"];
          ms_spent_doing_io = curr[dev \"_ms_spent_doing_io\"] - first[dev \"_ms_spent_doing_io\"];
          ms_weighted       = curr[dev \"_ms_weighted\"]       - first[dev \"_ms_weighted\"];
+         in_progress       = curr[dev \"_ios_in_progress\"];
+"
+
+awk_get_current_increments="
+         # Get incremental numbers.
+         elapsed           = ts                               - prev[\"ts\"];
+         reads             = curr[dev \"_reads\"]             - prev[dev \"_reads\"];
+         reads_merged      = curr[dev \"_reads_merged\"]      - prev[dev \"_reads_merged\"];
+         read_sectors      = curr[dev \"_read_sectors\"]      - prev[dev \"_read_sectors\"];
+         ms_spent_reading  = curr[dev \"_ms_spent_reading\"]  - prev[dev \"_ms_spent_reading\"];
+         writes            = curr[dev \"_writes\"]            - prev[dev \"_writes\"];
+         writes_merged     = curr[dev \"_writes_merged\"]     - prev[dev \"_writes_merged\"];
+         written_sectors   = curr[dev \"_written_sectors\"]   - prev[dev \"_written_sectors\"];
+         ms_spent_writing  = curr[dev \"_ms_spent_writing\"]  - prev[dev \"_ms_spent_writing\"];
+         ms_spent_doing_io = curr[dev \"_ms_spent_doing_io\"] - prev[dev \"_ms_spent_doing_io\"];
+         ms_weighted       = curr[dev \"_ms_weighted\"]       - prev[dev \"_ms_weighted\"];
+         in_progress       = curr[dev \"_ios_in_progress\"];
+"
+
+awk_reset_variables="
+         t_reads             = 0;
+         t_reads_merged      = 0;
+         t_read_sectors      = 0;
+         t_ms_spent_reading  = 0;
+         t_writes            = 0;
+         t_writes_merged     = 0;
+         t_written_sectors   = 0;
+         t_ms_spent_writing  = 0;
+         t_ms_spent_doing_io = 0;
+         t_ms_weighted       = 0;
+         t_in_progress       = 0;
+"
+
+awk_compute_sums_group_by_disk="
+         t_reads             = reads;
+         t_reads_merged      = reads_merged;
+         t_read_sectors      = read_sectors;
+         t_ms_spent_reading  = ms_spent_reading;
+         t_writes            = writes;
+         t_writes_merged     = writes_merged;
+         t_written_sectors   = written_sectors;
+         t_ms_spent_writing  = ms_spent_writing;
+         t_ms_spent_doing_io = ms_spent_doing_io;
+         t_ms_weighted       = ms_weighted;
+         t_in_progress       = in_progress;
+"
+
+awk_compute_sums_group_by_sample="
+         t_reads             += reads;
+         t_reads_merged      += reads_merged;
+         t_read_sectors      += read_sectors;
+         t_ms_spent_reading  += ms_spent_reading;
+         t_writes            += writes;
+         t_writes_merged     += writes_merged;
+         t_written_sectors   += written_sectors;
+         t_ms_spent_writing  += ms_spent_writing;
+         t_ms_spent_doing_io += ms_spent_doing_io;
+         t_ms_weighted       += ms_weighted;
+         t_in_progress       += in_progress;
 "
 
 awk_compute_read_write_stats="
-         # Compute the per-second stats for reads.
-         reads_sec        = reads/elapsed;
-         read_requests    = reads_merged + reads;
-         mbytes_read_sec  = read_sectors / elapsed / 2048;
-         read_conc        = ms_spent_reading / elapsed / 1000;
-         if ( reads > 0 ) {
-            read_rtime    = ms_spent_reading / reads;
-            avg_read_sz   = read_sectors / reads / 2;
+         # Compute the per-second stats for reads, writes, and overall.
+         reads_sec        = t_reads / elapsed;
+         read_requests    = t_reads_merged + t_reads;
+         mbytes_read_sec  = t_read_sectors / elapsed / 2048;
+         read_conc        = t_ms_spent_reading / elapsed / 1000 / ndevs;
+         if ( t_reads > 0 ) {
+            read_rtime    = t_ms_spent_reading / t_reads;
+            avg_read_sz   = t_read_sectors / t_reads / 2;
          }
          else {
             read_rtime    = 0;
             avg_read_sz   = 0;
          }
          if ( read_requests > 0 ) {
-            read_merge_pct = 100 * reads_merged / read_requests;
+            read_merge_pct = 100 * t_reads_merged / read_requests;
          }
          else {
             read_merge_pct = 0;
          }
-
-         # Compute the per-second stats for writes.
-         writes_sec          = writes/elapsed;
-         write_requests      = writes_merged + writes;
-         mbytes_written_sec  = written_sectors / elapsed / 2048;
-         write_conc          = ms_spent_writing / elapsed / 1000;
-         if ( writes > 0 ) {
-            write_rtime      = ms_spent_writing / writes;
-            avg_write_sz     = written_sectors / writes / 2;
+         writes_sec          = t_writes / elapsed;
+         write_requests      = t_writes_merged + t_writes;
+         mbytes_written_sec  = t_written_sectors / elapsed / 2048;
+         write_conc          = t_ms_spent_writing / elapsed / 1000 / ndevs;
+         if ( t_writes > 0 ) {
+            write_rtime      = t_ms_spent_writing / t_writes;
+            avg_write_sz     = t_written_sectors / t_writes / 2;
          }
          else {
             write_rtime      = 0;
             avg_write_sz     = 0;
          }
          if ( write_requests > 0 ) {
-            write_merge_pct = 100 * writes_merged / write_requests;
+            write_merge_pct = 100 * t_writes_merged / write_requests;
          }
          else {
             write_merge_pct = 0;
          }
-
          # Compute the numbers for reads and writes together, the things for
          # which we do not have separate statistics.
-
          # \"Active\" is what iostat calls %util.  This is the percent of
          # wall-clock time during which the device has I/O happening.
-         active = 100 * ms_spent_doing_io / (1000 * elapsed);
-
-         # This is simply the number of requests currently in progress.
-         in_progress = curr[dev \"_ios_in_progress\"];
+         active = 100 * t_ms_spent_doing_io / (1000 * elapsed * ndevs);
 "
 
 awk_print_line="
          printf(fmt, line_ts, dev,
             reads_sec,  avg_read_sz,  mbytes_read_sec,    read_merge_pct,  read_conc,  read_rtime,
             writes_sec, avg_write_sz, mbytes_written_sec, write_merge_pct, write_conc, write_rtime,
-            active, in_progress);
+            active, t_in_progress);
 "
 
 # Prints out one line for each disk, summing over the interval from first to
@@ -215,22 +268,19 @@ sum_group_by_disk () {
       ${awk_get_curr_sample}
    }
    \$1 ~ /^TS/ {
-      # Compute statistics, if there are any.
-      if ( iterations > 1 ) {
-         # XXX Do computations here.
-      }
       ${awk_save_curr_as_prev}
       iterations++;
    }
    END {
-      mdev = 7;
+      mdev = 6;
       ${awk_find_max_device_name_length}
       ${awk_design_printf_formats}
       ${awk_print_header}
-
+      ndevs = 1;
       for ( i = 1; i < devs; i++ ) {
          dev               = devsort[i];
          ${awk_get_overall_increments}
+         ${awk_compute_sums_group_by_disk}
          ${awk_compute_read_write_stats}
          line_ts="all";
          ${awk_print_line}
@@ -243,9 +293,38 @@ EOF
 # Prints out one line for each sample, summing up all disks together.
 # Arguments: $1 = filename to read.
 group_by_sample() {
-   echo "1"
+   cat > /tmp/aspersa <<EOF
+   BEGIN {
+      mdev = 6;
+      ${awk_design_printf_formats}
+      ${awk_print_header}
+   }
+   \$1 !~ /^TS / {
+      ${awk_parse_line}
+      ${awk_get_first_sample}
+      ${awk_get_curr_sample}
+   }
+   \$1 ~ /^TS/ {
+      if ( iterations > 1 ) {
+         ${awk_reset_variables}
+         ndevs = devs;
+         for ( i = 1; i < devs; i++ ) {
+            dev               = devsort[i];
+            ${awk_get_current_increments}
+            ${awk_compute_sums_group_by_sample}
+         }
+         ${awk_compute_read_write_stats}
+         line_ts = sprintf("%5.1f", ts - first["ts"]);
+         dev     = "---";
+         ${awk_print_line}
+      }
+      ${awk_save_curr_as_prev}
+      iterations++;
+   }
+EOF
+   awk -f /tmp/aspersa "$1"
 }
 
 # disks=$(awk '$1 ~ /^[0-9]/{print $3}' "$1" | sort -u);
-sum_group_by_disk "$1";
-#group_by_sample "$1";
+#sum_group_by_disk "$1";
+group_by_sample "$1";
