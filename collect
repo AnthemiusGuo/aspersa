@@ -75,7 +75,9 @@ fi
    ps -eaf                    >> $DEST/$d-ps 2>&1 &
    top -bn1                   >> $DEST/$d-top 2>&1 &
    vmstat 1 $LEN              >> $DEST/$d-vmstat 2>&1 &
+   vmstat $LEN 2              >> $DEST/$d-vmstat-overall 2>&1 &
    iostat -dx 1 $LEN          >> $DEST/$d-iostat 2>&1 &
+   iostat -dx $LEN 2          >> $DEST/$d-iostat-overall 2>&1 &
    mysqladmin ext -i1 -c$LEN  >> $DEST/$d-mysqladmin 2>&1 &
    mysqladmin_pid=$!
 
@@ -91,11 +93,19 @@ fi
       echo "TS $ts" >> $DEST/$d-netstat;   netstat -antp       >> $DEST/$d-netstat 2>&1 &
       sleep 1
    done
+   # Tools to work with the data collected above will rely on <data><timestamp>
+   # formatting.
+   ts=$(date +%s);
+   echo "TS $ts" >> $DEST/$d-diskstats;
+   echo "TS $ts" >> $DEST/$d-procstat;
+   echo "TS $ts" >> $DEST/$d-df;
+   echo "TS $ts" >> $DEST/$d-lsof;
+   echo "TS $ts" >> $DEST/$d-netstat;
 
    if [ "${OPC}" = "yes" ]; then
       opcontrol --stop;
       opcontrol --dump;
-      kill $(pidof oprofiled) 2>/dev/null;
+      kill $(pidof oprofiled 2>/dev/null) 2>/dev/null;
       opcontrol --save=$d;
       echo "oprofile data saved to $d; you should now be able to get a  report"
       echo "by running something like"
