@@ -261,7 +261,7 @@ awk_print_line="
 
 # Prints out one line for each disk, summing over the interval from first to
 # last sample.  Arguments: $1 = filename to read.
-sum_group_by_disk () {
+group_by_disk () {
    cat > /tmp/aspersa <<EOF
    \$1 !~ /^TS / {
       ${awk_parse_line}
@@ -283,7 +283,7 @@ sum_group_by_disk () {
          ${awk_get_overall_increments}
          ${awk_compute_sums_group_by_disk}
          ${awk_compute_read_write_stats}
-         line_ts="all";
+         line_ts="---";
          ${awk_print_line}
       }
    }
@@ -316,7 +316,7 @@ group_by_sample() {
          }
          ${awk_compute_read_write_stats}
          line_ts = sprintf("%5.1f", ts - first["ts"]);
-         dev     = "---";
+         dev     = "<" devs ">";
          ${awk_print_line}
       }
       ${awk_save_curr_as_prev}
@@ -328,7 +328,7 @@ EOF
 
 # Prints out one line for each sample, for each disk that matches the pattern.
 # Arguments: $1 = filename to read, $2 = which disks to match.
-group_by_sample_and_disk() {
+group_by_all () {
    cat > /tmp/aspersa <<EOF
    \$1 !~ /^TS / && \$3 ~ /$2/ {
       ${awk_parse_line}
@@ -366,15 +366,59 @@ EOF
 # filename to read, the mode, and the devices to match.  All of them are
 # optional.
 # - If no argument is given, then it starts a loop, reading /proc/diskstats
-#   once per second and displaying the output in "group_by_sample_and_disk"
-#   mode.
+#   once per second and displaying the output in "group_by_sample" mode.
 # - If a filename/mode/pattern is given, and it is run interactively, then it
 #   starts a loop and lets you control it until you exit with <Return>.
 # - If not interactive, then it just runs once in the specified mode.
+#
+# Within the interactive loop, it runs and then reads a line.  A line can be one
+# of the following:
+# - empty line                quits the program
+# - mode  <disk|sample|all>   sets the mode to group_by_${mode}
+# - disk  <pattern>           filters on device name; pattern is an awk regexp
+# - pager <program>           pipes output through the pager
 main() {
-   sum_group_by_disk "$1";
-   #group_by_sample "$1";
-   #group_by_sample_and_disk "$1" "c0d1"
+   file="$1"
+   mode="$2"
+   disk="$3"
+   while true; do
+      case "${mode}" in
+         disk|sample|all)
+            group_by_${mode} "${file}" "${disk}"
+            ;;
+         *)
+            echo "Sorry, I don't know what mode you mean.  Try disk|sample|all"
+            echo "Usage: $0 <file> <mode> <pattern>"
+            ;;
+      esac
+
+      if [ ! -t 0 ]; then
+         exit;
+      fi
+
+      while read cmd arg junk; do
+         [ -z "${cmd}" ] && exit;
+         case "${cmd}" in
+            mode)
+               mode="${arg}"
+               break;
+               ;;
+            disk)
+               disk="${arg}"
+               break;
+               ;;
+            pager)
+               echo "Pager isn't implemented yet, sorry."
+               ;;
+            q*)
+               exit
+               ;;
+            *)
+               echo "Sorry, that's not a known command.  Try mode|disk|pager"
+               ;;
+         esac
+      done
+   done
 }
 
 # Execute the program if it was not included from another file.  This makes it
