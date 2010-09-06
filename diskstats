@@ -100,7 +100,8 @@ awk_save_curr_as_prev="
 "
 
 awk_find_max_device_name_length="
-      for ( i = 1; i < devs; i++ ) {
+      mdev = 6;
+      for ( i = 0; i < devs; i++ ) {
          dlen = length(devsort[i]);
          if ( dlen > mdev ) {
             mdev = dlen;
@@ -325,6 +326,59 @@ EOF
    awk -f /tmp/aspersa "$1"
 }
 
-# disks=$(awk '$1 ~ /^[0-9]/{print $3}' "$1" | sort -u);
-#sum_group_by_disk "$1";
-group_by_sample "$1";
+# Prints out one line for each sample, for each disk that matches the pattern.
+# Arguments: $1 = filename to read, $2 = which disks to match.
+group_by_sample_and_disk() {
+   cat > /tmp/aspersa <<EOF
+   \$1 !~ /^TS / && \$3 ~ /$2/ {
+      ${awk_parse_line}
+      ${awk_get_first_sample}
+      ${awk_get_curr_sample}
+   }
+   \$1 ~ /^TS/ {
+      if ( iterations > 0 ) {
+         ${awk_find_max_device_name_length}
+         ${awk_design_printf_formats}
+      }
+      if ( iterations > 1 ) {
+         if ( devs > 1 || iterations == 2 ) {
+            ${awk_print_header}
+         }
+         ${awk_reset_variables}
+         ndevs = 1;
+         line_ts = sprintf("%5.1f", ts - first["ts"]);
+         for ( i = 0; i < devs; i++ ) {
+            dev               = devsort[i];
+            ${awk_get_current_increments}
+            ${awk_compute_sums_group_by_disk}
+            ${awk_compute_read_write_stats}
+            ${awk_print_line}
+         }
+      }
+      ${awk_save_curr_as_prev}
+      iterations++;
+   }
+EOF
+   awk -f /tmp/aspersa "$1"
+}
+
+# The main code that runs by default.  Arguments (command-line options) are the
+# filename to read, the mode, and the devices to match.  All of them are
+# optional.
+# - If no argument is given, then it starts a loop, reading /proc/diskstats
+#   once per second and displaying the output in "group_by_sample_and_disk"
+#   mode.
+# - If a filename/mode/pattern is given, and it is run interactively, then it
+#   starts a loop and lets you control it until you exit with <Return>.
+# - If not interactive, then it just runs once in the specified mode.
+main() {
+   sum_group_by_disk "$1";
+   #group_by_sample "$1";
+   #group_by_sample_and_disk "$1" "c0d1"
+}
+
+# Execute the program if it was not included from another file.  This makes it
+# possible to include without executing, and thus test.
+if [ $(basename "$0") = "diskstats" ] || [ $(basename "$0") = "bash" ]; then
+    main $*
+fi
