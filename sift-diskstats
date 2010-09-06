@@ -20,133 +20,133 @@
 # Author: Baron Schwartz
 # ########################################################################
 
-# Prints out one line for each disk, summing over the interval from first to
-# last sample.  Arguments: $1 = filename to read.
-sum_group_by_disk () {
-   awk '
-   $1 !~ /^TS / {
-
+# A bunch of snippets of awk code, to be reused in the functions below.
+awk_parse_line="
       # The entries in each stat line are as follows:
       #   1	major
       #   2	minor
       #   3	device name
-      dev = $3;
+      dev = \$3;
       #   4	reads
-      reads = $4;
+      reads = \$4;
       #   5	reads merged
-      reads_merged = $5;
+      reads_merged = \$5;
       #   6	read sectors
-      read_sectors = $6;
+      read_sectors = \$6;
       #   7	ms spent reading
-      ms_spent_reading = $7;
+      ms_spent_reading = \$7;
       #   8	writes
-      writes = $8;
+      writes = \$8;
       #   9	writes merged
-      writes_merged = $9;
+      writes_merged = \$9;
       #  10	written sectors
-      written_sectors = $10;
+      written_sectors = \$10;
       #  11	ms spent writing
-      ms_spent_writing = $11;
+      ms_spent_writing = \$11;
       #  12	IOs in progress
-      ios_in_progress = $12;
+      ios_in_progress = \$12;
       #  13	ms spent doing io
-      ms_spent_doing_io = $13;
+      ms_spent_doing_io = \$13;
       #  14	ms spent, weighted by ios_in_progress
-      ms_weighted = $14;
+      ms_weighted = \$14;
+"
 
+awk_get_first_sample="
       # Keep track of the natural order of the devices, so we can print them out
       # nicely later; and also keep the first-ever line of output.  This only
       # executes the first time through.
       devices[dev]++;
       if ( devices[dev] == 1 ) {
          devsort[devs++] = dev;
-         first["ts"]                     = ts;
-         first[dev "_reads"]             = reads;
-         first[dev "_reads_merged"]      = reads_merged;
-         first[dev "_read_sectors"]      = read_sectors;
-         first[dev "_ms_spent_reading"]  = ms_spent_reading;
-         first[dev "_writes"]            = writes;
-         first[dev "_writes_merged"]     = writes_merged;
-         first[dev "_written_sectors"]   = written_sectors;
-         first[dev "_ms_spent_writing"]  = ms_spent_writing;
-         first[dev "_ios_in_progress"]   = ios_in_progress;
-         first[dev "_ms_spent_doing_io"] = ms_spent_doing_io;
-         first[dev "_ms_weighted"]       = ms_weighted;
+         first[\"ts\"]                     = ts;
+         first[dev \"_reads\"]             = reads;
+         first[dev \"_reads_merged\"]      = reads_merged;
+         first[dev \"_read_sectors\"]      = read_sectors;
+         first[dev \"_ms_spent_reading\"]  = ms_spent_reading;
+         first[dev \"_writes\"]            = writes;
+         first[dev \"_writes_merged\"]     = writes_merged;
+         first[dev \"_written_sectors\"]   = written_sectors;
+         first[dev \"_ms_spent_writing\"]  = ms_spent_writing;
+         first[dev \"_ios_in_progress\"]   = ios_in_progress;
+         first[dev \"_ms_spent_doing_io\"] = ms_spent_doing_io;
+         first[dev \"_ms_weighted\"]       = ms_weighted;
       }
+"
 
-      curr[dev "_reads"]             = reads;
-      curr[dev "_reads_merged"]      = reads_merged;
-      curr[dev "_read_sectors"]      = read_sectors;
-      curr[dev "_ms_spent_reading"]  = ms_spent_reading;
-      curr[dev "_writes"]            = writes;
-      curr[dev "_writes_merged"]     = writes_merged;
-      curr[dev "_written_sectors"]   = written_sectors;
-      curr[dev "_ms_spent_writing"]  = ms_spent_writing;
-      curr[dev "_ios_in_progress"]   = ios_in_progress;
-      curr[dev "_ms_spent_doing_io"] = ms_spent_doing_io;
-      curr[dev "_ms_weighted"]       = ms_weighted;
+awk_get_curr_sample="
+      curr[dev \"_reads\"]             = reads;
+      curr[dev \"_reads_merged\"]      = reads_merged;
+      curr[dev \"_read_sectors\"]      = read_sectors;
+      curr[dev \"_ms_spent_reading\"]  = ms_spent_reading;
+      curr[dev \"_writes\"]            = writes;
+      curr[dev \"_writes_merged\"]     = writes_merged;
+      curr[dev \"_written_sectors\"]   = written_sectors;
+      curr[dev \"_ms_spent_writing\"]  = ms_spent_writing;
+      curr[dev \"_ios_in_progress\"]   = ios_in_progress;
+      curr[dev \"_ms_spent_doing_io\"] = ms_spent_doing_io;
+      curr[dev \"_ms_weighted\"]       = ms_weighted;
+"
 
-   }
-   $1 ~ /^TS/ {
-      # Compute statistics, if there are any.
-      if ( iterations > 1 ) {
-         # XXX Do computations here.
-      }
+awk_save_curr_as_prev="
       # Last step: save the current stats as prev.
       if ( iterations > 0 ) {
-         curr["ts"] = ts;
+         curr[\"ts\"] = ts;
          for (i in curr) {
             prev[i] = curr[i];
          }
       }
-      ts = $2;
-      iterations++;
-   }
-   END {
-      # First, figure out the max length of any device name (or the header).
-      mdev = 7;
+      ts = \$2;
+"
+
+awk_find_max_device_name_length="
       for ( i = 1; i < devs; i++ ) {
          dlen = length(devsort[i]);
          if ( dlen > mdev ) {
             mdev = dlen;
          }
       }
+"
 
+awk_design_printf_formats="
       # For each device, print out the following:
       # The timestamp offset and device name
-      fmt = "%5s %-" mdev "s";
+      fmt = \"%5s %-\" mdev \"s\";
       hdr = fmt;
       # The per-second reads, read size (kB), per-second MB read, read merged pct, read
       # concurrency, and average response time for each read.
-      fmt = fmt " %7.1f %7.1f %7.1f %5.0f%% %6.1f %7.1f";
-      hdr = hdr " %7s %7s %7s %6s %6s %7s";
+      fmt = fmt \" %7.1f %7.1f %7.1f %5.0f%% %6.1f %7.1f\";
+      hdr = hdr \" %7s %7s %7s %6s %6s %7s\";
       # The same for writes.
-      fmt = fmt " %7.1f %7.1f %7.1f %5.0f%% %6.1f %7.1f";
-      hdr = hdr " %7s %7s %7s %6s %6s %7s";
+      fmt = fmt \" %7.1f %7.1f %7.1f %5.0f%% %6.1f %7.1f\";
+      hdr = hdr \" %7s %7s %7s %6s %6s %7s\";
       # Then active%, in-progress, and line-ending.
-      fmt = fmt " %3.0f%% %6d\n";
-      hdr = hdr " %4s %6s\n";
-      printf(hdr, "#ts", "device",
-         "rd_s", "rd_avkb", "rd_mb_s", "rd_mrg", "rd_cnc", "rd_rt",
-         "wr_s", "wr_avkb", "wr_mb_s", "wr_mrg", "wr_cnc", "wr_rt",
-         "act%", "in_prg");
+      fmt = fmt \" %3.0f%% %6d\\n\";
+      hdr = hdr \" %4s %6s\\n\";
+"
 
-      for ( i = 1; i < devs; i++ ) {
-         dev               = devsort[i];
+awk_print_header="
+      printf(hdr, \"#ts\", \"device\",
+         \"rd_s\", \"rd_avkb\", \"rd_mb_s\", \"rd_mrg\", \"rd_cnc\", \"rd_rt\",
+         \"wr_s\", \"wr_avkb\", \"wr_mb_s\", \"wr_mrg\", \"wr_cnc\", \"wr_rt\",
+         \"act%\", \"in_prg\");
+"
 
+awk_get_overall_increments="
          # Get incremental numbers.
-         elapsed           = curr["ts"]                     - first["ts"];
-         reads             = curr[dev "_reads"]             - first[dev "_reads"];
-         reads_merged      = curr[dev "_reads_merged"]      - first[dev "_reads_merged"];
-         read_sectors      = curr[dev "_read_sectors"]      - first[dev "_read_sectors"];
-         ms_spent_reading  = curr[dev "_ms_spent_reading"]  - first[dev "_ms_spent_reading"];
-         writes            = curr[dev "_writes"]            - first[dev "_writes"];
-         writes_merged     = curr[dev "_writes_merged"]     - first[dev "_writes_merged"];
-         written_sectors   = curr[dev "_written_sectors"]   - first[dev "_written_sectors"];
-         ms_spent_writing  = curr[dev "_ms_spent_writing"]  - first[dev "_ms_spent_writing"];
-         ms_spent_doing_io = curr[dev "_ms_spent_doing_io"] - first[dev "_ms_spent_doing_io"];
-         ms_weighted       = curr[dev "_ms_weighted"]       - first[dev "_ms_weighted"];
+         elapsed           = curr[\"ts\"]                     - first[\"ts\"];
+         reads             = curr[dev \"_reads\"]             - first[dev \"_reads\"];
+         reads_merged      = curr[dev \"_reads_merged\"]      - first[dev \"_reads_merged\"];
+         read_sectors      = curr[dev \"_read_sectors\"]      - first[dev \"_read_sectors\"];
+         ms_spent_reading  = curr[dev \"_ms_spent_reading\"]  - first[dev \"_ms_spent_reading\"];
+         writes            = curr[dev \"_writes\"]            - first[dev \"_writes\"];
+         writes_merged     = curr[dev \"_writes_merged\"]     - first[dev \"_writes_merged\"];
+         written_sectors   = curr[dev \"_written_sectors\"]   - first[dev \"_written_sectors\"];
+         ms_spent_writing  = curr[dev \"_ms_spent_writing\"]  - first[dev \"_ms_spent_writing\"];
+         ms_spent_doing_io = curr[dev \"_ms_spent_doing_io\"] - first[dev \"_ms_spent_doing_io\"];
+         ms_weighted       = curr[dev \"_ms_weighted\"]       - first[dev \"_ms_weighted\"];
+"
 
+awk_compute_read_write_stats="
          # Compute the per-second stats for reads.
          reads_sec        = reads/elapsed;
          read_requests    = reads_merged + reads;
@@ -190,27 +190,60 @@ sum_group_by_disk () {
          # Compute the numbers for reads and writes together, the things for
          # which we do not have separate statistics.
 
-         # "Active" is what iostat calls %util.  This is the percent of
+         # \"Active\" is what iostat calls %util.  This is the percent of
          # wall-clock time during which the device has I/O happening.
          active = 100 * ms_spent_doing_io / (1000 * elapsed);
 
          # This is simply the number of requests currently in progress.
-         in_progress = curr[dev "_ios_in_progress"];
+         in_progress = curr[dev \"_ios_in_progress\"];
+"
 
-         printf(fmt, "all", dev,
+awk_print_line="
+         printf(fmt, line_ts, dev,
             reads_sec,  avg_read_sz,  mbytes_read_sec,    read_merge_pct,  read_conc,  read_rtime,
             writes_sec, avg_write_sz, mbytes_written_sec, write_merge_pct, write_conc, write_rtime,
             active, in_progress);
+"
+
+# Prints out one line for each disk, summing over the interval from first to
+# last sample.  Arguments: $1 = filename to read.
+sum_group_by_disk () {
+   cat > /tmp/aspersa <<EOF
+   \$1 !~ /^TS / {
+      ${awk_parse_line}
+      ${awk_get_first_sample}
+      ${awk_get_curr_sample}
+   }
+   \$1 ~ /^TS/ {
+      # Compute statistics, if there are any.
+      if ( iterations > 1 ) {
+         # XXX Do computations here.
+      }
+      ${awk_save_curr_as_prev}
+      iterations++;
+   }
+   END {
+      mdev = 7;
+      ${awk_find_max_device_name_length}
+      ${awk_design_printf_formats}
+      ${awk_print_header}
+
+      for ( i = 1; i < devs; i++ ) {
+         dev               = devsort[i];
+         ${awk_get_overall_increments}
+         ${awk_compute_read_write_stats}
+         line_ts="all";
+         ${awk_print_line}
       }
    }
-   ' "$1"
+EOF
+   awk -f /tmp/aspersa "$1"
 }
 
 # Prints out one line for each sample, summing up all disks together.
 # Arguments: $1 = filename to read.
 group_by_sample() {
-   awk '
-   ' "$1"
+   echo "1"
 }
 
 # disks=$(awk '$1 ~ /^[0-9]/{print $3}' "$1" | sort -u);
