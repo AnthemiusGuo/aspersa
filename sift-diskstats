@@ -121,13 +121,13 @@ all_disks_all_time() {
       # The same for writes.
       fmt = fmt " %7.1f %7.1f %7.1f %5.0f%% %6.1f %7.1f";
       hdr = hdr " %7s %7s %7s %6s %6s %7s";
-      # Then active line-ending.
-      fmt = fmt " %3.0f%%\n";
-      hdr = hdr " %4s\n";
+      # Then active%, in-progress, and line-ending.
+      fmt = fmt " %3.0f%% %6d\n";
+      hdr = hdr " %4s %6s\n";
       printf(hdr, "#Device",
          "rd_s", "rd_avkb", "rd_mb_s", "rd_mrg", "rd_cnc", "rd_rt",
          "wr_s", "wr_avkb", "wr_mb_s", "wr_mrg", "wr_cnc", "wr_rt",
-         "act%");
+         "act%", "in_prg");
 
       for ( i = 1; i < devs; i++ ) {
          dev               = devsort[i];
@@ -192,10 +192,13 @@ all_disks_all_time() {
          # wall-clock time during which the device has I/O happening.
          active = 100 * ms_spent_doing_io / (1000 * elapsed);
 
+         # This is simply the number of requests currently in progress.
+         in_progress = curr[dev "_ios_in_progress"];
+
          printf(fmt, dev,
             reads_sec,  avg_read_sz,  mbytes_read_sec,    read_merge_pct,  read_conc,  read_rtime,
             writes_sec, avg_write_sz, mbytes_written_sec, write_merge_pct, write_conc, write_rtime,
-            active);
+            active, in_progress);
       }
    }
    ' "$1"
