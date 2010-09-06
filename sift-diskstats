@@ -36,7 +36,7 @@ all_disks_all_time() {
       #   6	read sectors
       read_sectors = $6;
       #   7	ms spent reading
-      ms_spent_reading = $8;
+      ms_spent_reading = $7;
       #   8	writes
       writes = $8;
       #   9	writes merged
@@ -114,29 +114,20 @@ all_disks_all_time() {
       # The device name
       fmt = "%-" mdev "s";
       hdr = fmt;
-      # The per-second reads, per-second MB read, read merged pct, read
-      # utilization, and average response time for each read
-      fmt = fmt " %7.1f %7.1f %5.0f%% %5.0f%% %7.1f"
-      hdr = hdr " %7s %7s %6s %6s %7s"
-      # The same for writes
-      fmt = fmt " %7.1f %7.1f %5.0f%% %5.0f%% %7.1f"
-      hdr = hdr " %7s %7s %6s %6s %7s"
-      # "active": the percent of time the device was active
-      fmt = fmt " %3.0f%%";
-      hdr = hdr " %4s";
-      # "concurrency": the average number of operations either waiting or running
-      fmt = fmt " %5.1f";
-      hdr = hdr " %5s";
-      # "svctm": the average service time of all requests to the device, in ms
-      fmt = fmt " %5.1f";
-      hdr = hdr " %5s";
-      # The line ending
-      fmt = fmt "\n";
-      hdr = hdr "\n";
+      # The per-second reads, read size (kB), per-second MB read, read merged pct, read
+      # concurrency, and average response time for each read.
+      fmt = fmt " %7.1f %7.1f %7.1f %5.0f%% %6.1f %7.1f";
+      hdr = hdr " %7s %7s %7s %6s %6s %7s";
+      # The same for writes.
+      fmt = fmt " %7.1f %7.1f %7.1f %5.0f%% %6.1f %7.1f";
+      hdr = hdr " %7s %7s %7s %6s %6s %7s";
+      # Then active line-ending.
+      fmt = fmt " %3.0f%%\n";
+      hdr = hdr " %4s\n";
       printf(hdr, "#Device",
-         "rd_sec", "rd_mb", "rd_mrg", "rd_utl", "rd_rtt",
-         "wr_sec", "wr_mb", "wr_mrg", "wr_utl", "wr_rtt",
-         "act%", "cncur", "svctm");
+         "rd_s", "rd_avkb", "rd_mb_s", "rd_mrg", "rd_cnc", "rd_rt",
+         "wr_s", "wr_avkb", "wr_mb_s", "wr_mrg", "wr_cnc", "wr_rt",
+         "act%");
 
       for ( i = 1; i < devs; i++ ) {
          dev               = devsort[i];
@@ -158,15 +149,17 @@ all_disks_all_time() {
          reads_sec        = reads/elapsed;
          read_requests    = reads_merged + reads;
          mbytes_read_sec  = read_sectors / elapsed / 2048;
-         read_util        = 100 * ms_spent_reading / (1000 * elapsed);
+         read_conc        = ms_spent_reading / elapsed / 1000;
          if ( reads > 0 ) {
             read_rtime    = ms_spent_reading / reads;
+            avg_read_sz   = read_sectors / reads / 2;
          }
          else {
             read_rtime    = 0;
+            avg_read_sz   = 0;
          }
          if ( read_requests > 0 ) {
-            read_merge_pct = 100 * reads_merged / (reads_merged + reads);
+            read_merge_pct = 100 * reads_merged / read_requests;
          }
          else {
             read_merge_pct = 0;
@@ -176,15 +169,17 @@ all_disks_all_time() {
          writes_sec          = writes/elapsed;
          write_requests      = writes_merged + writes;
          mbytes_written_sec  = written_sectors / elapsed / 2048;
-         write_util          = 100 * ms_spent_writing / (1000 * elapsed);
+         write_conc          = ms_spent_writing / elapsed / 1000;
          if ( writes > 0 ) {
             write_rtime      = ms_spent_writing / writes;
+            avg_write_sz     = written_sectors / writes / 2;
          }
          else {
             write_rtime      = 0;
+            avg_write_sz     = 0;
          }
          if ( write_requests > 0 ) {
-            write_merge_pct = 100 * writes_merged / (writes_merged + writes);
+            write_merge_pct = 100 * writes_merged / write_requests;
          }
          else {
             write_merge_pct = 0;
@@ -193,34 +188,14 @@ all_disks_all_time() {
          # Compute the numbers for reads and writes together, the things for
          # which we do not have separate statistics.
 
-         # "Active" is what iostat calls %util.
+         # "Active" is what iostat calls %util.  This is the percent of
+         # wall-clock time during which the device has I/O happening.
          active = 100 * ms_spent_doing_io / (1000 * elapsed);
 
-         # "Load" is the average number of IO operations in progress during the
-         # interval.
-         if ( ms_spent_reading + ms_spent_writing > 0 ) {
-            conc = ms_weighted / (ms_spent_reading + ms_spent_writing);
-         }
-         else {
-            conc = 0;
-         }
-
-         # According to Littles Law, the service time is the average number of
-         # IOs in the system, divided by the arrival rate.  We could use the
-         # formula
-         #    svctm = conc / ((reads + writes) / (ms_spent_reading + ms_spent_writing))
-         # but it just simplifies down to the following anyway.
-         if ( reads + writes > 0  ) {
-            svctm = ms_weighted / (reads + writes);
-         }
-         else {
-            svctm = 0;
-         }
-
          printf(fmt, dev,
-            reads_sec,  mbytes_read_sec,    read_merge_pct,  read_util,  read_rtime,
-            writes_sec, mbytes_written_sec, write_merge_pct, write_util, write_rtime,
-            active, conc, svctm);
+            reads_sec,  avg_read_sz,  mbytes_read_sec,    read_merge_pct,  read_conc,  read_rtime,
+            writes_sec, avg_write_sz, mbytes_written_sec, write_merge_pct, write_conc, write_rtime,
+            active);
       }
    }
    ' "$1"
