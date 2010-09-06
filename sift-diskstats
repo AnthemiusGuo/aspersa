@@ -20,7 +20,9 @@
 # Author: Baron Schwartz
 # ########################################################################
 
-all_disks_all_time() {
+# Prints out one line for each disk, summing over the interval from first to
+# last sample.  Arguments: $1 = filename to read.
+sum_group_by_disk () {
    awk '
    $1 !~ /^TS / {
 
@@ -111,8 +113,8 @@ all_disks_all_time() {
       }
 
       # For each device, print out the following:
-      # The device name
-      fmt = "%-" mdev "s";
+      # The timestamp offset and device name
+      fmt = "%5s %-" mdev "s";
       hdr = fmt;
       # The per-second reads, read size (kB), per-second MB read, read merged pct, read
       # concurrency, and average response time for each read.
@@ -124,7 +126,7 @@ all_disks_all_time() {
       # Then active%, in-progress, and line-ending.
       fmt = fmt " %3.0f%% %6d\n";
       hdr = hdr " %4s %6s\n";
-      printf(hdr, "#Device",
+      printf(hdr, "#ts", "device",
          "rd_s", "rd_avkb", "rd_mb_s", "rd_mrg", "rd_cnc", "rd_rt",
          "wr_s", "wr_avkb", "wr_mb_s", "wr_mrg", "wr_cnc", "wr_rt",
          "act%", "in_prg");
@@ -195,7 +197,7 @@ all_disks_all_time() {
          # This is simply the number of requests currently in progress.
          in_progress = curr[dev "_ios_in_progress"];
 
-         printf(fmt, dev,
+         printf(fmt, "all", dev,
             reads_sec,  avg_read_sz,  mbytes_read_sec,    read_merge_pct,  read_conc,  read_rtime,
             writes_sec, avg_write_sz, mbytes_written_sec, write_merge_pct, write_conc, write_rtime,
             active, in_progress);
@@ -204,5 +206,13 @@ all_disks_all_time() {
    ' "$1"
 }
 
+# Prints out one line for each sample, summing up all disks together.
+# Arguments: $1 = filename to read.
+group_by_sample() {
+   awk '
+   ' "$1"
+}
+
 # disks=$(awk '$1 ~ /^[0-9]/{print $3}' "$1" | sort -u);
-all_disks_all_time "$1";
+sum_group_by_disk "$1";
+#group_by_sample "$1";
