@@ -83,9 +83,10 @@ fi
 
    # This loop is a bit redundant to the rest of the stuff, but in some cases we
    # really need this data, like diskstats.  This loop also defines the time of
-   # the whole job.
+   # the whole job.  Nanosecond precision isn't possible, but we can surely do
+   # better than 1-second.
    for a in `seq 1 $LEN`; do
-      ts=$(date +%s);
+      ts=$(date +%s.%N);
       echo "TS $ts" >> $DEST/$d-diskstats; cat /proc/diskstats >> $DEST/$d-diskstats 2>&1 &
       echo "TS $ts" >> $DEST/$d-procstat;  cat /proc/stat      >> $DEST/$d-procstat 2>&1 &
       echo "TS $ts" >> $DEST/$d-df;        df -h               >> $DEST/$d-df 2>&1 &
@@ -95,7 +96,7 @@ fi
    done
    # Tools to work with the data collected above will rely on <data><timestamp>
    # formatting.
-   ts=$(date +%s);
+   ts=$(date +%s.%N);
    echo "TS $ts" >> $DEST/$d-diskstats;
    echo "TS $ts" >> $DEST/$d-procstat;
    echo "TS $ts" >> $DEST/$d-df;
