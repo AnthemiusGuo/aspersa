@@ -8,7 +8,7 @@
 # this is the number of words in each line.  Then it discards all lines that
 # don't have that many words, and looks at the 2nd line that DOES.  It assumes
 # this is the first non-header line.  Based on whether each word looks numeric
-# or not, it decides on column alignment.  Finally, it goes through and deides
+# or not, it decides on column alignment.  Finally, it goes through and decides
 # how wide each column should be, and then prints them out.
 #
 # This is useful for things like aligning the output of vmstat or iostat so it
