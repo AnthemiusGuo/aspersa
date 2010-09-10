@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This program is part of Aspersa (http://code.google.com/p/aspersa/)
 
 # ########################################################################
@@ -17,10 +17,30 @@
 # 2) show summary stats for each sample in the interval, for all disks.
 # 3) show differential stats for specified disks for each sample.
 #
+# TODO: make it by default show only reads+writes in MB/sec
+# TODO: make it aggregate by number of lines or by time intervals.
+#
 # Author: Baron Schwartz
 # ########################################################################
 
+# ########################################################################
+# Variables that are set by command-line options and/or the interactive
+# functionality, and are used in the various snippets below
+# ########################################################################
+# -m
+MODE="disk";
+# -d
+DISK="";
+# -c
+COLS="";
+# -a
+AGGR="";
+# Any error with the above options
+OPT_ERR="";
+
+# ########################################################################
 # A bunch of snippets of awk code, to be reused in the functions below.
+# ########################################################################
 awk_parse_line="
       # The entries in each stat line are as follows:
       #   1	major
@@ -362,9 +382,41 @@ EOF
    awk -f /tmp/aspersa "$1"
 }
 
-# The main code that runs by default.  Arguments (command-line options) are the
-# filename to read, the mode, and the devices to match.  All of them are
-# optional.
+# Check the options set at the command-line or interactively.
+validate_opts() {
+   case "${MODE}" in
+      disk|sample|all)
+         ;;
+      *)
+         OPT_ERR="Unknown mode '${MODE}'."
+         ;;
+   esac
+}
+
+# Print a usage message.  If $1 is set, then print command-line usage and exit;
+# otherwise print interactive help.
+usage() {
+   if [ "${OPT_ERR}" ]; then
+      echo "${OPT_ERR}"
+   fi
+   if [ "$1" ]; then
+      echo "Usage: $0 -m <mode> -d <disk> -c <cols> -a <aggr> [FILE]"
+      echo "   mode: one of <disk|sample|all>"
+      echo "   disk: an awk regex to match disk names"
+      echo "   cols: an awk regex to match column names"
+      echo "   aggr: aggregation interval in seconds"
+      echo "   FILE: a file containing saved diskstats"
+      exit 1
+   else
+      echo "   mode: one of <disk|sample|all>           | currently ${MODE}"
+      echo "   disk: an awk regex to match disk names   | currently ${DISK}"
+      echo "   cols: an awk regex to match column names | currently ${COLS}"
+      echo "   aggr: aggregation interval in seconds    | currently ${AGGR}"
+   fi
+   OPT_ERR=""
+}
+
+# The main code that runs by default.  Arguments are the command-line options.
 # - If no argument is given, then it starts a loop, reading /proc/diskstats
 #   once per second and displaying the output in "group_by_sample" mode.
 # - If a filename/mode/pattern is given, and it is run interactively, then it
@@ -376,57 +428,79 @@ EOF
 # - empty line                quits the program
 # - mode  <disk|sample|all>   sets the mode to group_by_${mode}
 # - disk  <pattern>           filters on device name; pattern is an awk regexp
-# - pager <program>           pipes output through the pager
 main() {
-   file="$1"
-   mode="$2"
-   disk="$3"
-   iter=0;
-   while true; do
-      case "${mode}" in
-         disk|sample|all)
-            group_by_${mode} "${file}" "${disk}"
+
+   # Get command-line options.
+   for o; do
+      case "${o}" in
+         -m)
+            shift; MODE="${1}"; shift;
+            ;;
+         -d)
+            shift; DISK="${1}"; shift;
+            ;;
+         -c)
+            shift; COLS="${1}"; shift;
+            ;;
+         -a)
+            shift; AGGR="${1}"; shift;
+            ;;
+         --)
+            break;
+            ;;
+         -*)
+            OPT_ERR="Unknown option '${o}'."
+               usage 1
+            ;;
+      esac
+   done
+   validate_opts
+   if [ "${OPT_ERR}" ]; then
+      usage 1
+   fi
+
+   # Execute the actual functionality
+   group_by_${MODE} $*
+
+   # Don't be "interactive" unless the user actually has control.
+   if [ ! -t 0 -o ! -t 1 ]; then
+      exit;
+   fi
+
+   while read cmd arg junk; do
+
+      [ -z "${cmd}" ] && exit;
+      case "${cmd}" in
+         mode)
+            MODE="${arg}"
+            ;;
+         disk)
+            DISK="${arg}"
+            ;;
+         cols)
+            COLS="${arg}"
+            ;;
+         aggr)
+            AGGR="${arg}"
+            ;;
+         q*)
+            exit
+            ;;
+         .)
             ;;
          *)
-            if [ "${iter}" = "0" ]; then
-               echo "Usage: $0 <file> <mode> <pattern>"
-               echo "          file: a file containing saved diskstats"
-               echo "          mode: one of <disk|sample|all>"
-               echo "       pattern: an awk regex to match disk names"
-               exit
-            fi
-            echo "Sorry, I don't know what mode you mean.  Try <disk|sample|all>."
+            OPT_ERR="Unknown command '${cmd}'"
             ;;
       esac
 
-      # Don't be "interactive" unless the user actually has control.
-      if [ ! -t 0 -o ! -t 1 ]; then
-         exit;
+      validate_opts
+      if [ "${OPT_ERR}" ]; then
+         usage
+      else
+         # Execute the actual functionality
+         group_by_${MODE} $*
       fi
 
-      while read cmd arg junk; do
-         [ -z "${cmd}" ] && exit;
-         case "${cmd}" in
-            mode)
-               mode="${arg}"
-               break;
-               ;;
-            disk)
-               disk="${arg}"
-               break;
-               ;;
-            pager)
-               echo "Pager isn't implemented yet, sorry."
-               ;;
-            q*)
-               exit
-               ;;
-            *)
-               echo "Sorry, that's not a known command.  Try mode|disk|pager"
-               ;;
-         esac
-      done
-      iter=$((iter + 1));
    done
 }
 
