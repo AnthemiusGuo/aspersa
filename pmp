@@ -35,11 +35,17 @@ aggregate_stacktrace() {
          c = 0;
       }
       /^\#/ {
-         if ( \$4 ~ /@@/ ) {
-            fname = substr(\$4, 1, index(\$4, \"@@\") - 1);
+         if ( \$2 ~ /0x/ ) {
+            targ = \$4;
          }
          else {
-            fname = \$4;
+            targ = \$2;
+         }
+         if ( targ ~ /@@/ ) {
+            fname = substr(targ, 1, index(targ, \"@@\") - 1);
+         }
+         else {
+            fname = targ;
          }
          if ( ${maxlen} == 0 || c < ${maxlen} ) {
             if (s != \"\" ) {
