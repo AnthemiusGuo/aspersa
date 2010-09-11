@@ -7,6 +7,7 @@ if [ -z "${pid}" ]; then
    pid=$(ps -eaf | grep 'mysql[d]' | grep -v mysqld_safe | awk '{print $2}' | head -n1);
 fi
 
+date;
 for x in $(seq 1 $nsamples)
   do
     gdb -ex "set pagination 0" -ex "thread apply all bt" -batch -p $pid
