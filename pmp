@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+nsamples=${1:-1}
+sleeptime=${2:-0}
+pid=$(pidof -s mysqld 2>/dev/null);
+if [ -z "${pid}" ]; then
+   pid=$(ps -eaf | grep 'mysql[d]' | grep -v mysqld_safe | awk '{print $2}' | head -n1);
+fi
+
+for x in $(seq 1 $nsamples)
+  do
+    gdb -ex "set pagination 0" -ex "thread apply all bt" -batch -p $pid
+    sleep $sleeptime
+  done | \
+awk '
+  BEGIN { s = ""; } 
+  /Thread/ { print s; s = ""; } 
+  /^\#/ { if (s != "" ) { s = s "," $4} else { s = $4 } } 
+  END { print s }' | \
+sort | uniq -c | sort -r -n -k 1,1
