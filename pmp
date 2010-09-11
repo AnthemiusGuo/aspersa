@@ -1,21 +1,121 @@
 #!/usr/bin/env bash
+# This program is part of Aspersa (http://code.google.com/p/aspersa/)
 
-nsamples=${1:-1}
-sleeptime=${2:-0}
-pid=$(pidof -s mysqld 2>/dev/null);
-if [ -z "${pid}" ]; then
-   pid=$(ps -eaf | grep 'mysql[d]' | grep -v mysqld_safe | awk '{print $2}' | head -n1);
+# ########################################################################
+# This script aggregates GDB stack traces for a selected program.  By default it
+# does mysqld.
+#
+# Author: Baron Schwartz, based on a script by Domas Mituzas at
+# poormansprofiler.org
+# ########################################################################
+
+# Print a usage message and exit.
+usage() {
+   if [ "${OPT_ERR}" ]; then
+      echo "${OPT_ERR}"
+   fi
+   echo "Usage: $0 -p <pid> -b <binary> -i <iterations> -s <sleeptime> -l <maxlen> [FILE]"
+   echo "   $0 does two things: 1) get a GDB backtrace 2) aggregate it."
+   echo "   If you specify -p, then -b is ignored.  Otherwise that binary is traced."
+   echo "   If you specify -l, then only the topmost N functions are aggregated."
+   echo "   If you specify a FILE, then step 1) above is not performed."
+   exit 1
+}
+
+aggregate_stacktrace() {
+   awk "
+      BEGIN {
+         s = \"\";
+      }
+      /^Thread/ {
+         if ( s != \"\" ) {
+            print s;
+         }
+         s = \"\";
+         c = 0;
+      }
+      /^\#/ {
+         if ( \$4 ~ /@@/ ) {
+            fname = substr(\$4, 1, index(\$4, \"@@\") - 1);
+         }
+         else {
+            fname = \$4;
+         }
+         if ( ${maxlen} == 0 || c < ${maxlen} ) {
+            if (s != \"\" ) {
+               s = s \",\" fname;
+            }
+            else {
+               s = fname;
+            }
+         }
+         c++;
+      }
+      END {
+         print s
+      }" $* | sort | uniq -c | sort -r -n -k 1,1
+}
+
+# The main program to run.
+main() {
+   rm -f /tmp/aspersa
+
+   # Get command-line options.
+   for o; do
+      case "${o}" in
+         --)
+            break;
+            ;;
+         -p)
+            shift; pid="${1}"; shift;
+            ;;
+         -b)
+            shift; binary="${1}"; shift;
+            ;;
+         -i)
+            shift; iterations="${1}"; shift;
+            ;;
+         -s)
+            shift; sleeptime="${1}"; shift;
+            ;;
+         -l)
+            shift; maxlen="${1}"; shift;
+            ;;
+         -*)
+            OPT_ERR="Unknown option '${o}'."
+               usage 1
+            ;;
+      esac
+   done
+   if [ "${OPT_ERR}" ]; then
+      usage
+   fi
+
+   if [ -z "${1}" ]; then
+      # There's no file to analyze, so we'll make one.
+      iterations=${iterations:-1}
+      sleeptime=${sleeptime:-0}
+      binary=${binary:-mysqld}
+      if [ -z "${pid}" ]; then
+         pid=$(pidof -s ${binary} 2>/dev/null);
+         if [ -z "${pid}" ]; then
+            pid=$(ps -eaf | grep 'mysql[d]\>' | awk '{print $2}' | head -n1);
+         fi
+      fi
+      date;
+      for x in $(seq 1 $iterations); do
+         gdb -ex "set pagination 0" -ex "thread apply all bt" -batch -p $pid >> /tmp/aspersa
+         sleep $sleeptime
+      done
+   fi
+
+   maxlen=${maxlen:-0};
+   aggregate_stacktrace "${1:-/tmp/aspersa}"
+   rm -f /tmp/aspersa
+}
+
+# Execute the program if it was not included from another file.  This makes it
+# possible to include without executing, and thus test.
+if [ $(basename "$0") = "pmp" ] || [ $(basename "$0") = "bash" ]; then
+    main $*
 fi
-
-date;
-for x in $(seq 1 $nsamples)
-  do
-    gdb -ex "set pagination 0" -ex "thread apply all bt" -batch -p $pid
-    sleep $sleeptime
-  done | \
-awk '
-  BEGIN { s = ""; } 
-  /Thread/ { print s; s = ""; } 
-  /^\#/ { if (s != "" ) { s = s "," $4} else { s = $4 } } 
-  END { print s }' | \
-sort | uniq -c | sort -r -n -k 1,1
