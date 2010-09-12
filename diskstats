@@ -71,14 +71,17 @@ awk_parse_line="
       ms_weighted = \$14;
 "
 
-# NOTE: this one is necessary in order to get the device listing.
+# NOTE: this one is necessary in order to get the device listing.  NOTE: the
+# 'devs' variable is initialized to 0, but it is pre-incremented, so a) it will
+# reflect the accurate number of devices found (after filtering); be iteration
+# must be from 1 to devs, not from 0 to devs-1.
 awk_get_first_sample="
       # Keep track of the natural order of the devices, so we can print them out
       # nicely later; and also keep the first-ever line of output.  This only
       # executes the first time through.
       devices[dev]++;
       if ( devices[dev] == 1 ) {
-         devsort[devs++] = dev;
+         devsort[++devs] = dev;
          first[\"ts\"]                     = ts;
          first[dev \"_reads\"]             = reads;
          first[dev \"_reads_merged\"]      = reads_merged;
@@ -121,7 +124,7 @@ awk_save_curr_as_prev="
 
 awk_find_max_device_name_length="
       mdev = 6;
-      for ( i = 0; i < devs; i++ ) {
+      for ( i = 1; i <= devs; i++ ) {
          dlen = length(devsort[i]);
          if ( dlen > mdev ) {
             mdev = dlen;
@@ -232,7 +235,7 @@ awk_compute_read_write_stats="
          reads_sec        = t_reads / elapsed;
          read_requests    = t_reads_merged + t_reads;
          mbytes_read_sec  = t_read_sectors / elapsed / 2048;
-         read_conc        = t_ms_spent_reading / elapsed / 1000 / ndevs;
+         read_conc        = t_ms_spent_reading / elapsed / 1000 / devs;
          if ( t_reads > 0 ) {
             read_rtime    = t_ms_spent_reading / t_reads;
             avg_read_sz   = t_read_sectors / t_reads / 2;
@@ -250,7 +253,7 @@ awk_compute_read_write_stats="
          writes_sec          = t_writes / elapsed;
          write_requests      = t_writes_merged + t_writes;
          mbytes_written_sec  = t_written_sectors / elapsed / 2048;
-         write_conc          = t_ms_spent_writing / elapsed / 1000 / ndevs;
+         write_conc          = t_ms_spent_writing / elapsed / 1000 / devs;
          if ( t_writes > 0 ) {
             write_rtime      = t_ms_spent_writing / t_writes;
             avg_write_sz     = t_written_sectors / t_writes / 2;
@@ -269,7 +272,7 @@ awk_compute_read_write_stats="
          # which we do not have separate statistics.
          # \"Active\" is what iostat calls %util.  This is the percent of
          # wall-clock time during which the device has I/O happening.
-         active = 100 * t_ms_spent_doing_io / (1000 * elapsed * ndevs);
+         active = 100 * t_ms_spent_doing_io / (1000 * elapsed * devs);
 "
 
 awk_print_line="
@@ -283,7 +286,11 @@ awk_print_line="
 # last sample.  Arguments: $1 = filename to read.
 group_by_disk () {
    cat > /tmp/aspersa <<EOF
-   \$1 !~ /^TS / {
+   BEGIN {
+      devs    = 0;
+      devname = "${DISK}";
+   }
+   \$1 !~ /^TS / && \$3 ~ devname {
       ${awk_parse_line}
       ${awk_get_first_sample}
       ${awk_get_curr_sample}
@@ -297,8 +304,7 @@ group_by_disk () {
       ${awk_find_max_device_name_length}
       ${awk_design_printf_formats}
       ${awk_print_header}
-      ndevs = 1;
-      for ( i = 1; i < devs; i++ ) {
+      for ( i = 1; i <= devs; i++ ) {
          dev               = devsort[i];
          ${awk_get_overall_increments}
          ${awk_compute_sums_group_by_disk}
@@ -316,11 +322,13 @@ EOF
 group_by_sample() {
    cat > /tmp/aspersa <<EOF
    BEGIN {
-      mdev = 6;
+      devs    = 0;
+      devname = "${DISK}";
+      mdev    = 6;
       ${awk_design_printf_formats}
       ${awk_print_header}
    }
-   \$1 !~ /^TS / {
+   \$1 !~ /^TS/ && \$3 ~ devname {
       ${awk_parse_line}
       ${awk_get_first_sample}
       ${awk_get_curr_sample}
@@ -328,8 +336,7 @@ group_by_sample() {
    \$1 ~ /^TS/ {
       if ( iterations > 1 ) {
          ${awk_reset_variables}
-         ndevs = devs;
-         for ( i = 1; i < devs; i++ ) {
+         for ( i = 1; i <= devs; i++ ) {
             dev               = devsort[i];
             ${awk_get_current_increments}
             ${awk_compute_sums_group_by_sample}
@@ -347,10 +354,13 @@ EOF
 }
 
 # Prints out one line for each sample, for each disk that matches the pattern.
-# Arguments: $1 = filename to read, $2 = which disks to match.
 group_by_all () {
    cat > /tmp/aspersa <<EOF
-   \$1 !~ /^TS / && \$3 ~ /$2/ {
+   BEGIN {
+      devs    = 0;
+      devname = "${DISK}";
+   }
+   \$1 !~ /^TS / && \$3 ~ devname {
       ${awk_parse_line}
       ${awk_get_first_sample}
       ${awk_get_curr_sample}
@@ -365,9 +375,8 @@ group_by_all () {
             ${awk_print_header}
          }
          ${awk_reset_variables}
-         ndevs = 1;
          line_ts = sprintf("%5.1f", ts - first["ts"]);
-         for ( i = 0; i < devs; i++ ) {
+         for ( i = 1; i <= devs; i++ ) {
             dev               = devsort[i];
             ${awk_get_current_increments}
             ${awk_compute_sums_group_by_disk}
