@@ -132,30 +132,6 @@ awk_find_max_device_name_length="
       }
 "
 
-awk_design_printf_formats="
-      # For each device, print out the following:
-      # The timestamp offset and device name
-      fmt = \"%5s %-\" mdev \"s\";
-      hdr = fmt;
-      # The per-second reads, read size (kB), per-second MB read, read merged pct, read
-      # concurrency, and average response time for each read.
-      fmt = fmt \" %7.1f %7.1f %7.1f %5.0f%% %6.1f %7.1f\";
-      hdr = hdr \" %7s %7s %7s %6s %6s %7s\";
-      # The same for writes.
-      fmt = fmt \" %7.1f %7.1f %7.1f %5.0f%% %6.1f %7.1f\";
-      hdr = hdr \" %7s %7s %7s %6s %6s %7s\";
-      # Then active%, in-progress, and line-ending.
-      fmt = fmt \" %3.0f%% %6d\\n\";
-      hdr = hdr \" %4s %6s\\n\";
-"
-
-awk_print_header="
-      printf(hdr, \"#ts\", \"device\",
-         \"rd_s\", \"rd_avkb\", \"rd_mb_s\", \"rd_mrg\", \"rd_cnc\", \"rd_rt\",
-         \"wr_s\", \"wr_avkb\", \"wr_mb_s\", \"wr_mrg\", \"wr_cnc\", \"wr_rt\",
-         \"act%\", \"in_prg\");
-"
-
 awk_get_overall_increments="
          # Get incremental numbers.
          elapsed           = curr[\"ts\"]                     - first[\"ts\"];
@@ -275,12 +251,38 @@ awk_compute_read_write_stats="
          active = 100 * t_ms_spent_doing_io / (1000 * elapsed * devs);
 "
 
-awk_print_line="
-         printf(fmt, line_ts, dev,
-            reads_sec,  avg_read_sz,  mbytes_read_sec,    read_merge_pct,  read_conc,  read_rtime,
-            writes_sec, avg_write_sz, mbytes_written_sec, write_merge_pct, write_conc, write_rtime,
-            active, t_in_progress);
-"
+# Based on which columns match $COLS, designs a header and line printf format,
+# and a printf statement to print the lines.
+design_print_formats() {
+   # For each device, print out the following: The timestamp offset and
+   # device name.  Must embed the mdev Awk variable here, because the device
+   # name is variable-length.
+   fmt="\"%5s %-\" mdev \"s";
+   hdr="${fmt}";
+   vars="";
+   # The per-second reads, read size (kB), per-second MB read, read merged pct, read
+   # concurrency, and average response time for each read.
+   if [[ "rd_s"    == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr}    rd_s";  vars="${vars}, reads_sec"; fi
+   if [[ "rd_avkb" == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr} rd_avkb";  vars="${vars}, avg_read_sz"; fi
+   if [[ "rd_mb_s" == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr} rd_mb_s";  vars="${vars}, mbytes_read_sec"; fi
+   if [[ "rd_mrg"  == *"${COLS}"* ]]; then fmt="${fmt} %5.0f%%"; hdr="${hdr} rd_mrg";   vars="${vars}, read_merge_pct"; fi
+   if [[ "rd_cnc"  == *"${COLS}"* ]]; then fmt="${fmt} %6.1f";   hdr="${hdr} rd_cnc";   vars="${vars}, read_conc"; fi
+   if [[ "rd_rt"   == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr}   rd_rt";  vars="${vars}, read_rtime"; fi
+   # The same for writes.
+   if [[ "wr_s"    == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr}    wr_s";  vars="${vars}, writes_sec"; fi
+   if [[ "wr_avkb" == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr} wr_avkb";  vars="${vars}, avg_write_sz"; fi
+   if [[ "wr_mb_s" == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr} wr_mb_s";  vars="${vars}, mbytes_written_sec"; fi
+   if [[ "wr_mrg"  == *"${COLS}"* ]]; then fmt="${fmt} %5.0f%%"; hdr="${hdr} wr_mrg";   vars="${vars}, write_merge_pct"; fi
+   if [[ "wr_cnc"  == *"${COLS}"* ]]; then fmt="${fmt} %6.1f";   hdr="${hdr} wr_cnc";   vars="${vars}, write_conc"; fi
+   if [[ "wr_rt"   == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr}   wr_rt";  vars="${vars}, write_rtime"; fi
+   # Then active%, in-progress, and line-ending.
+   if [[ "act"     == *"${COLS}"* ]]; then fmt="${fmt} %3.0f%%"; hdr="${hdr}  act";     vars="${vars}, active"; fi
+   if [[ "in_prg"  == *"${COLS}"* ]]; then fmt="${fmt} %6d";     hdr="${hdr} in_prg";   vars="${vars}, t_in_progress"; fi
+   fmt="${fmt}\n\"";
+   hdr="${hdr}\n\"";
+   awk_print_header="printf(${hdr}, \"#ts\", \"device\");";
+   awk_print_line="printf(${fmt}, line_ts, dev${vars});";
+}
 
 # Prints out one line for each disk, summing over the interval from first to
 # last sample.  Arguments: $1 = filename to read.
@@ -302,7 +304,6 @@ group_by_disk () {
    END {
       mdev = 6;
       ${awk_find_max_device_name_length}
-      ${awk_design_printf_formats}
       ${awk_print_header}
       for ( i = 1; i <= devs; i++ ) {
          dev               = devsort[i];
@@ -325,7 +326,6 @@ group_by_sample() {
       devs    = 0;
       devname = "${DISK}";
       mdev    = 6;
-      ${awk_design_printf_formats}
       ${awk_print_header}
    }
    \$1 !~ /^TS/ && \$3 ~ devname {
@@ -368,7 +368,6 @@ group_by_all () {
    \$1 ~ /^TS/ {
       if ( iterations > 0 ) {
          ${awk_find_max_device_name_length}
-         ${awk_design_printf_formats}
       }
       if ( iterations > 1 ) {
          if ( devs > 1 || iterations == 2 ) {
@@ -412,7 +411,7 @@ usage() {
       echo "Usage: $0 -m <mode> -d <disk> -c <cols> -a <aggr> [FILE]"
       echo "   mode: one of <disk|sample|all>"
       echo "   disk: an awk regex to match disk names"
-      echo "   cols: an awk regex to match column names"
+      echo "   cols: a Bash pattern to match column names"
       echo "   aggr: aggregation interval in seconds"
       echo "   FILE: a file containing saved diskstats"
       exit 1
@@ -469,6 +468,7 @@ main() {
    fi
 
    # Execute the actual functionality
+   design_print_formats
    group_by_${MODE} $*
 
    # Don't be "interactive" unless the user actually has control.
@@ -507,6 +507,7 @@ main() {
          usage
       else
          # Execute the actual functionality
+         design_print_formats
          group_by_${MODE} $*
       fi
 
