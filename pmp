@@ -22,7 +22,12 @@ usage() {
    exit 1
 }
 
+# Actually does the aggregation.  The arguments are the max number of functions
+# to aggregate, and the files to read.  If maxlen=0, it means infinity.  We have
+# to pass the maxlen argument into this function to make maxlen testable.
 aggregate_stacktrace() {
+   maxlen="$1";
+   shift;
    awk "
       BEGIN {
          s = \"\";
@@ -47,7 +52,7 @@ aggregate_stacktrace() {
          else {
             fname = targ;
          }
-         if ( ${maxlen} == 0 || c < ${maxlen} ) {
+         if ( ${maxlen:-0} == 0 || c < ${maxlen:-0} ) {
             if (s != \"\" ) {
                s = s \",\" fname;
             }
@@ -64,7 +69,6 @@ aggregate_stacktrace() {
 
 # The main program to run.
 main() {
-   rm -f /tmp/aspersa
 
    # Get command-line options.
    for o; do
@@ -115,8 +119,7 @@ main() {
       done
    fi
 
-   maxlen=${maxlen:-0};
-   aggregate_stacktrace "${1:-/tmp/aspersa}"
+   aggregate_stacktrace "${maxlen:-0}" "${1:-/tmp/aspersa}"
    rm -f /tmp/aspersa
 }
 
