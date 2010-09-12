@@ -433,6 +433,9 @@ main() {
    # Get command-line options.
    for o; do
       case "${o}" in
+         --)
+            break;
+            ;;
          -m)
             shift; MODE="${1}"; shift;
             ;;
@@ -444,9 +447,6 @@ main() {
             ;;
          -a)
             shift; AGGR="${1}"; shift;
-            ;;
-         --)
-            break;
             ;;
          -*)
             OPT_ERR="Unknown option '${o}'."
