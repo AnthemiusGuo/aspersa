@@ -310,7 +310,7 @@ group_by_disk () {
          ${awk_get_overall_increments}
          ${awk_compute_sums_group_by_disk}
          ${awk_compute_read_write_stats}
-         line_ts="---";
+         line_ts="<" iterations ">";
          ${awk_print_line}
       }
    }
@@ -325,8 +325,6 @@ group_by_sample() {
    BEGIN {
       devs    = 0;
       devname = "${DISK}";
-      mdev    = 6;
-      ${awk_print_header}
    }
    \$1 !~ /^TS/ && \$3 ~ devname {
       ${awk_parse_line}
@@ -334,6 +332,11 @@ group_by_sample() {
       ${awk_get_curr_sample}
    }
    \$1 ~ /^TS/ {
+      if ( iterations == 1 ) {
+         mdev    = 6;
+         ${awk_find_max_device_name_length}
+         ${awk_print_header}
+      }
       if ( iterations > 1 ) {
          ${awk_reset_variables}
          for ( i = 1; i <= devs; i++ ) {
@@ -343,7 +346,12 @@ group_by_sample() {
          }
          ${awk_compute_read_write_stats}
          line_ts = sprintf("%5.1f", ts - first["ts"]);
-         dev     = "<" devs ">";
+         if ( devs > 1 ) {
+            dev     = "<" devs ">";
+         }
+         else {
+            dev     = devsort[1];
+         }
          ${awk_print_line}
       }
       ${awk_save_curr_as_prev}
