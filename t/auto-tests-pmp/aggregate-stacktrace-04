@@ -1,16 +1,12 @@
 #!/bin/bash
-#aggregate_stacktrace 2 /tmp/aspersa
+#aggregate_stacktrace /tmp/aspersa
 
 cat > $1 <<EOF
-     35 pthread_cond_wait,end_thread
-     20 read,read
-     18 pthread_cond_wait,os_event_wait_low
-      3 select,os_thread_sleep
-      3 pthread_cond_wait,MYSQL_LOG::wait_for_update
-      1 select,handle_connections_sockets
-      1 do_sigwait,sigwait
-      1 btr_search_guess_on_hash,btr_cur_search_to_nth_level
-      1 btr_cur_search_to_nth_level,btr_estimate_n_rows_in_range
+     33 pthread_cond_wait,boost::condition_variable::wait,Queue::pop,Worker::work,boost::_mfi::mf0::operator,boost::_bi::list1::operator,boost::_bi::bind_t::operator,boost::detail::thread_data::run,thread_proxy,start_thread,clone,??
+      1 StringBuilder::length,Parser::add,Parser::try_parse_query,Parser::parse_block,Parser::work,boost::_mfi::mf0::operator,boost::_bi::list1::operator,boost::_bi::bind_t::operator,boost::detail::thread_data::run,thread_proxy,start_thread,clone,??
+      1 pthread_cond_wait,boost::thread::join,LogReader::wait,Replay::wait,main
+      1 pthread_cond_wait,boost::condition_variable::wait,Queue::push,LogReader::work,boost::_mfi::mf0::operator,boost::_bi::list1::operator,boost::_bi::bind_t::operator,boost::detail::thread_data::run,thread_proxy,start_thread,clone,??
+      1 pthread_cond_wait,boost::condition_variable::wait,Queue::pop,Reporter::work,boost::_mfi::mf0::operator,boost::_bi::list1::operator,boost::_bi::bind_t::operator,boost::detail::thread_data::run,thread_proxy,start_thread,clone,??
 EOF
 
-cp samples/stacktrace-003.txt $2
+cp samples/stacktrace-004.txt $2
