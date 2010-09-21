@@ -28,24 +28,26 @@ usage() {
 aggregate_stacktrace() {
    maxlen="$1";
    shift;
-   awk "
+   cat > /tmp/aspersa.awk <<EOF
       BEGIN {
-         s = \"\";
+         s = "";
       }
       /^Thread/ {
-         if ( s != \"\" ) {
+         if ( s != "" ) {
             print s;
          }
-         s = \"\";
+         s = "";
          c = 0;
       }
       /^\#/ {
          if ( \$2 ~ /0x/ ) {
             # Shorten C++ templates, e.g. in t/samples/stacktrace-004.txt
             if ( \$0 ~ />::/ ) {
-               targ = substr(\$0, index(\$0, \" in \") + 4);
+               targ = substr(\$0, index(\$0, " in ") + 4);
                while ( targ ~ />::/ ) {
-                  gsub(/<[^<>]*>/, \"\", targ);
+                  if ( 0 == gsub(/<[^<>]*>/, "", targ) ) {
+                     break;
+                  }
                }
             }
             else {
@@ -53,25 +55,27 @@ aggregate_stacktrace() {
             }
             # Further shorten argument lists.
             while ( targ ~ /\\(/ ) {
-               gsub(/\\([^\\)]*\\)/, \"\", targ);
+               if ( 0 == gsub(/\\([^()]*\\)/, "", targ) ) {
+                  break;
+               }
             }
             # Remove void and const decorators.
-            gsub(/ ?(void|const) ?/, \"\", targ);
-            gsub(/ /, \"\", targ);
+            gsub(/ ?(void|const) ?/, "", targ);
+            gsub(/ /, "", targ);
          }
          else {
             targ = \$2;
          }
          # get rid of long symbol names such as 'pthread_cond_wait@@GLIBC_2.3.2'
          if ( targ ~ /@@/ ) {
-            fname = substr(targ, 1, index(targ, \"@@\") - 1);
+            fname = substr(targ, 1, index(targ, "@@") - 1);
          }
          else {
             fname = targ;
          }
          if ( ${maxlen:-0} == 0 || c < ${maxlen:-0} ) {
-            if (s != \"\" ) {
-               s = s \",\" fname;
+            if (s != "" ) {
+               s = s "," fname;
             }
             else {
                s = fname;
@@ -81,7 +85,9 @@ aggregate_stacktrace() {
       }
       END {
          print s
-      }" $* | sort | uniq -c | sort -r -n -k 1,1
+      }
+EOF
+   awk -f /tmp/aspersa.awk $* | sort | uniq -c | sort -r -n -k 1,1
 }
 
 # The main program to run.
