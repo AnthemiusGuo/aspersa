@@ -658,13 +658,13 @@ main () {
    # ########################################################################
    # Fetch some basic info so we can start
    # ########################################################################
-   mysql -ss -e 'SHOW GRANTS' > /tmp/aspersa
+   mysql -ss -e 'SELECT CURRENT_USER()' > /tmp/aspersa
    if [ "$?" != "0" ]; then
       echo "Cannot connect to mysql, please specify command-line options."
       temp_files "rm"
       exit 1
    fi
-   user="$(sed -e 's/^.*TO //; s/ .*//g; q' /tmp/aspersa)";
+   user="$(cat /tmp/aspersa)";
    mysql -ss -e 'SHOW /*!40100 GLOBAL*/ VARIABLES' $* > /tmp/aspersa-mysql-variables
    mysql -ss -e 'SHOW /*!50000 GLOBAL*/ STATUS' $* > /tmp/aspersa-mysql-status
    mysql -ss -e 'SHOW DATABASES' $* > /tmp/aspersa-mysql-databases 2>/dev/null
