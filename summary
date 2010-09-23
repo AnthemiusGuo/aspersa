@@ -125,7 +125,7 @@ parse_proc_cpuinfo () {
    # Test for HTT; cannot trust the 'ht' flag.  If physical * cores < virtual,
    # then hyperthreading is in use.
    cores=$((${cores} * ${physical}));
-   if [ ${cores} -gt 0 -a $cores -lt $virtual ]; then htt=has; else htt=no; fi
+   if [ ${cores} -gt 0 -a $cores -lt $virtual ]; then htt=yes; else htt=no; fi
 
    name_val "Processors" "physical = ${physical}, cores = ${cores}, virtual = ${virtual}, hyperthreading = ${htt}"
 
