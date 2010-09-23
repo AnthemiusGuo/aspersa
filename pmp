@@ -41,27 +41,45 @@ aggregate_stacktrace() {
       }
       /^\#/ {
          if ( \$2 ~ /0x/ ) {
-            # Shorten C++ templates, e.g. in t/samples/stacktrace-004.txt
-            if ( \$0 ~ />::/ ) {
+            if ( \$4 ~/void|const/ ) {
+               targ = \$5;
+            }
+            else {
+               targ = \$4;
+            }
+            if ( targ ~ /[<\\(]/ ) {
                targ = substr(\$0, index(\$0, " in ") + 4);
+               if ( targ ~ / from / ) {
+                  targ = substr(targ, 1, index(targ, " from ") - 1);
+               }
+               if ( targ ~ / at / ) {
+                  targ = substr(targ, 1, index(targ, " at ") - 1);
+               }
+               # Shorten C++ templates, e.g. in t/samples/stacktrace-004.txt
                while ( targ ~ />::/ ) {
                   if ( 0 == gsub(/<[^<>]*>/, "", targ) ) {
                      break;
                   }
                }
-            }
-            else {
-               targ = \$4;
-            }
-            # Further shorten argument lists.
-            while ( targ ~ /\\(/ ) {
-               if ( 0 == gsub(/\\([^()]*\\)/, "", targ) ) {
-                  break;
+               # Further shorten argument lists.
+               while ( targ ~ /\\(/ ) {
+                  if ( 0 == gsub(/\\([^()]*\\)/, "", targ) ) {
+                     break;
+                  }
                }
+               # Remove void and const decorators.
+               gsub(/ ?(void|const) ?/, "", targ);
+               gsub(/ /, "", targ);
             }
-            # Remove void and const decorators.
-            gsub(/ ?(void|const) ?/, "", targ);
-            gsub(/ /, "", targ);
+            else if ( targ ~ /\\?\\?/ && \$2 ~ /[1-9]/ ) {
+               # Substitute ?? by the name of the library.
+               targ = \$NF;
+               while ( targ ~ /\\// ) {
+                  targ = substr(targ, index(targ, "/") + 1);
+               }
+               targ = substr(targ, 1, index(targ, ".") - 1);
+               targ = targ "::??";
+            }
          }
          else {
             targ = \$2;
