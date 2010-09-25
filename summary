@@ -176,8 +176,8 @@ parse_free_minus_b () {
 # /tmp/aspersa.
 # ##############################################################################
 parse_dmidecode_mem_devices () {
-   echo "  Locator Size     Speed            Form Factor   Type          Type Detail"
-   echo "  ======= ======== ================ ============= ============= ==========="
+   echo "  Locator   Size     Speed             Form Factor   Type          Type Detail"
+   echo "  ========= ======== ================= ============= ============= ==========="
    # Print paragraphs containing 'Memory Device\n', extract the desired bits,
    # concatenate them into one long line, then format as a table.  The data
    # comes out in this order for each paragraph:
@@ -190,11 +190,14 @@ parse_dmidecode_mem_devices () {
    sed    -e '/./{H;$!d;}' \
           -e 'x;/Memory Device\n/!d;' \
           -e 's/: /:/g' \
+          -e 's/</{/g' \
+          -e 's/>/}/g' \
+          -e 's/[ \t]*\n/\n/g' \
        /tmp/aspersa \
        | awk -F: '/Size|Type|Form.Factor|Type.Detail|[^ ]Locator/{printf("|%s", $2)}/Speed/{print "|" $2}' \
-       | sed -e 's/No Module Installed/<EMPTY>/' \
+       | sed -e 's/No Module Installed/{EMPTY}/' \
        | sort \
-       | awk -F'|' '{printf("  %-7s %-8s %-16s %-13s %-13s %8s\n", $4, $2, $7, $3, $5, $6);}'
+       | awk -F'|' '{printf("  %-9s %-8s %-17s %-13s %-13s %-8s\n", $4, $2, $7, $3, $5, $6);}'
 }
 
 # ##############################################################################
@@ -953,6 +956,6 @@ main () {
 
 # Execute the program if it was not included from another file.  This makes it
 # possible to include without executing, and thus test.
-if [ $(basename "$0") = "summary" ] || [ $(basename "$0") = "bash" ]; then
+if [ $(basename "$0") = "summary" ] || [ $(basename "$0") = "bash" -a "$_" = "$0" ]; then
     main $*
 fi
