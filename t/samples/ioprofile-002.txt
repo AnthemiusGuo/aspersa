@@ -1,0 +1,1172 @@
+COMMAND  PID  USER   FD   TYPE     DEVICE     SIZE    NODE NAME
+mysqld  6562 baron  cwd    DIR      253,0     4096 2621555 /home/baron/etc/mysql/server/5.1.41/data
+mysqld  6562 baron  rtd    DIR      253,0     4096       2 /
+mysqld  6562 baron  txt    REG      253,0 30106640 2229338 /home/baron/etc/mysql/server/5.1.41/bin/mysqld
+mysqld  6562 baron  mem    REG      253,0   121288  133204 /lib/libgcc_s-4.4.3-20100127.so.1
+mysqld  6562 baron  mem    REG      253,0  5201268 2229265 /home/baron/etc/mysql/server/5.1.41/lib/plugin/ha_innodb_plugin.so.0.0.0
+mysqld  6562 baron  mem    REG      253,0   143412  131416 /lib/ld-2.11.1.so
+mysqld  6562 baron  mem    REG      253,0  1814652  131656 /lib/libc-2.11.1.so
+mysqld  6562 baron  mem    REG      253,0   214396  133058 /lib/libm-2.11.1.so
+mysqld  6562 baron  mem    REG      253,0   136020  131658 /lib/libpthread-2.11.1.so
+mysqld  6562 baron  mem    REG      253,0    20464  132182 /lib/libdl-2.11.1.so
+mysqld  6562 baron  mem    REG      253,0   281944  134834 /lib/libfreebl3.so
+mysqld  6562 baron  mem    REG      253,0    55368  133955 /lib/libnss_files-2.11.1.so
+mysqld  6562 baron  mem    REG      253,0    38832  131170 /lib/libcrypt-2.11.1.so
+mysqld  6562 baron  mem    REG      253,0   117772  133386 /lib/libnsl-2.11.1.so
+mysqld  6562 baron    0u   CHR      136,2                5 /dev/pts/2
+mysqld  6562 baron    1u   CHR      136,2                5 /dev/pts/2
+mysqld  6562 baron    2u   CHR      136,2                5 /dev/pts/2
+mysqld  6562 baron    3uW  REG      253,0 10485760 2621644 /home/baron/etc/mysql/server/5.1.41/data/ibdata1
+mysqld  6562 baron    4u   REG      253,0        0    7081 /tmp/ibFMTmWE (deleted)
+mysqld  6562 baron    5u   REG      253,0        0    7083 /tmp/ibtmc3SO (deleted)
+mysqld  6562 baron    6u   REG      253,0        0    7088 /tmp/ib8NIJPY (deleted)
+mysqld  6562 baron    7u   REG      253,0        0    7156 /tmp/ibmeihP8 (deleted)
+mysqld  6562 baron    8uW  REG      253,0  5242880 2621646 /home/baron/etc/mysql/server/5.1.41/data/ib_logfile0
+mysqld  6562 baron    9uW  REG      253,0  5242880 2621647 /home/baron/etc/mysql/server/5.1.41/data/ib_logfile1
+mysqld  6562 baron   10u  IPv4    2941198              TCP *:5141 (LISTEN)
+mysqld  6562 baron   11u   REG      253,0        0    7159 /tmp/ibakHfSi (deleted)
+mysqld  6562 baron   12u  unix 0xf6123a00          2941199 /home/baron/etc/mysql/server/5.1.41/data/mysql.sock
+mysqld  6562 baron   13u   REG      253,0     2048 2621610 /home/baron/etc/mysql/server/5.1.41/data/mysql/host.MYI
+mysqld  6562 baron   14u   REG      253,0        0 2621575 /home/baron/etc/mysql/server/5.1.41/data/mysql/host.MYD
+mysqld  6562 baron   15u   REG      253,0     2048 2621630 /home/baron/etc/mysql/server/5.1.41/data/mysql/user.MYI
+mysqld  6562 baron   16u   REG      253,0      180 2621571 /home/baron/etc/mysql/server/5.1.41/data/mysql/user.MYD
+mysqld  6562 baron   17u   REG      253,0     5120 2621560 /home/baron/etc/mysql/server/5.1.41/data/mysql/db.MYI
+mysqld  6562 baron   18u   REG      253,0     1320 2621589 /home/baron/etc/mysql/server/5.1.41/data/mysql/db.MYD
+mysqld  6562 baron   19u   REG      253,0     4096 2621622 /home/baron/etc/mysql/server/5.1.41/data/mysql/tables_priv.MYI
+mysqld  6562 baron   20u   REG      253,0        0 2621634 /home/baron/etc/mysql/server/5.1.41/data/mysql/tables_priv.MYD
+mysqld  6562 baron   21u   REG      253,0     4096 2621581 /home/baron/etc/mysql/server/5.1.41/data/mysql/columns_priv.MYI
+mysqld  6562 baron   22u   REG      253,0        0 2621603 /home/baron/etc/mysql/server/5.1.41/data/mysql/columns_priv.MYD
+mysqld  6562 baron   23u   REG      253,0     4096 2621563 /home/baron/etc/mysql/server/5.1.41/data/mysql/procs_priv.MYI
+mysqld  6562 baron   24u   REG      253,0        0 2621590 /home/baron/etc/mysql/server/5.1.41/data/mysql/procs_priv.MYD
+mysqld  6562 baron   25u   REG      253,0     1024 2621566 /home/baron/etc/mysql/server/5.1.41/data/mysql/servers.MYI
+mysqld  6562 baron   26u   REG      253,0        0 2621626 /home/baron/etc/mysql/server/5.1.41/data/mysql/servers.MYD
+mysqld  6562 baron   27u   REG      253,0     2048 2621596 /home/baron/etc/mysql/server/5.1.41/data/mysql/event.MYI
+mysqld  6562 baron   28u   REG      253,0        0 2621609 /home/baron/etc/mysql/server/5.1.41/data/mysql/event.MYD
+Process 6562 attached with 15 threads - interrupt to quit
+[pid  6575] select(0, NULL, NULL, NULL, {0, 987633} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {0, 987816} <unfinished ...>
+[pid  6562] select(13, [10 12], NULL, NULL, NULL <unfinished ...>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <0.988775>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <0.988885>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001342>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001375>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.001200>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001564>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.000341>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.000354>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001352>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001442>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001125>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.000902>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.001357>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001520>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001276>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001254>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.001039>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001318>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001355>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001416>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001441>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001476>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001378>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001232>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001290>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001361>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001421>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001477>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001185>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001211>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001240>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001130>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.001090>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001319>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001347>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001383>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001245>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001185>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.000395>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.000687>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001232>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001230>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001339>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001410>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001413>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001461>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001201>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001239>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001357>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001376>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001364>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001092>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.001264>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001616>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001182>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.000969>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.000963>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001257>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001300>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001301>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.001198>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001380>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001370>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001395>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001350>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001399>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001211>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001237>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.001217>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001560>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001356>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001410>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001349>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001397>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001353>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001375>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001357>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001375>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6562] <... select resumed> )      = 1 (in [10]) <39.524650>
+[pid  6562] fcntl64(10, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000051>
+[pid  6562] fcntl64(10, F_SETFL, O_RDWR) = 0 <0.000035>
+[pid  6562] fcntl64(29, F_SETFL, O_RDONLY) = 0 <0.000033>
+[pid  6562] fcntl64(29, F_GETFL)        = 0x2 (flags O_RDWR) <0.000032>
+[pid  6562] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000033>
+Process 6594 attached
+[pid  6562] select(13, [10 12], NULL, NULL, NULL <unfinished ...>
+[pid  6594] open("/proc/stat", O_RDONLY|O_CLOEXEC) = 30 <0.000071>
+[pid  6594] read(30, ""..., 8192)       = 2965 <0.000690>
+[pid  6594] close(30)                   = 0 <0.000024>
+[pid  6594] write(29, ""..., 56)        = 56 <0.000060>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000022>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000195>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000593>
+[pid  6594] read(29, ""..., 58)         = 58 <0.000023>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000019>
+[pid  6594] write(29, ""..., 11)        = 11 <0.000038>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000021>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000019>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000113>
+[pid  6594] read(29, ""..., 33)         = 33 <0.000022>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000027>
+[pid  6594] write(29, ""..., 99)        = 99 <0.000874>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000027>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000026>
+[pid  6594] read(29,  <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001360>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001279>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001063>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001209>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001176>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001164>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.000177>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001470>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001360>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001205>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6594] <... read resumed> ""..., 4) = 4 <5.203993>
+[pid  6594] read(29, ""..., 15)         = 15 <0.000047>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000043>
+[pid  6594] open("./", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY|O_CLOEXEC) = 30 <0.000096>
+[pid  6594] getdents64(30, /* 9 entries */, 32768) = 264 <0.000164>
+[pid  6594] getdents64(30, /* 0 entries */, 32768) = 0 <0.000146>
+[pid  6594] close(30)                   = 0 <0.000098>
+[pid  6594] open("./mysql/db.opt", O_RDONLY|O_LARGEFILE) = -1 ENOENT (No such file or directory) <0.000050>
+[pid  6594] open("./test/db.opt", O_RDONLY|O_LARGEFILE) = 30 <0.000054>
+[pid  6594] _llseek(30, 0, [0], SEEK_CUR) = 0 <0.000043>
+[pid  6594] _llseek(30, 0, [65], SEEK_END) = 0 <0.000041>
+[pid  6594] _llseek(30, 0, [0], SEEK_SET) = 0 <0.000043>
+[pid  6594] read(30, ""..., 65)         = 65 <0.000062>
+[pid  6594] close(30)                   = 0 <0.000045>
+[pid  6594] write(29, ""..., 118)       = 118 <0.000080>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000035>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000060>
+[pid  6594] read(29,  <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001236>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001232>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001358>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001306>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6594] <... read resumed> ""..., 4) = 4 <2.075011>
+[pid  6594] read(29, ""..., 18)         = 18 <0.000063>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000057>
+[pid  6594] write(29, ""..., 64)        = 64 <0.000126>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000054>
+[pid  6594] read(29, ""..., 6)          = 6 <0.000049>
+[pid  6594] open("./mysql/db.opt", O_RDONLY|O_LARGEFILE) = -1 ENOENT (No such file or directory) <0.000053>
+[pid  6594] write(29, ""..., 11)        = 11 <0.000065>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000033>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000030>
+[pid  6594] read(29, ""..., 4)          = 4 <0.002618>
+[pid  6594] read(29, ""..., 15)         = 15 <0.000056>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000041>
+[pid  6594] open("./", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY|O_CLOEXEC) = 30 <0.000052>
+[pid  6594] getdents64(30, /* 9 entries */, 32768) = 264 <0.000064>
+[pid  6594] getdents64(30, /* 0 entries */, 32768) = 0 <0.000119>
+[pid  6594] close(30)                   = 0 <0.000097>
+[pid  6594] open("./mysql/db.opt", O_RDONLY|O_LARGEFILE) = -1 ENOENT (No such file or directory) <0.000060>
+[pid  6594] write(29, ""..., 118)       = 118 <0.000081>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000048>
+[pid  6594] read(29, ""..., 12)         = 12 <0.000057>
+[pid  6594] open("./mysql/", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY|O_CLOEXEC) = 30 <0.000043>
+[pid  6594] getdents64(30, /* 71 entries */, 32768) = 2688 <0.000173>
+[pid  6594] getdents64(30, /* 0 entries */, 32768) = 0 <0.000025>
+[pid  6594] close(30)                   = 0 <0.000044>
+[pid  6594] open("./mysql/columns_priv.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000040>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000029>
+[pid  6594] close(30)                   = 0 <0.000027>
+[pid  6594] open("./mysql/db.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000036>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000028>
+[pid  6594] close(30)                   = 0 <0.000026>
+[pid  6594] open("./mysql/event.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000036>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000027>
+[pid  6594] close(30)                   = 0 <0.000026>
+[pid  6594] open("./mysql/func.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000035>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000028>
+[pid  6594] close(30)                   = 0 <0.000026>
+[pid  6594] open("./mysql/general_log.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000052>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000028>
+[pid  6594] close(30)                   = 0 <0.000026>
+[pid  6594] open("./mysql/help_category.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000035>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000027>
+[pid  6594] close(30)                   = 0 <0.000026>
+[pid  6594] open("./mysql/help_keyword.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000035>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000028>
+[pid  6594] close(30)                   = 0 <0.000026>
+[pid  6594] open("./mysql/help_relation.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000035>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000028>
+[pid  6594] close(30)                   = 0 <0.000026>
+[pid  6594] open("./mysql/help_topic.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000035>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000027>
+[pid  6594] close(30)                   = 0 <0.000026>
+[pid  6594] open("./mysql/host.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000035>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000028>
+[pid  6594] close(30)                   = 0 <0.000042>
+[pid  6594] open("./mysql/ndb_binlog_index.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000022>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000018>
+[pid  6594] close(30)                   = 0 <0.000017>
+[pid  6594] open("./mysql/plugin.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000022>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000018>
+[pid  6594] close(30)                   = 0 <0.000017>
+[pid  6594] open("./mysql/proc.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000023>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000017>
+[pid  6594] close(30)                   = 0 <0.000017>
+[pid  6594] open("./mysql/procs_priv.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000022>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000017>
+[pid  6594] close(30)                   = 0 <0.000030>
+[pid  6594] open("./mysql/servers.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000022>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000017>
+[pid  6594] close(30)                   = 0 <0.000017>
+[pid  6594] open("./mysql/slow_log.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000022>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000017>
+[pid  6594] close(30)                   = 0 <0.000016>
+[pid  6594] open("./mysql/tables_priv.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000022>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000018>
+[pid  6594] close(30)                   = 0 <0.000017>
+[pid  6594] open("./mysql/time_zone.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000021>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000018>
+[pid  6594] close(30)                   = 0 <0.000017>
+[pid  6594] open("./mysql/time_zone_leap_second.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000022>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000018>
+[pid  6594] close(30)                   = 0 <0.000021>
+[pid  6594] open("./mysql/time_zone_name.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000026>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000017>
+[pid  6594] close(30)                   = 0 <0.000020>
+[pid  6594] open("./mysql/time_zone_transition.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000022>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000018>
+[pid  6594] close(30)                   = 0 <0.000017>
+[pid  6594] open("./mysql/time_zone_transition_type.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000023>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000018>
+[pid  6594] close(30)                   = 0 <0.000016>
+[pid  6594] open("./mysql/user.frm", O_RDONLY|O_LARGEFILE) = 30 <0.000022>
+[pid  6594] read(30, ""..., 10)         = 10 <0.000017>
+[pid  6594] close(30)                   = 0 <0.000017>
+[pid  6594] write(29, ""..., 441)       = 441 <0.000061>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000018>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000016>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000055>
+[pid  6594] read(29, ""..., 14)         = 14 <0.000866>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000021>
+[pid  6594] write(29, ""..., 522)       = 522 <0.000059>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000017>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000016>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000018>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000031>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000017>
+[pid  6594] write(29, ""..., 1334)      = 1334 <0.000039>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000017>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000015>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000269>
+[pid  6594] read(29, ""..., 7)          = 7 <0.000018>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000016>
+[pid  6594] write(29, ""..., 1403)      = 1403 <0.000039>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000017>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000015>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000282>
+[pid  6594] read(29, ""..., 6)          = 6 <0.000018>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000016>
+[pid  6594] open("/home/baron/etc/mysql/server/5.1.41/data/mysql/func.MYI", O_RDWR|O_LARGEFILE) = 30 <0.000028>
+[pid  6594] read(30, ""..., 24)         = 24 <0.000018>
+[pid  6594] _llseek(30, 0, [0], SEEK_SET) = 0 <0.000016>
+[pid  6594] read(30, ""..., 361)        = 361 <0.000017>
+[pid  6594] open("./mysql/func.MYD", O_RDWR|O_LARGEFILE) = 31 <0.000022>
+[pid  6594] write(29, ""..., 204)       = 204 <0.000038>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000019>
+[pid  6594] read(29, ""..., 13)         = 13 <0.000018>
+[pid  6594] open("./mysql/general_log.frm", O_RDONLY|O_LARGEFILE) = 32 <0.000023>
+[pid  6594] read(32, ""..., 64)         = 64 <0.000017>
+[pid  6594] _llseek(32, 64, [64], SEEK_SET) = 0 <0.000016>
+[pid  6594] read(32, ""..., 7)          = 7 <0.000017>
+[pid  6594] _llseek(32, 4096, [4096], SEEK_SET) = 0 <0.000015>
+[pid  6594] read(32, ""..., 8)          = 8 <0.000017>
+[pid  6594] pread64(32, ""..., 13, 4339) = 13 <0.000017>
+[pid  6594] pread64(32, ""..., 227, 4112) = 227 <0.000018>
+[pid  6594] _llseek(32, 8192, [8192], SEEK_SET) = 0 <0.000016>
+[pid  6594] read(32, ""..., 288)        = 288 <0.000017>
+[pid  6594] read(32, ""..., 296)        = 296 <0.000017>
+[pid  6594] close(32)                   = 0 <0.000021>
+[pid  6594] open("./mysql/general_log.CSM", O_RDWR|O_CREAT|O_LARGEFILE, 0660) = 32 <0.000024>
+[pid  6594] _llseek(32, 0, [0], SEEK_SET) = 0 <0.000015>
+[pid  6594] read(32, ""..., 35)         = 35 <0.000025>
+[pid  6594] fdatasync(32)               = 0 <0.045218>
+[pid  6594] open("./mysql/general_log.CSV", O_RDONLY|O_LARGEFILE) = 33 <0.000172>
+[pid  6594] write(29, ""..., 468)       = 468 <0.000112>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000196>
+[pid  6594] read(29, ""..., 15)         = 15 <0.000045>
+[pid  6594] open("./mysql/help_category.frm", O_RDONLY|O_LARGEFILE) = 34 <0.000055>
+[pid  6594] read(34, ""..., 64)         = 64 <0.000046>
+[pid  6594] _llseek(34, 64, [64], SEEK_SET) = 0 <0.000150>
+[pid  6594] read(34, ""..., 7)          = 7 <0.000141>
+[pid  6594] _llseek(34, 4096, [4096], SEEK_SET) = 0 <0.000145>
+[pid  6594] read(34, ""..., 55)         = 55 <0.000139>
+[pid  6594] pread64(34, ""..., 16, 5383) = 16 <0.000148>
+[pid  6594] pread64(34, ""..., 581, 4802) = 581 <0.000145>
+[pid  6594] _llseek(34, 8192, [8192], SEEK_SET) = 0 <0.000147>
+[pid  6594] read(34, ""..., 288)        = 288 <0.000144>
+[pid  6594] read(34, ""..., 220)        = 220 <0.000139>
+[pid  6594] close(34)                   = 0 <0.000109>
+[pid  6594] open("/home/baron/etc/mysql/server/5.1.41/data/mysql/help_category.MYI", O_RDWR|O_LARGEFILE) = 34 <0.000058>
+[pid  6594] read(34, ""..., 24)         = 24 <0.000071>
+[pid  6594] _llseek(34, 0, [0], SEEK_SET) = 0 <0.000054>
+[pid  6594] read(34, ""..., 403)        = 403 <0.000076>
+[pid  6594] open("./mysql/help_category.MYD", O_RDWR|O_LARGEFILE) = 35 <0.000053>
+[pid  6594] write(29, ""..., 324)       = 324 <0.000085>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000037>
+[pid  6594] read(29, ""..., 14)         = 14 <0.000036>
+[pid  6594] open("./mysql/help_keyword.frm", O_RDONLY|O_LARGEFILE) = 36 <0.000059>
+[pid  6594] read(36, ""..., 64)         = 64 <0.000045>
+[pid  6594] _llseek(36, 64, [64], SEEK_SET) = 0 <0.000042>
+[pid  6594] read(36, ""..., 7)          = 7 <0.000069>
+[pid  6594] _llseek(36, 4096, [4096], SEEK_SET) = 0 <0.000041>
+[pid  6594] read(36, ""..., 55)         = 55 <0.000056>
+[pid  6594] pread64(36, ""..., 16, 4999) = 16 <0.000058>
+[pid  6594] pread64(36, ""..., 197, 4802) = 197 <0.000057>
+[pid  6594] _llseek(36, 8192, [8192], SEEK_SET) = 0 <0.000055>
+[pid  6594] read(36, ""..., 288)        = 288 <0.000057>
+[pid  6594] read(36, ""..., 132)        = 132 <0.000044>
+[pid  6594] close(36)                   = 0 <0.000100>
+[pid  6594] open("/home/baron/etc/mysql/server/5.1.41/data/mysql/help_keyword.MYI", O_RDWR|O_LARGEFILE) = 36 <0.000057>
+[pid  6594] read(36, ""..., 24)         = 24 <0.000052>
+[pid  6594] _llseek(36, 0, [0], SEEK_SET) = 0 <0.000055>
+[pid  6594] read(36, ""..., 389)        = 389 <0.000056>
+[pid  6594] open("./mysql/help_keyword.MYD", O_RDWR|O_LARGEFILE) = 37 <0.000114>
+[pid  6594] write(29, ""..., 160)       = 160 <0.000076>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000045>
+[pid  6594] read(29, ""..., 15)         = 15 <0.000044>
+[pid  6594] open("./mysql/help_relation.frm", O_RDONLY|O_LARGEFILE) = 38 <0.000065>
+[pid  6594] read(38, ""..., 64)         = 64 <0.000058>
+[pid  6594] _llseek(38, 64, [64], SEEK_SET) = 0 <0.000061>
+[pid  6594] read(38, ""..., 7)          = 7 <0.000045>
+[pid  6594] _llseek(38, 4096, [4096], SEEK_SET) = 0 <0.000042>
+[pid  6594] read(38, ""..., 42)         = 42 <0.000056>
+[pid  6594] pread64(38, ""..., 16, 4466) = 16 <0.000062>
+[pid  6594] pread64(38, ""..., 9, 4457) = 9 <0.000057>
+[pid  6594] _llseek(38, 8192, [8192], SEEK_SET) = 0 <0.000055>
+[pid  6594] read(38, ""..., 288)        = 288 <0.000046>
+[pid  6594] read(38, ""..., 150)        = 150 <0.000044>
+[pid  6594] close(38)                   = 0 <0.000045>
+[pid  6594] open("/home/baron/etc/mysql/server/5.1.41/data/mysql/help_relation.MYI", O_RDWR|O_LARGEFILE) = 38 <0.000056>
+[pid  6594] read(38, ""..., 24)         = 24 <0.000044>
+[pid  6594] _llseek(38, 0, [0], SEEK_SET) = 0 <0.000055>
+[pid  6594] read(38, ""..., 369)        = 369 <0.000055>
+[pid  6594] open("./mysql/help_relation.MYD", O_RDWR|O_LARGEFILE) = 39 <0.000051>
+[pid  6594] write(29, ""..., 183)       = 183 <0.000245>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000044>
+[pid  6594] read(29, ""..., 12)         = 12 <0.000044>
+[pid  6594] open("./mysql/help_topic.frm", O_RDONLY|O_LARGEFILE) = 40 <0.000060>
+[pid  6594] read(40, ""..., 64)         = 64 <0.000057>
+[pid  6594] _llseek(40, 64, [64], SEEK_SET) = 0 <0.000055>
+[pid  6594] read(40, ""..., 7)          = 7 <0.000057>
+[pid  6594] _llseek(40, 4096, [4096], SEEK_SET) = 0 <0.000054>
+[pid  6594] read(40, ""..., 55)         = 55 <0.000045>
+[pid  6594] pread64(40, ""..., 16, 5404) = 16 <0.000044>
+[pid  6594] pread64(40, ""..., 602, 4802) = 602 <0.000046>
+[pid  6594] _llseek(40, 8192, [8192], SEEK_SET) = 0 <0.000041>
+[pid  6594] read(40, ""..., 288)        = 288 <0.000044>
+[pid  6594] read(40, ""..., 290)        = 290 <0.000044>
+[pid  6594] close(40)                   = 0 <0.000030>
+[pid  6594] open("/home/baron/etc/mysql/server/5.1.41/data/mysql/help_topic.MYI", O_RDWR|O_LARGEFILE) = 40 <0.000057>
+[pid  6594] read(40, ""..., 24)         = 24 <0.000045>
+[pid  6594] _llseek(40, 0, [0], SEEK_SET) = 0 <0.000042>
+[pid  6594] read(40, ""..., 410)        = 410 <0.000048>
+[pid  6594] open("./mysql/help_topic.MYD", O_RDWR|O_LARGEFILE) = 41 <0.000063>
+[pid  6594] write(29, ""..., 431)       = 431 <0.000351>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000057>
+[pid  6594] read(29, ""..., 6)          = 6 <0.000085>
+[pid  6594] write(29, ""..., 1313)      = 1313 <0.000656>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000045>
+[pid  6594] read(29, ""..., 18)         = 18 <0.000045>
+[pid  6594] open("./mysql/ndb_binlog_index.frm", O_RDONLY|O_LARGEFILE) = 42 <0.000127>
+[pid  6594] read(42, ""..., 64)         = 64 <0.000123>
+[pid  6594] _llseek(42, 64, [64], SEEK_SET) = 0 <0.000151>
+[pid  6594] read(42, ""..., 7)          = 7 <0.000138>
+[pid  6594] _llseek(42, 4096, [4096], SEEK_SET) = 0 <0.000149>
+[pid  6594] read(42, ""..., 33)         = 33 <0.000160>
+[pid  6594] pread64(42, ""..., 16, 4761) = 16 <0.000117>
+[pid  6594] pread64(42, ""..., 304, 4457) = 304 <0.000118>
+[pid  6594] _llseek(42, 8192, [8192], SEEK_SET) = 0 <0.000116>
+[pid  6594] read(42, ""..., 288)        = 288 <0.000046>
+[pid  6594] read(42, ""..., 298)        = 298 <0.000070>
+[pid  6594] close(42)                   = 0 <0.000066>
+[pid  6594] open("/home/baron/etc/mysql/server/5.1.41/data/mysql/ndb_binlog_index.MYI", O_RDWR|O_LARGEFILE) = 42 <0.000077>
+[pid  6594] read(42, ""..., 24)         = 24 <0.000044>
+[pid  6594] _llseek(42, 0, [0], SEEK_SET) = 0 <0.000042>
+[pid  6594] read(42, ""..., 375)        = 375 <0.000044>
+[pid  6594] open("./mysql/ndb_binlog_index.MYD", O_RDWR|O_LARGEFILE) = 43 <0.000055>
+[pid  6594] write(29, ""..., 557)       = 557 <0.000423>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000046>
+[pid  6594] read(29, ""..., 8)          = 8 <0.000095>
+[pid  6594] open("/home/baron/etc/mysql/server/5.1.41/data/mysql/plugin.MYI", O_RDWR|O_LARGEFILE) = 44 <0.000057>
+[pid  6594] read(44, ""..., 24)         = 24 <0.000046>
+[pid  6594] _llseek(44, 0, [0], SEEK_SET) = 0 <0.000043>
+[pid  6594] read(44, ""..., 347)        = 347 <0.000045>
+[pid  6594] open("./mysql/plugin.MYD", O_RDWR|O_LARGEFILE) = 45 <0.000050>
+[pid  6594] write(29, ""..., 109)       = 109 <0.000185>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000045>
+[pid  6594] read(29, ""..., 6)          = 6 <0.000044>
+[pid  6594] open("./mysql/proc.frm", O_RDONLY|O_LARGEFILE) = 46 <0.000075>
+[pid  6594] read(46, ""..., 64)         = 64 <0.000045>
+[pid  6594] _llseek(46, 64, [64], SEEK_SET) = 0 <0.000060>
+[pid  6594] read(46, ""..., 7)          = 7 <0.000045>
+[pid  6594] _llseek(46, 4096, [4096], SEEK_SET) = 0 <0.000042>
+[pid  6594] read(46, ""..., 51)         = 51 <0.000044>
+[pid  6594] pread64(46, ""..., 16, 5808) = 16 <0.000044>
+[pid  6594] pread64(46, ""..., 1351, 4457) = 1351 <0.000066>
+[pid  6594] _llseek(46, 8192, [8192], SEEK_SET) = 0 <0.000041>
+[pid  6594] read(46, ""..., 288)        = 288 <0.000045>
+[pid  6594] read(46, ""..., 1516)       = 1516 <0.000140>
+[pid  6594] close(46)                   = 0 <0.000128>
+[pid  6594] open("/home/baron/etc/mysql/server/5.1.41/data/mysql/proc.MYI", O_RDWR|O_LARGEFILE) = 46 <0.000056>
+[pid  6594] read(46, ""..., 24)         = 24 <0.000045>
+[pid  6594] _llseek(46, 0, [0], SEEK_SET) = 0 <0.000042>
+[pid  6594] read(46, ""..., 525)        = 525 <0.000044>
+[pid  6594] open("./mysql/proc.MYD", O_RDWR|O_LARGEFILE) = 47 <0.000050>
+[pid  6594] write(29, ""..., 1267)      = 1267 <0.000804>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000045>
+[pid  6594] read(29, ""..., 12)         = 12 <0.000032>
+[pid  6594] write(29, ""..., 570)       = 570 <0.000396>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000066>
+[pid  6594] read(29, ""..., 9)          = 9 <0.000044>
+[pid  6594] write(29, ""..., 534)       = 534 <0.000411>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000045>
+[pid  6594] read(29, ""..., 10)         = 10 <0.000043>
+[pid  6594] open("./mysql/slow_log.frm", O_RDONLY|O_LARGEFILE) = 48 <0.000094>
+[pid  6594] read(48, ""..., 64)         = 64 <0.000118>
+[pid  6594] _llseek(48, 64, [64], SEEK_SET) = 0 <0.000135>
+[pid  6594] read(48, ""..., 7)          = 7 <0.000132>
+[pid  6594] _llseek(48, 4096, [4096], SEEK_SET) = 0 <0.000148>
+[pid  6594] read(48, ""..., 8)          = 8 <0.000141>
+[pid  6594] pread64(48, ""..., 13, 5702) = 13 <0.000149>
+[pid  6594] pread64(48, ""..., 1590, 4112) = 1590 <0.000117>
+[pid  6594] _llseek(48, 8192, [8192], SEEK_SET) = 0 <0.000128>
+[pid  6594] read(48, ""..., 288)        = 288 <0.000117>
+[pid  6594] read(48, ""..., 496)        = 496 <0.000116>
+[pid  6594] close(48)                   = 0 <0.000095>
+[pid  6594] open("./mysql/slow_log.CSM", O_RDWR|O_CREAT|O_LARGEFILE, 0660) = 48 <0.000078>
+[pid  6594] _llseek(48, 0, [0], SEEK_SET) = 0 <0.000042>
+[pid  6594] read(48, ""..., 35)         = 35 <0.000054>
+[pid  6594] fdatasync(48)               = 0 <0.000414>
+[pid  6594] open("./mysql/slow_log.CSV", O_RDONLY|O_LARGEFILE) = 49 <0.000070>
+[pid  6594] write(29, ""..., 781)       = 781 <0.000586>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000046>
+[pid  6594] read(29, ""..., 13)         = 13 <0.000065>
+[pid  6594] write(29, ""..., 574)       = 574 <0.000388>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000117>
+[pid  6594] read(29, ""..., 11)         = 11 <0.000056>
+[pid  6594] open("/home/baron/etc/mysql/server/5.1.41/data/mysql/time_zone.MYI", O_RDWR|O_LARGEFILE) = 50 <0.000087>
+[pid  6594] read(50, ""..., 24)         = 24 <0.000118>
+[pid  6594] _llseek(50, 0, [0], SEEK_SET) = 0 <0.000116>
+[pid  6594] read(50, ""..., 347)        = 347 <0.000143>
+[pid  6594] open("./mysql/time_zone.MYD", O_RDWR|O_LARGEFILE) = 51 <0.000094>
+[pid  6594] write(29, ""..., 167)       = 167 <0.000271>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000067>
+[pid  6594] read(29, ""..., 23)         = 23 <0.000044>
+[pid  6594] open("/home/baron/etc/mysql/server/5.1.41/data/mysql/time_zone_leap_second.MYI", O_RDWR|O_LARGEFILE) = 52 <0.000070>
+[pid  6594] read(52, ""..., 24)         = 24 <0.000045>
+[pid  6594] _llseek(52, 0, [0], SEEK_SET) = 0 <0.000067>
+[pid  6594] read(52, ""..., 347)        = 347 <0.000069>
+[pid  6594] open("./mysql/time_zone_leap_second.MYD", O_RDWR|O_LARGEFILE) = 53 <0.000077>
+[pid  6594] write(29, ""..., 209)       = 209 <0.000314>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000138>
+[pid  6594] read(29, ""..., 16)         = 16 <0.000085>
+[pid  6594] open("/home/baron/etc/mysql/server/5.1.41/data/mysql/time_zone_name.MYI", O_RDWR|O_LARGEFILE) = 54 <0.000061>
+[pid  6594] read(54, ""..., 24)         = 24 <0.000035>
+[pid  6594] _llseek(54, 0, [0], SEEK_SET) = 0 <0.000031>
+[pid  6594] read(54, ""..., 347)        = 347 <0.000034>
+[pid  6594] open("./mysql/time_zone_name.MYD", O_RDWR|O_LARGEFILE) = 55 <0.000039>
+[pid  6594] write(29, ""..., 162)       = 162 <0.000343>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000028>
+[pid  6594] read(29, ""..., 22)         = 22 <0.000035>
+[pid  6594] open("/home/baron/etc/mysql/server/5.1.41/data/mysql/time_zone_transition.MYI", O_RDWR|O_LARGEFILE) = 56 <0.000043>
+[pid  6594] read(56, ""..., 24)         = 24 <0.000050>
+[pid  6594] _llseek(56, 0, [0], SEEK_SET) = 0 <0.000117>
+[pid  6594] read(56, ""..., 376)        = 376 <0.000069>
+[pid  6594] open("./mysql/time_zone_transition.MYD", O_RDWR|O_LARGEFILE) = 57 <0.000077>
+[pid  6594] write(29, ""..., 318)       = 318 <0.000437>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000044>
+[pid  6594] read(29, ""..., 27)         = 27 <0.000056>
+[pid  6594] open("/home/baron/etc/mysql/server/5.1.41/data/mysql/time_zone_transition_type.MYI", O_RDWR|O_LARGEFILE) = 58 <0.000058>
+[pid  6594] read(58, ""..., 24)         = 24 <0.000046>
+[pid  6594] _llseek(58, 0, [0], SEEK_SET) = 0 <0.000042>
+[pid  6594] read(58, ""..., 390)        = 390 <0.000044>
+[pid  6594] open("./mysql/time_zone_transition_type.MYD", O_RDWR|O_LARGEFILE) = 59 <0.000062>
+[pid  6594] write(29, ""..., 531)       = 531 <0.000498>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000045>
+[pid  6594] read(29, ""..., 6)          = 6 <0.000038>
+[pid  6594] write(29, ""..., 2555)      = 2555 <0.001598>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000030>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000045>
+[pid  6594] read(29,  <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.000186>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001175>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001354>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.000538>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.001243>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001522>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.000701>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.000735>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001351>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001034>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.001356>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001578>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6594] <... read resumed> ""..., 4) = 4 <5.818698>
+[pid  6594] read(29, ""..., 12)         = 12 <0.000050>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000043>
+[pid  6594] open("./mysql/", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY|O_CLOEXEC) = 60 <0.000065>
+[pid  6594] getdents64(60, /* 71 entries */, 32768) = 2688 <0.000162>
+[pid  6594] getdents64(60, /* 0 entries */, 32768) = 0 <0.000117>
+[pid  6594] close(60)                   = 0 <0.000141>
+[pid  6594] open("./mysql/columns_priv.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000057>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000058>
+[pid  6594] close(60)                   = 0 <0.000080>
+[pid  6594] open("./mysql/db.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000063>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000045>
+[pid  6594] close(60)                   = 0 <0.000043>
+[pid  6594] open("./mysql/event.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000077>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000056>
+[pid  6594] close(60)                   = 0 <0.000058>
+[pid  6594] open("./mysql/func.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000061>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000045>
+[pid  6594] close(60)                   = 0 <0.000046>
+[pid  6594] open("./mysql/general_log.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000050>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000045>
+[pid  6594] close(60)                   = 0 <0.000043>
+[pid  6594] open("./mysql/help_category.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000050>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000044>
+[pid  6594] close(60)                   = 0 <0.000043>
+[pid  6594] open("./mysql/help_keyword.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000052>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000045>
+[pid  6594] close(60)                   = 0 <0.000043>
+[pid  6594] open("./mysql/help_relation.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000051>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000044>
+[pid  6594] close(60)                   = 0 <0.000042>
+[pid  6594] open("./mysql/help_topic.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000059>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000056>
+[pid  6594] close(60)                   = 0 <0.000029>
+[pid  6594] open("./mysql/host.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000038>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000028>
+[pid  6594] close(60)                   = 0 <0.000027>
+[pid  6594] open("./mysql/ndb_binlog_index.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000034>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000027>
+[pid  6594] close(60)                   = 0 <0.000027>
+[pid  6594] open("./mysql/plugin.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000035>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000031>
+[pid  6594] close(60)                   = 0 <0.000028>
+[pid  6594] open("./mysql/proc.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000036>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000057>
+[pid  6594] close(60)                   = 0 <0.000026>
+[pid  6594] open("./mysql/procs_priv.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000037>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000028>
+[pid  6594] close(60)                   = 0 <0.000033>
+[pid  6594] open("./mysql/servers.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000036>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000028>
+[pid  6594] close(60)                   = 0 <0.000027>
+[pid  6594] open("./mysql/slow_log.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000036>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000028>
+[pid  6594] close(60)                   = 0 <0.000026>
+[pid  6594] open("./mysql/tables_priv.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000035>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000027>
+[pid  6594] close(60)                   = 0 <0.000305>
+[pid  6594] open("./mysql/time_zone.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000034>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000031>
+[pid  6594] close(60)                   = 0 <0.000027>
+[pid  6594] open("./mysql/time_zone_leap_second.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000036>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000028>
+[pid  6594] close(60)                   = 0 <0.000027>
+[pid  6594] open("./mysql/time_zone_name.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000034>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000027>
+[pid  6594] close(60)                   = 0 <0.000051>
+[pid  6594] open("./mysql/time_zone_transition.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000044>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000029>
+[pid  6594] close(60)                   = 0 <0.000028>
+[pid  6594] open("./mysql/time_zone_transition_type.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000036>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000028>
+[pid  6594] close(60)                   = 0 <0.000026>
+[pid  6594] open("./mysql/user.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000035>
+[pid  6594] read(60, ""..., 10)         = 10 <0.000027>
+[pid  6594] close(60)                   = 0 <0.000026>
+[pid  6594] write(29, ""..., 441)       = 441 <0.000093>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000028>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000025>
+[pid  6594] read(29,  <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001360>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001442>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.000605>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.000605>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001358>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001395>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001386>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001365>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001362>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001402>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6594] <... read resumed> ""..., 4) = 4 <4.992747>
+[pid  6594] read(29, ""..., 19)         = 19 <0.000037>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000124>
+[pid  6594] write(29, ""..., 205)       = 205 <0.000072>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000045>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000041>
+[pid  6594] read(29,  <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001361>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001384>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001360>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001374>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001182>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001028>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6594] <... read resumed> ""..., 4) = 4 <2.835498>
+[pid  6594] read(29, ""..., 18)         = 18 <0.000087>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000043>
+[pid  6594] write(29, ""..., 69)        = 69 <0.000089>
+[pid  6594] read(29, ""..., 4)          = 4 <0.000064>
+[pid  6594] read(29, ""..., 5)          = 5 <0.000117>
+[pid  6594] write(29, ""..., 11)        = 11 <0.000084>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000033>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000047>
+[pid  6594] read(29, ""..., 4)          = 4 <0.002494>
+[pid  6594] read(29, ""..., 15)         = 15 <0.000094>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000070>
+[pid  6594] open("./", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY|O_CLOEXEC) = 60 <0.000098>
+[pid  6594] getdents64(60, /* 9 entries */, 32768) = 264 <0.000112>
+[pid  6594] getdents64(60, /* 0 entries */, 32768) = 0 <0.000065>
+[pid  6594] close(60)                   = 0 <0.000069>
+[pid  6594] open("./mysql/db.opt", O_RDONLY|O_LARGEFILE) = -1 ENOENT (No such file or directory) <0.000050>
+[pid  6594] write(29, ""..., 118)       = 118 <0.000073>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000034>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000030>
+[pid  6594] read(29, ""..., 4)          = 4 <0.004014>
+[pid  6594] read(29, ""..., 12)         = 12 <0.000647>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000025>
+[pid  6594] open("./test/", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY|O_CLOEXEC) = 60 <0.000039>
+[pid  6594] getdents64(60, /* 3 entries */, 32768) = 80 <0.000041>
+[pid  6594] getdents64(60, /* 0 entries */, 32768) = 0 <0.000025>
+[pid  6594] close(60)                   = 0 <0.000028>
+[pid  6594] write(29, ""..., 84)        = 84 <0.000245>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000289>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000024>
+[pid  6594] read(29,  <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001230>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001227>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.000273>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.000283>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.001345>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001507>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.001107>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001343>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001193>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001326>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001010>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001090>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001358>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001448>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001356>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001438>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6594] <... read resumed> ""..., 4) = 4 <8.251601>
+[pid  6594] read(29, ""..., 23)         = 23 <0.000061>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000056>
+[pid  6594] open("./test/t2.frm", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0660) = 60 <0.000114>
+[pid  6594] write(60, ""..., 4096)      = 4096 <0.000069>
+[pid  6594] _llseek(60, 64, [64], SEEK_SET) = 0 <0.000043>
+[pid  6594] write(60, ""..., 3)         = 3 <0.000114>
+[pid  6594] write(60, ""..., 4)         = 4 <0.000109>
+[pid  6594] _llseek(60, 0, [4096], SEEK_END) = 0 <0.000055>
+[pid  6594] write(60, ""..., 4096)      = 4096 <0.000060>
+[pid  6594] pwrite64(60, ""..., 64, 0)  = 64 <0.000061>
+[pid  6594] pwrite64(60, ""..., 8, 4096) = 8 <0.000094>
+[pid  6594] _llseek(60, 4112, [4112], SEEK_SET) = 0 <0.000117>
+[pid  6594] write(60, ""..., 5)         = 5 <0.000118>
+[pid  6594] write(60, ""..., 2)         = 2 <0.000120>
+[pid  6594] write(60, ""..., 2)         = 2 <0.000119>
+[pid  6594] write(60, ""..., 6)         = 6 <0.000121>
+[pid  6594] write(60, ""..., 6)         = 6 <0.000075>
+[pid  6594] _llseek(60, 8192, [8192], SEEK_SET) = 0 <0.000064>
+[pid  6594] write(60, ""..., 288)       = 288 <0.000082>
+[pid  6594] write(60, ""..., 53)        = 53 <0.000073>
+[pid  6594] write(60, ""..., 17)        = 17 <0.000097>
+[pid  6594] write(60, ""..., 1)         = 1 <0.000057>
+[pid  6594] write(60, ""..., 3)         = 3 <0.000054>
+[pid  6594] fdatasync(60)               = 0 <0.106805>
+[pid  6594] open("./test/", O_RDONLY|O_LARGEFILE) = 61 <0.000099>
+[pid  6594] fdatasync(61)               = 0 <0.032578>
+[pid  6594] close(61)                   = 0 <0.000087>
+[pid  6594] close(60)                   = 0 <0.000086>
+[pid  6594] open("./test/t2.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000156>
+[pid  6594] read(60, ""..., 64)         = 64 <0.000062>
+[pid  6594] _llseek(60, 64, [64], SEEK_SET) = 0 <0.000042>
+[pid  6594] read(60, ""..., 7)          = 7 <0.000044>
+[pid  6594] _llseek(60, 4096, [4096], SEEK_SET) = 0 <0.000041>
+[pid  6594] read(60, ""..., 8)          = 8 <0.000046>
+[pid  6594] pread64(60, ""..., 16, 4117) = 16 <0.000044>
+[pid  6594] pread64(60, ""..., 5, 4112) = 5 <0.000058>
+[pid  6594] _llseek(60, 8192, [8192], SEEK_SET) = 0 <0.000054>
+[pid  6594] read(60, ""..., 288)        = 288 <0.000061>
+[pid  6594] read(60, ""..., 74)         = 74 <0.000045>
+[pid  6594] close(60)                   = 0 <0.000045>
+[pid  6594] open("/home/baron/etc/mysql/server/5.1.41/data/test/t2.MYI", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0660) = 60 <0.000112>
+[pid  6594] open("./test/t2.MYD", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0660) = 61 <0.000104>
+[pid  6594] write(60, ""..., 176)       = 176 <0.000085>
+[pid  6594] write(60, ""..., 100)       = 100 <0.000085>
+[pid  6594] write(60, ""..., 7)         = 7 <0.000086>
+[pid  6594] write(60, ""..., 7)         = 7 <0.000050>
+[pid  6594] _llseek(60, 0, [290], SEEK_END) = 0 <0.000117>
+[pid  6594] write(60, ""..., 734)       = 734 <0.000125>
+[pid  6594] close(61)                   = 0 <0.000097>
+[pid  6594] close(60)                   = 0 <0.000096>
+[pid  6594] write(29, ""..., 11)        = 11 <0.000124>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000036>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000026>
+[pid  6594] read(29,  <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001477>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001534>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001363>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001435>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001215>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001221>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001349>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001387>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001352>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001389>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001214>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001201>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001208>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001240>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.000432>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001069>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001140>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.000395>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001380>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001375>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6594] <... read resumed> ""..., 4) = 4 <10.123425>
+[pid  6594] read(29, ""..., 25)         = 25 <0.000048>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000143>
+[pid  6594] open("./test/t2.frm", O_RDONLY|O_LARGEFILE) = 60 <0.000101>
+[pid  6594] read(60, ""..., 64)         = 64 <0.000121>
+[pid  6594] _llseek(60, 64, [64], SEEK_SET) = 0 <0.000096>
+[pid  6594] read(60, ""..., 7)          = 7 <0.000116>
+[pid  6594] _llseek(60, 4096, [4096], SEEK_SET) = 0 <0.000116>
+[pid  6594] read(60, ""..., 8)          = 8 <0.000070>
+[pid  6594] pread64(60, ""..., 16, 4117) = 16 <0.000068>
+[pid  6594] pread64(60, ""..., 5, 4112) = 5 <0.000071>
+[pid  6594] _llseek(60, 8192, [8192], SEEK_SET) = 0 <0.000071>
+[pid  6594] read(60, ""..., 288)        = 288 <0.000069>
+[pid  6594] read(60, ""..., 74)         = 74 <0.000029>
+[pid  6594] close(60)                   = 0 <0.000090>
+[pid  6594] open("/home/baron/etc/mysql/server/5.1.41/data/test/t2.MYI", O_RDWR|O_LARGEFILE) = 60 <0.000044>
+[pid  6594] read(60, ""..., 24)         = 24 <0.000057>
+[pid  6594] _llseek(60, 0, [0], SEEK_SET) = 0 <0.000042>
+[pid  6594] read(60, ""..., 290)        = 290 <0.000045>
+[pid  6594] open("./test/t2.MYD", O_RDWR|O_LARGEFILE) = 61 <0.000050>
+[pid  6594] pwrite64(60, ""..., 3, 24)  = 3 <0.000055>
+[pid  6594] pwrite64(61, ""..., 5, 0)   = 5 <0.000075>
+[pid  6594] pwrite64(61, ""..., 2, 5)   = 2 <0.000051>
+[pid  6594] write(29, ""..., 11)        = 11 <0.000079>
+[pid  6594] pwrite64(60, ""..., 124, 0) = 124 <0.000087>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000078>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000046>
+[pid  6594] read(29,  <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001273>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001629>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001193>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001105>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001430>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001377>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.001351>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001517>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6594] <... read resumed> ""..., 4) = 4 <3.936983>
+[pid  6594] read(29, ""..., 17)         = 17 <0.000047>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000043>
+[pid  6594] pread64(61, ""..., 5, 0)    = 5 <0.000067>
+[pid  6594] write(29, ""..., 65)        = 65 <0.000070>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000045>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000056>
+[pid  6594] read(29,  <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001149>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001061>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001348>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001430>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.000505>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001015>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6594] <... read resumed> ""..., 4) = 4 <3.104013>
+[pid  6594] read(29, ""..., 13)         = 13 <0.000038>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000031>
+[pid  6594] close(21)                   = 0 <0.000098>
+[pid  6594] close(22)                   = 0 <0.000047>
+[pid  6594] close(17)                   = 0 <0.000046>
+[pid  6594] close(18)                   = 0 <0.000044>
+[pid  6594] close(27)                   = 0 <0.000045>
+[pid  6594] close(28)                   = 0 <0.000046>
+[pid  6594] close(33)                   = 0 <0.000040>
+[pid  6594] _llseek(32, 0, [0], SEEK_SET) = 0 <0.000043>
+[pid  6594] write(32, ""..., 35)        = 35 <0.000140>
+[pid  6594] fdatasync(32)               = 0 <0.062441>
+[pid  6594] close(32)                   = 0 <0.000114>
+[pid  6594] close(34)                   = 0 <0.000061>
+[pid  6594] close(35)                   = 0 <0.000057>
+[pid  6594] close(36)                   = 0 <0.000057>
+[pid  6594] close(37)                   = 0 <0.000056>
+[pid  6594] close(38)                   = 0 <0.000046>
+[pid  6594] close(39)                   = 0 <0.000069>
+[pid  6594] close(40)                   = 0 <0.000046>
+[pid  6594] close(41)                   = 0 <0.000045>
+[pid  6594] close(13)                   = 0 <0.000048>
+[pid  6594] close(14)                   = 0 <0.000044>
+[pid  6594] close(42)                   = 0 <0.000046>
+[pid  6594] close(43)                   = 0 <0.000045>
+[pid  6594] close(44)                   = 0 <0.000063>
+[pid  6594] close(45)                   = 0 <0.000045>
+[pid  6594] close(46)                   = 0 <0.000045>
+[pid  6594] close(47)                   = 0 <0.000044>
+[pid  6594] close(23)                   = 0 <0.000045>
+[pid  6594] close(24)                   = 0 <0.000044>
+[pid  6594] close(25)                   = 0 <0.000046>
+[pid  6594] close(26)                   = 0 <0.000082>
+[pid  6594] close(49)                   = 0 <0.000046>
+[pid  6594] _llseek(48, 0, [0], SEEK_SET) = 0 <0.000043>
+[pid  6594] write(48, ""..., 35)        = 35 <0.000068>
+[pid  6594] fdatasync(48 <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001210>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001215>
+[pid  6594] <... fdatasync resumed> )   = 0 <0.013248>
+[pid  6594] close(48 <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6594] <... close resumed> )       = 0 <0.000101>
+[pid  6594] close(19)                   = 0 <0.000145>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6594] close(20)                   = 0 <0.000205>
+[pid  6594] close(50)                   = 0 <0.000090>
+[pid  6594] close(51)                   = 0 <0.000045>
+[pid  6594] close(52)                   = 0 <0.000046>
+[pid  6594] close(53)                   = 0 <0.000045>
+[pid  6594] close(54)                   = 0 <0.000046>
+[pid  6594] close(55)                   = 0 <0.000062>
+[pid  6594] close(56)                   = 0 <0.000046>
+[pid  6594] close(57)                   = 0 <0.000062>
+[pid  6594] close(58)                   = 0 <0.000045>
+[pid  6594] close(59)                   = 0 <0.000046>
+[pid  6594] close(15)                   = 0 <0.000046>
+[pid  6594] close(16)                   = 0 <0.000045>
+[pid  6594] close(30)                   = 0 <0.000046>
+[pid  6594] close(31)                   = 0 <0.000045>
+[pid  6594] pwrite64(60, ""..., 2, 24)  = 2 <0.000059>
+[pid  6594] close(60)                   = 0 <0.000045>
+[pid  6594] close(61)                   = 0 <0.000043>
+[pid  6594] write(29, ""..., 11)        = 11 <0.000109>
+[pid  6594] read(29, 0x9b812e0, 4)      = -1 EAGAIN (Resource temporarily unavailable) <0.000028>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR) = 0 <0.000025>
+[pid  6594] read(29,  <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.000603>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.000277>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6594] <... read resumed> ""..., 4) = 4 <1.441520>
+[pid  6594] read(29, ""..., 1)          = 1 <0.000025>
+[pid  6594] fcntl64(29, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000020>
+[pid  6594] close(29)                   = 0 <0.000030>
+Process 6594 detached
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001360>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001367>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001359>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001408>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001316>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001148>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.000217>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001191>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001371>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.000484>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001141>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001172>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001359>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001393>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001270>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001079>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001177>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001213>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001236>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001328>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001361>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001451>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.001151>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001076>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0}) = 0 (Timeout) <1.001180>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001468>
+[pid  6575] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6576] select(0, NULL, NULL, NULL, {1, 0} <unfinished ...>
+[pid  6562] <... select resumed> )      = 1 (in [10]) <61.313335>
+[pid  6562] fcntl64(10, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000046>
+[pid  6562] fcntl64(10, F_SETFL, O_RDWR) = 0 <0.000046>
+[pid  6562] fcntl64(13, F_SETFL, O_RDONLY) = 0 <0.000046>
+[pid  6562] fcntl64(13, F_GETFL)        = 0x2 (flags O_RDWR) <0.000049>
+[pid  6562] fcntl64(13, F_SETFL, O_RDWR|O_NONBLOCK) = 0 <0.000044>
+Process 6629 attached
+[pid  6562] select(13, [10 12], NULL, NULL, NULL <unfinished ...>
+[pid  6629] write(13, ""..., 56)        = 56 <0.001056>
+[pid  6629] read(13, ""..., 4)          = 4 <0.000068>
+[pid  6629] read(13, ""..., 58)         = 58 <0.000144>
+[pid  6629] write(13, ""..., 11)        = 11 <0.000166>
+[pid  6629] read(13, ""..., 4)          = 4 <0.000115>
+[pid  6629] read(13, ""..., 2)          = 2 <0.000118>
+[pid  6629] write(13, ""..., 9Process 6630 attached
+ <unfinished ...>
+[pid  6630] write(2, ""..., 54)         = 54 <0.000054>
+[pid  6562] <... select resumed> )      = ? ERESTARTNOHAND (To be restarted) <0.005228>
+[pid  6562] --- SIGUSR1 (User defined signal 1) @ 0 (0) ---
+[pid  6629] <... write resumed> )       = 9 <0.001545>
+[pid  6629] close(13)                   = 0 <0.000080>
+Process 6629 detached
+[pid  6630] close(10)                   = 0 <0.000087>
+[pid  6630] close(12)                   = 0 <0.000062>
+[pid  6630] write(2, ""..., 68)         = 68 <0.000052>
+[pid  6630] write(2, ""..., 15)         = 15 <0.000046>
+[pid  6630] write(2, ""..., 31)         = 31 <0.000047>
+[pid  6630] select(0, NULL, NULL, NULL, {0, 100000}) = 0 (Timeout) <0.100444>
+[pid  6630] select(0, NULL, NULL, NULL, {0, 100000}) = 0 (Timeout) <0.100521>
+[pid  6630] select(0, NULL, NULL, NULL, {0, 100000}) = 0 (Timeout) <0.100573>
+[pid  6630] select(0, NULL, NULL, NULL, {0, 100000}) = 0 (Timeout) <0.100465>
+[pid  6630] select(0, NULL, NULL, NULL, {0, 100000}) = 0 (Timeout) <0.100470>
+[pid  6630] select(0, NULL, NULL, NULL, {0, 100000} <unfinished ...>
+[pid  6576] <... select resumed> )      = 0 (Timeout) <1.000455>
+[pid  6575] <... select resumed> )      = 0 (Timeout) <1.001511>
+Process 6576 detached
+Process 6575 detached
+[pid  6630] <... select resumed> )      = 0 (Timeout) <0.100739>
+[pid  6565] pwrite64(8, ""..., 512, 512) = 512 <0.000061>
+[pid  6565] fsync(8)                    = 0 <0.116063>
+[pid  6630] pread64(3, ""..., 16384, 0) = 16384 <0.000109>
+[pid  6630] pwrite64(3, ""..., 16384, 0) = 16384 <0.000109>
+[pid  6630] fsync(3)                    = 0 <0.053555>
+[pid  6630] close(3)                    = 0 <0.000060>
+[pid  6630] close(8)                    = 0 <0.000048>
+[pid  6630] close(9)                    = 0 <0.000042>
+[pid  6630] select(0, NULL, NULL, NULL, {0, 100000}Process 6577 detached
+Process 6572 detached
+Process 6573 detached
+Process 6571 detached
+Process 6570 detached
+Process 6569 detached
+Process 6568 detached
+Process 6567 detached
+Process 6565 detached
+Process 6566 detached
+Process 6564 detached
+) = 0 (Timeout) <0.100447>
+[pid  6630] select(0, NULL, NULL, NULL, {0, 100000}) = 0 (Timeout) <0.100470>
+[pid  6630] close(4)                    = 0 <0.000145>
+[pid  6630] close(5)                    = 0 <0.000098>
+[pid  6630] close(6)                    = 0 <0.000098>
+[pid  6630] close(11)                   = 0 <0.000088>
+[pid  6630] close(7)                    = 0 <0.000072>
+[pid  6630] write(2, ""..., 15)         = 15 <0.000041>
+[pid  6630] write(2, ""..., 56)         = 56 <0.000035>
+[pid  6630] write(2, ""..., 56)         = 56 <0.000038>
+Process 6630 detached
+Process 6562 detached

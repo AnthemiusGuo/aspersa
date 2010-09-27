@@ -4,49 +4,36 @@
 # ########################################################################
 # This script uses strace and lsof to watch a process's IO and print out a table
 # of files and I/O activity.
-# TODO Make a table of file descriptor, read/pread/write/pwrite/open/close, and the
-# count and time and size of each operation in the cells of the table.  At the
-# far right, print the filename and size of the file.
-# TODO: also permit aggregating by thread ID instead of filename
-# TODO: -t should make it print total size in MB and total time in S
-# TODO: optionally aggregate by device, not by filename
-# lsof -s -p $(pidof mysqld) > files;
-# strace -f -e read,write,pread,pwrite,open -p 2362 -T -xx -s 0 > strace 2>&1
-# grep -o 'pread([0-9]*' strace | cut -d'(' -f2 | sort |uniq -c | sort -rn
-# grep 7792uW files
 #
 # Author: Baron Schwartz
 # ########################################################################
+
+# TODO: also permit aggregating by thread ID instead of filename
+# TODO: -t should make it print total size in MB and total time in S
+# TODO: optionally aggregate by device, not by filename
+
+# Print a usage message and exit.
+usage() {
+   if [ "${OPT_ERR}" ]; then
+      echo "${OPT_ERR}"
+   fi
+   echo "Usage: $0 -p <pid> -b <binary> -s <time> [FILE]"
+   echo "   $0 does two things: 1) get lsof+strace for -s seconds and 2) aggregate it."
+   echo "   If you specify -p, then -b is ignored.  Otherwise that binary is straced."
+   echo "   If you specify a FILE, then step 1) above is not performed."
+   exit 1
+}
 
 # ########################################################################
 # Variables that are used/reused in the awk code.
 # ########################################################################
 count_stats="
-            if ( funcn == \"read\" ) {
-               count_read[filename]++;
-               sizes_read[filename] += size;
-               times_read[filename] += timing;
-            }
-            else if ( funcn == \"pread\" ) {
-               count_pread[filename]++;
-               sizes_pread[filename] += size;
-               times_pread[filename] += timing;
-            }
-            else if ( funcn == \"write\" ) {
-               count_write[filename]++;
-               sizes_write[filename] += size;
-               times_write[filename] += timing;
-            }
-            else if ( funcn == \"pwrite\" ) {
-               count_pwrite[filename]++;
-               sizes_pwrite[filename] += size;
-               times_pwrite[filename] += timing;
-            }
-            else if ( funcn == \"open\" ) {
-               count_open[filename]++;
-               sizes_open[filename] += size;
-               times_open[filename] += timing;
-            }"
+               if ( funcn ~ wanted_pat ) {
+                  filenames[filename]++;
+                  count[funcn \",\" filename]++;
+                  sizes[funcn \",\" filename] += size;
+                  times[funcn \",\" filename] += timing;
+               }"
 
 # ########################################################################
 # Variables that are set by command-line options and/or the interactive
@@ -56,6 +43,17 @@ count_stats="
 # Read the 'lsof' and 'strace' from the file, summarize, print.
 summarize_strace() {
    cat > /tmp/aspersa.awk <<EOF
+   BEGIN {
+      # These are function names, or partial function names, that we care about.
+      # Later we will ignore any function whose name doesn't look like these.
+      wanted["1"] = "read"; # Will match pread, pread64, etc.
+      wanted["2"] = "write";
+      wanted["3"] = "sync";
+      wanted["4"] = "open";
+      wanted["5"] = "close";
+      wanted_pat  = "read|write|sync|open|close";
+      num_wanted  = 5;
+   }
    /^COMMAND/ {
       # The lsof output is beginning.
       lsof = 1;
@@ -68,10 +66,9 @@ summarize_strace() {
    {
       if ( lsof == 1 && \$5 == "REG" ) {
          # Save the file descriptor and name for lookup later.
-         fd=\$4;
+         fd = \$4;
          gsub(/[rwu-].*/, "", fd);
          filename_for[fd] = \$9;
-         filenames[\$9]++;
       }
       else if ( strace == 1 && \$1 ~ /^\[/ ) {
 
@@ -81,6 +78,7 @@ summarize_strace() {
             funcn = substr(\$3, 1, index(\$3, "(") - 1);
             fd    = substr(\$3, index(\$3, "(") + 1);
             fd    = substr(fd, 1, index(fd, ",") - 1);
+            func_names[funcn]++;
             # handle unfinished calls
             if ( \$NF ~ />/ ) {
                unfinished[pid funcn] = fd;
@@ -116,78 +114,95 @@ summarize_strace() {
       }
    }
    END {
-      for (f in filenames) {
-         preads       = 0;
-         pread_avgtm  = 0;
-         pread_avgsz  = 0;
-         reads        = 0;
-         read_avgtm   = 0;
-         read_avgsz   = 0;
-         pwrites      = 0;
-         pwrite_avgtm = 0;
-         pwrite_avgsz = 0;
-         writes       = 0;
-         write_avgtm  = 0;
-         write_avgsz  = 0;
-         opens        = 0;
-         open_avgtm   = 0;
-         open_avgsz   = 0;
-         total_count  = 0;
-         total_avgsz  = 0;
-         total_avgtm  = 0;
-         if ( count_pread[f] ) {
-            preads      = count_pread[f];
-            pread_avgtm = times_pread[f] / preads;
-            pread_avgsz = sizes_pread[f] / preads;
+      # Choose which functions we want to print out, ordered by wanted[].
+      num_functions = 0;
+      printf("%9s ", "total");
+      for (i = 1; i <= num_wanted; i++) {
+         for (funcn in func_names) {
+            if ( funcn ~ wanted_pat && !accepted[funcn] ) {
+               num_functions++;
+               funcs_to_print[num_functions] = funcn;
+               accepted[funcn]++;
+               printf("%9s ", funcn);
+            }
          }
-         if ( count_read[f] ) {
-            reads      = count_read[f];
-            read_avgtm = times_read[f] / reads;
-            read_avgsz = sizes_read[f] / reads;
+      }
+      print "filename";
+      # filenames[] contains only files that have been referenced by some
+      # functions, so we are automatically including only files that have some
+      # activity from wanted functions.
+      for (filename in filenames) {
+         total_count = 0;
+         total_size  = 0;
+         total_time  = 0;
+         output      = "";
+         for (i = 1; i <= num_functions; i++) {
+            funcn = funcs_to_print[i];
+            total_count += count[funcn "," filename];
+            total_size  += sizes[funcn "," filename];
+            total_time  += times[funcn "," filename];
+            output = output sprintf("%9.6f ", times[funcn "," filename]);
          }
-         if ( count_pwrite[f] ) {
-            pwrites      = count_pwrite[f];
-            pwrite_avgtm = times_pwrite[f] / pwrites;
-            pwrite_avgsz = sizes_pwrite[f] / pwrites;
-         }
-         if ( count_write[f] ) {
-            writes      = count_write[f];
-            write_avgtm = times_write[f] / writes;
-            write_avgsz = sizes_write[f] / writes;
-         }
-         if ( count_open[f] ) {
-            opens      = count_open[f];
-            open_avgtm = times_open[f] / opens;
-            open_avgsz = sizes_open[f] / opens;
-         }
-         total_count = preads + reads + pwrites + writes + opens;
-         if ( total_count > 0 ) {
-            total_avgsz = (sizes_pread[f] + sizes_read[f] + sizes_pwrite[f] + sizes_write[f] + sizes_open[f]) / total_count;
-            total_avgtm = (times_pread[f] + times_read[f] + times_pwrite[f] + times_write[f] + times_open[f]) / total_count;
-            printf("%4d %5.1f %7.3f %4d %5.1f %7.3f %4d %5.1f %7.3f %4d %5.1f %7.3f %4d %5.1f %7.3f %4d %5.1f %7.3f %s\\n",
-               total_count, total_avgsz / 1024,   total_avgtm * 1000,
-               preads,      pread_avgsz / 1024,   pread_avgtm * 1000,
-               reads,       read_avgsz / 1024,    read_avgtm * 1000,
-               pwrites,     pwrite_avgsz / 1024,  pwrite_avgtm * 1000,
-               writes,      write_avgsz / 1024,   write_avgtm * 1000,
-               opens,       open_avgsz / 1024,    open_avgtm * 1000,
-               f);
-         }
+         printf("%9.6f %s%s\\n", total_time, output, filename);
       }
    }
 EOF
 
-   for thing in TOT PRD RED PRW WRT OPN; do
-      echo -n "N${thing} SZ${thing}   TM${thing} "
-   done
-   echo FILENAME
    awk -f /tmp/aspersa.awk $* | sort -rn -k1
    rm /tmp/aspersa.awk
 }
 
 # The main code that runs by default.  Arguments are the command-line options.
 main() {
-   summarize_strace $*
+   rm -f /tmp/aspersa
+
+   # Get command-line options.
+   for o; do
+      case "${o}" in
+         --)
+            break;
+            ;;
+         -p)
+            shift; pid="${1}"; shift;
+            ;;
+         -b)
+            shift; binary="${1}"; shift;
+            ;;
+         -s)
+            shift; stime="${1}"; shift;
+            ;;
+         -*)
+            OPT_ERR="Unknown option '${o}'."
+               usage 1
+            ;;
+      esac
+   done
+   if [ "${OPT_ERR}" ]; then
+      usage
+   fi
+
+   if [ -z "${1}" ]; then
+      # There's no file to analyze, so we'll make one.
+      stime=${stime:-0}
+      binary=${binary:-mysqld}
+      if [ -z "${pid}" ]; then
+         pid=$(pidof -s "${binary}" 2>/dev/null);
+         if [ -z "${pid}" ]; then
+            pid=$(ps -eaf | grep "${binary}" | grep -v grep | awk '{print $2}' | head -n1);
+         fi
+      fi
+      date;
+      if [ "${pid}" ]; then
+         lsof -s -p "${pid}" > /tmp/aspersa
+         strace -T -s 0 -f -e trace=file -e trace=desc -p ${pid} >> /tmp/aspersa 2>&1
+      else
+         echo "No such process"
+         exit 1
+      fi
+   fi
+
+   summarize_strace "${1:-/tmp/aspersa}"
+   #rm -f /tmp/aspersa
 }
 
 # Execute the program if it was not included from another file.  This makes it
