@@ -29,11 +29,30 @@ usage() {
 # ########################################################################
 count_stats="
                if ( funcn ~ wanted_pat ) {
+                  if ( funcn ~ /open/ ) {
+                     size     = 0;
+                  }
                   filenames[filename]++;
                   count[funcn \",\" filename]++;
                   sizes[funcn \",\" filename] += size;
                   times[funcn \",\" filename] += timing;
                }"
+
+register_filename="
+            if ( funcn ~ /open/ ) {
+               # Save the file descriptor and name for lookup later.
+               filename = \$3;
+               filename = substr(filename, index(filename, \"(\") + 2);
+               filename = substr(filename, 1, index(filename, \"\\\"\") - 1);
+               if ( \"./\" == substr(filename, 1, 2) ) {
+                  # Translate relative filenames into absolute ones.
+                  filename = cwd substr(filename, 2);
+               }
+               fd_field = NF - 1;
+               fd       = \$fd_field;
+               filename_for[fd] = filename;
+            }"
+
 
 # ########################################################################
 # Variables that are set by command-line options and/or the interactive
@@ -51,8 +70,11 @@ summarize_strace() {
       wanted["3"] = "sync";
       wanted["4"] = "open";
       wanted["5"] = "close";
-      wanted_pat  = "read|write|sync|open|close";
-      num_wanted  = 5;
+      wanted["6"] = "getdents";
+      wanted_pat  = "read|write|sync|open|close|getdents";
+      num_wanted  = 6;
+      col_pat     = "%10.6f ";
+      hdr_pat     = "%10s ";
    }
    /^COMMAND/ {
       # The lsof output is beginning.
@@ -64,11 +86,18 @@ summarize_strace() {
       strace = 1;
    }
    {
-      if ( lsof == 1 && \$5 == "REG" ) {
-         # Save the file descriptor and name for lookup later.
-         fd = \$4;
-         gsub(/[rwu-].*/, "", fd);
-         filename_for[fd] = \$9;
+      if ( lsof == 1 ) {
+         if ( \$5 == "REG" ) {
+            # Save the file descriptor and name for lookup later.
+            fd = \$4;
+            gsub(/[rwu-].*/, "", fd);
+            filename_for[fd] = \$9;
+         }
+         else if ( \$5 == "DIR" && \$4 == "cwd" ) {
+            # Special case: save the process's cwd to prepend to ./ filenames
+            # later.
+            cwd = \$NF;
+         }
       }
       else if ( strace == 1 && \$1 ~ /^\[/ ) {
 
@@ -76,11 +105,14 @@ summarize_strace() {
          if ( \$3 !~ /^</ ) {
             pid   = \$2;
             funcn = substr(\$3, 1, index(\$3, "(") - 1);
-            fd    = substr(\$3, index(\$3, "(") + 1);
-            fd    = substr(fd, 1, index(fd, ",") - 1);
+            ${register_filename}
+            else {
+               fd = substr(\$3, index(\$3, "(") + 1);
+               fd = substr(fd, 1, index(fd, ",") - 1);
+            }
             func_names[funcn]++;
             # handle unfinished calls
-            if ( \$NF ~ />/ ) {
+            if ( \$NF == "...>" ) {
                unfinished[pid funcn] = fd;
             }
             else {
@@ -115,15 +147,17 @@ summarize_strace() {
    }
    END {
       # Choose which functions we want to print out, ordered by wanted[].
+      # TODO: I think this is broken, I think the columns and the headers are in
+      # different orders.
       num_functions = 0;
-      printf("%9s ", "total");
+      printf(hdr_pat, "total");
       for (i = 1; i <= num_wanted; i++) {
          for (funcn in func_names) {
             if ( funcn ~ wanted_pat && !accepted[funcn] ) {
                num_functions++;
                funcs_to_print[num_functions] = funcn;
                accepted[funcn]++;
-               printf("%9s ", funcn);
+               printf(hdr_pat, funcn);
             }
          }
       }
@@ -141,20 +175,21 @@ summarize_strace() {
             total_count += count[funcn "," filename];
             total_size  += sizes[funcn "," filename];
             total_time  += times[funcn "," filename];
-            output = output sprintf("%9.6f ", times[funcn "," filename]);
+            output = output sprintf(col_pat, times[funcn "," filename]);
          }
-         printf("%9.6f %s%s\\n", total_time, output, filename);
+         printf(col_pat "%s%s\\n", total_time, output, filename);
       }
    }
 EOF
 
-   awk -f /tmp/aspersa.awk $* | sort -rn -k1
-   rm /tmp/aspersa.awk
+   awk -f /tmp/aspersa.awk $* > /tmp/aspersa2
+   head -n1 /tmp/aspersa2
+   tail -n +2 /tmp/aspersa2 | sort -rn -k1
 }
 
 # The main code that runs by default.  Arguments are the command-line options.
 main() {
-   rm -f /tmp/aspersa
+   rm -f /tmp/aspersa{,.awk,2}
 
    # Get command-line options.
    for o; do
@@ -202,7 +237,7 @@ main() {
    fi
 
    summarize_strace "${1:-/tmp/aspersa}"
-   #rm -f /tmp/aspersa
+   rm -f /tmp/aspersa{,.awk,2}
 }
 
 # Execute the program if it was not included from another file.  This makes it
