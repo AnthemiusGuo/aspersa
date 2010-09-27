@@ -110,6 +110,7 @@ EOF
 
 # The main program to run.
 main() {
+   rm -f /tmp/aspersa
 
    # Get command-line options.
    for o; do
@@ -148,9 +149,9 @@ main() {
       sleeptime=${sleeptime:-0}
       binary=${binary:-mysqld}
       if [ -z "${pid}" ]; then
-         pid=$(pidof -s ${binary} 2>/dev/null);
+         pid=$(pidof -s "${binary}" 2>/dev/null);
          if [ -z "${pid}" ]; then
-            pid=$(ps -eaf | grep 'mysql[d]\>' | awk '{print $2}' | head -n1);
+            pid=$(ps -eaf | grep "${binary}" | grep -v grep | awk '{print $2}' | head -n1);
          fi
       fi
       date;
