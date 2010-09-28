@@ -8,9 +8,9 @@
 # Author: Baron Schwartz
 # ########################################################################
 
+# TODO: what to aggregate by, what to put in the cell, and what agg func
+# (sum,avg) to use
 # TODO: also permit aggregating by thread ID instead of filename
-# TODO: -t should make it print total size in MB and total time in S
-# TODO: optionally aggregate by device, not by filename
 
 # Print a usage message and exit.
 usage() {
@@ -146,7 +146,14 @@ summarize_strace() {
       hdr_pat     = "%10s ";
    }
    {
+      pid      = \$1;
+      funcn    = \$2;
+      fd       = \$3;
+      size     = \$4;
+      timing   = \$5;
+      filename = \$6;
       if ( funcn ~ wanted_pat ) {
+         func_names[funcn]++;
          filenames[filename]++;
          count[funcn "," filename]++;
          sizes[funcn "," filename] += size;
@@ -158,8 +165,9 @@ summarize_strace() {
       num_functions = 0;
       printf(hdr_pat, "total");
       for (i = 1; i <= num_wanted; i++) {
+         pat = wanted[i];
          for (funcn in func_names) {
-            if ( funcn ~ wanted_pat && !accepted[funcn] ) {
+            if ( funcn ~ pat && !accepted[funcn] ) {
                num_functions++;
                funcs_to_print[num_functions] = funcn;
                accepted[funcn]++;
@@ -168,9 +176,11 @@ summarize_strace() {
          }
       }
       print "filename";
+
       # filenames[] contains only files that have been referenced by some
       # functions, so we are automatically including only files that have some
-      # activity from wanted functions.
+      # activity from wanted functions. We iterate through each function name
+      # and print the cell of the table.
       for (filename in filenames) {
          total_count = 0;
          total_size  = 0;
@@ -188,14 +198,12 @@ summarize_strace() {
    }
 EOF
 
-   awk -f /tmp/aspersa.awk $* > /tmp/aspersa2
-   head -n1 /tmp/aspersa2
-   tail -n +2 /tmp/aspersa2 | sort -rn -k1
+   awk -f /tmp/aspersa.awk $*
 }
 
 # The main code that runs by default.  Arguments are the command-line options.
 main() {
-   rm -f /tmp/aspersa{,.awk,2}
+   rm -f /tmp/aspersa{,.awk,2,3}
 
    # Get command-line options.
    for o; do
@@ -224,7 +232,6 @@ main() {
 
    if [ -z "${1}" ]; then
       # There's no file to analyze, so we'll make one.
-      stime=${stime:-0}
       binary=${binary:-mysqld}
       if [ -z "${pid}" ]; then
          pid=$(pidof -s "${binary}" 2>/dev/null);
@@ -235,15 +242,22 @@ main() {
       date;
       if [ "${pid}" ]; then
          lsof -s -p "${pid}" > /tmp/aspersa
-         strace -T -s 0 -f -e trace=file -e trace=desc -p ${pid} >> /tmp/aspersa 2>&1
+         strace -T -s 0 -f -e trace=file -e trace=desc -p ${pid} >> \
+            /tmp/aspersa 2>&1 &
+         tokill=$!
+         sleep ${stime:-30}
+         kill ${tokill}
       else
          echo "No such process"
          exit 1
       fi
    fi
 
-   summarize_strace "${1:-/tmp/aspersa}"
-   rm -f /tmp/aspersa{,.awk,2}
+   tabulate_strace "${1:-/tmp/aspersa}" > /tmp/aspersa2
+   summarize_strace /tmp/aspersa2 > /tmp/aspersa3
+   head -n1 /tmp/aspersa3
+   tail -n +2 /tmp/aspersa3 | sort -rn -k1
+   rm -f /tmp/aspersa{,.awk,2,3}
 }
 
 # Execute the program if it was not included from another file.  This makes it
