@@ -27,128 +27,134 @@ usage() {
 # ########################################################################
 # Variables that are used/reused in the awk code.
 # ########################################################################
-count_stats="
-               if ( funcn ~ wanted_pat ) {
-                  if ( funcn ~ /open/ ) {
-                     size     = 0;
-                  }
-                  filenames[filename]++;
-                  count[funcn \",\" filename]++;
-                  sizes[funcn \",\" filename] += size;
-                  times[funcn \",\" filename] += timing;
-               }"
 
-register_filename="
-            if ( funcn ~ /open/ ) {
-               # Save the file descriptor and name for lookup later.
-               filename = \$3;
-               filename = substr(filename, index(filename, \"(\") + 2);
-               filename = substr(filename, 1, index(filename, \"\\\"\") - 1);
-               if ( \"./\" == substr(filename, 1, 2) ) {
-                  # Translate relative filenames into absolute ones.
-                  filename = cwd substr(filename, 2);
-               }
-               fd_field = NF - 1;
-               fd       = \$fd_field;
-               filename_for[fd] = filename;
-            }"
+wanted_pat="
+      # These are function names, or partial function names, that we care about.
+      # Later we will ignore any function whose name doesn't look like these.
+      wanted_pat  = \"read|write|sync|open|close|getdents|seek\";"
 
+print_strace_line="
+                  filename = filename_for[fd];
+                  if ( filename != \"\" ) {
+                     if ( funcn ~ /open/ ) {
+                        size = 0;
+                     }
+                     else {
+                        size_field = NF - 1;
+                        size       = \$size_field;
+                     }
+                     timing = \$NF;
+                     gsub(/[<>]/, \"\", timing);
+                     print pid, funcn, fd, size, timing, filename;
+                  }"
 
 # ########################################################################
 # Variables that are set by command-line options and/or the interactive
 # functionality, and are used in the various snippets below
 # ########################################################################
 
-# Read the 'lsof' and 'strace' from the file, summarize, print.
+# Read the 'lsof' and 'strace' from the file, and convert it into lines:
+# pid function fd_no size timing filename
+tabulate_strace() {
+   cat > /tmp/aspersa.awk <<EOF
+   BEGIN {
+      ${wanted_pat}
+      cwd    = ""; # The process's cwd to prepend to ./ filenames later.
+      mode   = 0;  # Whether we're in the lsof or strace part of the input.
+   }
+   /^COMMAND/ { mode = "lsof";   }
+   /^Process/ { mode = "strace"; }
+   {
+      # Save the file descriptor and name for lookup later.
+      if ( mode == "lsof" ) {
+         if ( \$5 == "REG" ) {
+            fd = \$4;
+            gsub(/[rwu-].*/, "", fd);
+            filename_for[fd] = \$9;
+         }
+         else if ( \$5 == "DIR" && \$4 == "cwd" ) {
+            cwd = \$NF;
+         }
+      }
+      else if ( mode == "strace" && \$1 ~ /^\[/ ) {
+         pid = substr(\$2, 1, length(\$2) - 1);
+
+         # Continuation of a previously <unfinished ...> function call
+         if ( \$3 == "<..." ) {
+            funcn      = \$4;
+            fd         = unfinished[pid "," funcn];
+            if ( fd > 0 ) {
+               ${print_strace_line}
+            }
+         }
+
+         # The beginning of a function call (not resumed).  There are basically
+         # two cases here: the whole call is on one line, and it's unfinished
+         # and ends on a later line.
+         else {
+            funcn = substr(\$3, 1, index(\$3, "(") - 1);
+            if ( funcn ~ wanted_pat ) {
+               # Save the file descriptor and name for lookup later.
+               if ( funcn ~ /open/ ) {
+                  filename = substr(\$3, index(\$3, "(") + 2);
+                  filename = substr(filename, 1, index(filename, "\\"") - 1);
+                  if ( "./" == substr(filename, 1, 2) ) {
+                     # Translate relative filenames into absolute ones.
+                     filename = cwd substr(filename, 2);
+                  }
+                  fd_field         = NF - 1;
+                  fd               = \$fd_field;
+                  filename_for[fd] = filename;
+               }
+
+               else {
+                  fd  = substr(\$3, index(\$3, "(") + 1);
+                  fd  = substr(fd, 1, length(fd) - 1);
+               }
+
+               # Save unfinished calls for later
+               if ( \$NF == "...>" ) {
+                  unfinished[pid "," funcn] = fd;
+               }
+
+               # Function calls that are all on one line, not <unfinished ...>
+               else {
+                  ${print_strace_line}
+               }
+            }
+         }
+
+      }
+   }
+EOF
+   awk -f /tmp/aspersa.awk $*
+}
+
 summarize_strace() {
    cat > /tmp/aspersa.awk <<EOF
    BEGIN {
-      # These are function names, or partial function names, that we care about.
-      # Later we will ignore any function whose name doesn't look like these.
+      ${wanted_pat}
       wanted["1"] = "read"; # Will match pread, pread64, etc.
       wanted["2"] = "write";
       wanted["3"] = "sync";
       wanted["4"] = "open";
       wanted["5"] = "close";
       wanted["6"] = "getdents";
-      wanted_pat  = "read|write|sync|open|close|getdents";
-      num_wanted  = 6;
+      wanted["7"] = "seek";
+      num_wanted  = 7;
       col_pat     = "%10.6f ";
       hdr_pat     = "%10s ";
    }
-   /^COMMAND/ {
-      # The lsof output is beginning.
-      lsof = 1;
-   }
-   /^Process/ {
-      # lsof has ended, strace output begins.
-      lsof   = 0;
-      strace = 1;
-   }
    {
-      if ( lsof == 1 ) {
-         if ( \$5 == "REG" ) {
-            # Save the file descriptor and name for lookup later.
-            fd = \$4;
-            gsub(/[rwu-].*/, "", fd);
-            filename_for[fd] = \$9;
-         }
-         else if ( \$5 == "DIR" && \$4 == "cwd" ) {
-            # Special case: save the process's cwd to prepend to ./ filenames
-            # later.
-            cwd = \$NF;
-         }
-      }
-      else if ( strace == 1 && \$1 ~ /^\[/ ) {
-
-         # Function calls
-         if ( \$3 !~ /^</ ) {
-            pid   = \$2;
-            funcn = substr(\$3, 1, index(\$3, "(") - 1);
-            ${register_filename}
-            else {
-               fd = substr(\$3, index(\$3, "(") + 1);
-               fd = substr(fd, 1, index(fd, ",") - 1);
-            }
-            func_names[funcn]++;
-            # handle unfinished calls
-            if ( \$NF == "...>" ) {
-               unfinished[pid funcn] = fd;
-            }
-            else {
-               filename = filename_for[fd];
-               if ( filename != "" ) {
-                  size_field = NF - 1;
-                  size       = \$size_field;
-                  timing     = \$NF;
-                  gsub(/[<>]/, "", timing);
-                  ${count_stats}
-               }
-            }
-         }
-
-         # Continuation of a previously <unfinished ...> function call
-         else {
-            pid        = \$2;
-            funcn      = \$4;
-            fd         = unfinished[pid funcn];
-            if ( fd > 0 ) {
-               filename = filename_for[fd];
-               if ( filename != "" ) {
-                  size_field = NF - 1;
-                  size       = \$size_field;
-                  timing     = \$NF;
-                  gsub(/[<>]/, "", timing);
-                  ${count_stats}
-               }
-            }
-         }
+      if ( funcn ~ wanted_pat ) {
+         filenames[filename]++;
+         count[funcn "," filename]++;
+         sizes[funcn "," filename] += size;
+         times[funcn "," filename] += timing;
       }
    }
    END {
       # Choose which functions we want to print out, ordered by wanted[].
-      # TODO: I think this is broken, I think the columns and the headers are in
-      # different orders.
       num_functions = 0;
       printf(hdr_pat, "total");
       for (i = 1; i <= num_wanted; i++) {
