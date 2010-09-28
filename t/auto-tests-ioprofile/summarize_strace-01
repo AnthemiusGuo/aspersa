@@ -1,7 +1,15 @@
 #!/bin/bash
-#tabulate_strace samples/ioprofile-003.txt 
+#summarize_strace -c times -g filename -a sum /tmp/aspersa
 
 cat <<EOF > $1
+     total      pread       read       open      close getdents64    _llseek filename
+  0.006348   0.006348   0.000000   0.000000   0.000000   0.000000   0.000000 /data/data/abd_2dia/aia_227_228.ibd
+  0.000504   0.000000   0.000000   0.000096   0.000098   0.000310   0.000000 /data/data/abd_2dia/
+  0.000369   0.000369   0.000000   0.000000   0.000000   0.000000   0.000000 /data/data/abd_2dia/aia_227_223.ibd
+  0.000288   0.000000   0.000062   0.000054   0.000045   0.000000   0.000127 /data/data/abd_2dia/test/db.opt
+EOF
+
+cat <<EOF > $2
 20974 pread 7792 16384 0.000369 /data/data/abd_2dia/aia_227_223.ibd
 22782 pread 586 16384 0.006348 /data/data/abd_2dia/aia_227_228.ibd
 6594 open 30 0 0.000096 /data/data/abd_2dia/

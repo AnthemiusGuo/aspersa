@@ -8,59 +8,67 @@
 # Author: Baron Schwartz
 # ########################################################################
 
-# TODO: what to aggregate by, what to put in the cell, and what agg func
-# (sum,avg) to use
-# TODO: also permit aggregating by thread ID instead of filename
+# ########################################################################
+# Usage functions.
+# ########################################################################
 
 # Print a usage message and exit.
 usage() {
    if [ "${OPT_ERR}" ]; then
       echo "${OPT_ERR}"
    fi
-   echo "Usage: $0 -p <pid> -b <binary> -s <time> [FILE]"
-   echo "   $0 does two things: 1) get lsof+strace for -s seconds and 2) aggregate it."
-   echo "   If you specify -p, then -b is ignored.  Otherwise that binary is straced."
-   echo "   If you specify a FILE, then step 1) above is not performed."
+   cat <<EOF
+   Usage: $0 -p <pid> -b <binary> -s <time> -a <func> -g <groupby> -c <cell> [FILE]
+      $0 does two things: 1) get lsof+strace for -s seconds and 2) aggregate it.
+      If you specify -p, then -b is ignored.  Otherwise that binary is straced.
+      If you specify a FILE, then step 1) above is not performed.
+   Options:
+      -a <func>    The aggregate function for the cells of the table (default sum).
+      -b <binary>  The process name to profile (default mysqld).
+      -c <cell>    The item to place into the cell (default timing).
+      -g <groupby> The item by which to group the table (default filename).
+      -p <pid>     The process ID to profile.
+      -s <time>    The number of seconds to profile (default 30).
+EOF
    exit 1
 }
 
-# ########################################################################
-# Variables that are used/reused in the awk code.
-# ########################################################################
-
-wanted_pat="
-      # These are function names, or partial function names, that we care about.
-      # Later we will ignore any function whose name doesn't look like these.
-      wanted_pat  = \"read|write|sync|open|close|getdents|seek\";"
-
-print_strace_line="
-                  filename = filename_for[fd];
-                  if ( filename != \"\" ) {
-                     if ( funcn ~ /open/ ) {
-                        size = 0;
-                     }
-                     else {
-                        size_field = NF - 1;
-                        size       = \$size_field;
-                     }
-                     timing = \$NF;
-                     gsub(/[<>]/, \"\", timing);
-                     print pid, funcn, fd, size, timing, filename;
-                  }"
-
-# ########################################################################
-# Variables that are set by command-line options and/or the interactive
-# functionality, and are used in the various snippets below
-# ########################################################################
+# Check the options set at the command-line or interactively.
+validate_opts() {
+   case "${CELL}" in
+      count|sizes|times)
+         ;;
+      *)
+         OPT_ERR="Unknown cell item '${CELL}'; use count|sizes|times."
+         ;;
+   esac
+   case "${FUNC}" in
+      sum|avg)
+         ;;
+      *)
+         OPT_ERR="Unknown function '${FUNC}'; use sum|avg."
+         ;;
+   esac
+   case "${GROUPBY}" in
+      filename|pid)
+         ;;
+      *)
+         OPT_ERR="Unknown group-by item '${GROUPBY}'; use filename|pid."
+         ;;
+   esac
+}
 
 # Read the 'lsof' and 'strace' from the file, and convert it into lines:
 # pid function fd_no size timing filename
+# The arguments are the files to summarize.
 tabulate_strace() {
    cat > /tmp/aspersa.awk <<EOF
    BEGIN {
-      ${wanted_pat}
-      cwd    = ""; # The process's cwd to prepend to ./ filenames later.
-      mode   = 0;  # Whether we're in the lsof or strace part of the input.
+      # These are function names, or partial function names, that we care about.
+      # Later we will ignore any function whose name doesn't look like these.
+      wanted_pat  = "read|write|sync|open|close|getdents|seek";
+      cwd         = ""; # The process's cwd to prepend to ./ filenames later.
+      mode        = 0;  # Whether we're in the lsof or strace part of the input.
    }
    /^COMMAND/ { mode = "lsof";   }
    /^Process/ { mode = "strace"; }
@@ -84,7 +92,19 @@ tabulate_strace() {
             funcn      = \$4;
             fd         = unfinished[pid "," funcn];
             if ( fd > 0 ) {
-               ${print_strace_line}
+               filename = filename_for[fd];
+               if ( filename != "" ) {
+                  if ( funcn ~ /open/ ) {
+                     size = 0;
+                  }
+                  else {
+                     size_field = NF - 1;
+                     size       = \$size_field;
+                  }
+                  timing = \$NF;
+                  gsub(/[<>]/, "", timing);
+                  print pid, funcn, fd, size, timing, filename;
+               }
             }
          }
 
@@ -119,21 +139,56 @@ tabulate_strace() {
 
                # Function calls that are all on one line, not <unfinished ...>
                else {
-                  ${print_strace_line}
+                  filename = filename_for[fd];
+                  if ( filename != "" ) {
+                     if ( funcn ~ /open/ ) {
+                        size = 0;
+                     }
+                     else {
+                        size_field = NF - 1;
+                        size       = \$size_field;
+                     }
+                     timing = \$NF;
+                     gsub(/[<>]/, "", timing);
+                     print pid, funcn, fd, size, timing, filename;
+                  }
                }
             }
          }
-
       }
    }
 EOF
    awk -f /tmp/aspersa.awk $*
 }
 
+# Takes as input the output from tabulate_strace.  Arguments are just a subset
+# of the overall command-line options, but no validation is needed.  The last
+# command-line option is the filename of the tabulate_strace output.
 summarize_strace() {
+
+   # Get command-line options.
+   for o; do
+      case "${o}" in
+         --)
+            break;
+            ;;
+         -a)
+            shift; FUNC="${1}"; shift;
+            ;;
+         -c)
+            shift; CELL="${1}"; shift;
+            ;;
+         -g)
+            shift; GROUPBY="${1}"; shift;
+            ;;
+      esac
+   done
+
    cat > /tmp/aspersa.awk <<EOF
    BEGIN {
-      ${wanted_pat}
+      # These are function names, or partial function names, that we care about.
+      # Later we will ignore any function whose name doesn't look like these.
+      wanted_pat  = "read|write|sync|open|close|getdents|seek";
       wanted["1"] = "read"; # Will match pread, pread64, etc.
       wanted["2"] = "write";
       wanted["3"] = "sync";
@@ -142,8 +197,11 @@ summarize_strace() {
       wanted["6"] = "getdents";
       wanted["7"] = "seek";
       num_wanted  = 7;
-      col_pat     = "%10.6f ";
+      col_pat     = "%10d ";
       hdr_pat     = "%10s ";
+      if ( "${CELL}" == "times" ) {
+         col_pat  = "%10.6f ";
+      }
    }
    {
       pid      = \$1;
@@ -154,10 +212,10 @@ summarize_strace() {
       filename = \$6;
       if ( funcn ~ wanted_pat ) {
          func_names[funcn]++;
-         filenames[filename]++;
-         count[funcn "," filename]++;
-         sizes[funcn "," filename] += size;
-         times[funcn "," filename] += timing;
+         groupby[${GROUPBY}]++;
+         count[funcn "," ${GROUPBY}]++;
+         sizes[funcn "," ${GROUPBY}] += size;
+         times[funcn "," ${GROUPBY}] += timing;
       }
    }
    END {
@@ -175,30 +233,50 @@ summarize_strace() {
             }
          }
       }
-      print "filename";
+      print "${GROUPBY}";
 
-      # filenames[] contains only files that have been referenced by some
+      # groupby[] contains only files that have been referenced by some
       # functions, so we are automatically including only files that have some
       # activity from wanted functions. We iterate through each function name
       # and print the cell of the table.
-      for (filename in filenames) {
+      for (thing in groupby) {
          total_count = 0;
-         total_size  = 0;
-         total_time  = 0;
+         total_sizes = 0;
+         total_times = 0;
          output      = "";
          for (i = 1; i <= num_functions; i++) {
             funcn = funcs_to_print[i];
-            total_count += count[funcn "," filename];
-            total_size  += sizes[funcn "," filename];
-            total_time  += times[funcn "," filename];
-            output = output sprintf(col_pat, times[funcn "," filename]);
+            total_count += count[funcn "," thing];
+            total_sizes += sizes[funcn "," thing];
+            total_times += times[funcn "," thing];
+            result       = ${CELL}[funcn "," thing];
+            if ( "${FUNC}" == "avg" ) {
+               if ( count[funcn "," thing] > 0 ) {
+                  result /= count[funcn "," thing];
+               }
+               else {
+                  result = 0;
+               }
+            }
+            output = output sprintf(col_pat, result);
          }
-         printf(col_pat "%s%s\\n", total_time, output, filename);
+         total_result = total_${CELL};
+         if ( "${FUNC}" == "avg" ) {
+            if ( total_count > 0 ) {
+               total_result /= total_count;
+            }
+            else {
+               total_result = 0;
+            }
+         }
+         printf(col_pat "%s%s\\n", total_result, output, thing);
       }
    }
 EOF
 
-   awk -f /tmp/aspersa.awk $*
+   awk -f /tmp/aspersa.awk $* > /tmp/aspersa3
+   head -n1 /tmp/aspersa3
+   tail -n +2 /tmp/aspersa3 | sort -rn -k1
 }
 
 # The main code that runs by default.  Arguments are the command-line options.
@@ -211,14 +289,23 @@ main() {
          --)
             break;
             ;;
-         -p)
-            shift; pid="${1}"; shift;
+         -a)
+            shift; FUNC="${1}"; shift;
             ;;
          -b)
-            shift; binary="${1}"; shift;
+            shift; BINARY="${1}"; shift;
+            ;;
+         -c)
+            shift; CELL="${1}"; shift;
+            ;;
+         -g)
+            shift; GROUPBY="${1}"; shift;
+            ;;
+         -p)
+            shift; PID="${1}"; shift;
             ;;
          -s)
-            shift; stime="${1}"; shift;
+            shift; STIME="${1}"; shift;
             ;;
          -*)
             OPT_ERR="Unknown option '${o}'."
@@ -226,26 +313,33 @@ main() {
             ;;
       esac
    done
+
+   BINARY="${BINARY:-mysqld}"
+   STIME="${STIME:-30}"
+   FUNC="${FUNC:-sum}"
+   CELL="${CELL:-times}"
+   GROUPBY="${GROUPBY:-filename}"
+   validate_opts
    if [ "${OPT_ERR}" ]; then
       usage
    fi
 
    if [ -z "${1}" ]; then
       # There's no file to analyze, so we'll make one.
-      binary=${binary:-mysqld}
-      if [ -z "${pid}" ]; then
-         pid=$(pidof -s "${binary}" 2>/dev/null);
-         if [ -z "${pid}" ]; then
-            pid=$(ps -eaf | grep "${binary}" | grep -v grep | awk '{print $2}' | head -n1);
+      BINARY=${BINARY}
+      if [ -z "${PID}" ]; then
+         PID=$(pidof -s "${BINARY}" 2>/dev/null);
+         if [ -z "${PID}" ]; then
+            PID=$(ps -eaf | grep "${BINARY}" | grep -v grep | awk '{print $2}' | head -n1);
          fi
       fi
       date;
-      if [ "${pid}" ]; then
-         lsof -s -p "${pid}" > /tmp/aspersa
-         strace -T -s 0 -f -e trace=file -e trace=desc -p ${pid} >> \
+      if [ "${PID}" ]; then
+         lsof -s -p "${PID}" > /tmp/aspersa
+         strace -T -s 0 -f -e trace=file -e trace=desc -p ${PID} >> \
             /tmp/aspersa 2>&1 &
          tokill=$!
-         sleep ${stime:-30}
+         sleep ${STIME}
          kill ${tokill}
       else
          echo "No such process"
@@ -254,9 +348,10 @@ main() {
    fi
 
    tabulate_strace "${1:-/tmp/aspersa}" > /tmp/aspersa2
-   summarize_strace /tmp/aspersa2 > /tmp/aspersa3
-   head -n1 /tmp/aspersa3
-   tail -n +2 /tmp/aspersa3 | sort -rn -k1
+
+   # Assuming all the inputs are filenames, now we ignore $* and re-send the
+   # pre-processed command-line options to the summarize_strace function.
+   summarize_strace -a ${FUNC} -c ${CELL} -g ${GROUPBY} /tmp/aspersa2
    rm -f /tmp/aspersa{,.awk,2,3}
 }
 
