@@ -18,17 +18,19 @@ usage() {
       echo "${OPT_ERR}"
    fi
    cat <<EOF
-   Usage: $0 -p <pid> -b <binary> -s <time> -a <func> -g <groupby> -c <cell> [FILE]
-      $0 does two things: 1) get lsof+strace for -s seconds and 2) aggregate it.
-      If you specify -p, then -b is ignored.  Otherwise that binary is straced.
-      If you specify a FILE, then step 1) above is not performed.
-   Options:
-      -a <func>    The aggregate function for the cells of the table (default sum).
-      -b <binary>  The process name to profile (default mysqld).
-      -c <cell>    The item to place into the cell (default timing).
-      -g <groupby> The item by which to group the table (default filename).
-      -p <pid>     The process ID to profile.
-      -s <time>    The number of seconds to profile (default 30).
+Usage: $0 -abcgps [FILE]
+   $0 does two things:
+      1) get lsof+strace for -s seconds.
+      2) aggregate the lsof+strace result.
+   If you specify -p, then -b is ignored.  Otherwise that binary is profiled.
+   If you specify a FILE, then step 1) above is not performed.
+Options:
+   -a <func>    The aggregate function for the cells of the table (default sum).
+   -b <binary>  The process name to profile (default mysqld).
+   -c <cell>    The item to place into the cell (default timing).
+   -g <groupby> The item by which to group the table (default filename).
+   -p <pid>     The process ID to profile.
+   -s <time>    The number of seconds to profile (default 30).
 EOF
    exit 1
 }
