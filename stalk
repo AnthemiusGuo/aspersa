@@ -23,6 +23,10 @@ THRESHOLD=${1:-100}
 INTERVAL=${2:-30}
 # This is the thing to check for.  You can pass this as the third option.
 VARIABLE=${3:-Threads_connected}
+# If the command you're running to detect the condition is allowed to return
+# nothing (e.g. a grep line that might not even exist if there's no problem),
+# then set this to "yes".
+MAYBE_EMPTY="no"
 # This is the location of the 'collect' script.
 COLLECT="${HOME}/bin/collect";
 # How long to sleep after collecting?
@@ -40,10 +44,10 @@ while true; do
    # XXX it into $detected, and if $detected > $THRESHOLD, then we'll execute
    # XXX the collection process.
    detected=$(mysqladmin ext | grep ${VARIABLE} | awk '{print $4}');
-   if [ -z "${detected}" ]; then
+   if [ -z "${detected}" -a ${MAYBE_EMPTY} = "no" ]; then
       execute="yes" # Oops, couldn't connect, maybe max_connections problem.
       echo "The detected value is empty; something failed?  Exit status is $?"
-   elif [ ${detected} -gt ${THRESHOLD} ]; then
+   elif [ "${detected:-0}" -gt ${THRESHOLD} ]; then
       execute="yes"
    fi
 

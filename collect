@@ -14,7 +14,7 @@
 # how long?
 # ########################################################################
 # Where to store the data
-DEST=~/collected
+DEST="${HOME}/collected"
 # How long to work for, in seconds
 LEN=30
 # Get GDB stack traces?
@@ -78,6 +78,8 @@ fi
    vmstat $LEN 2              >> $DEST/$d-vmstat-overall 2>&1 &
    iostat -dx 1 $LEN          >> $DEST/$d-iostat 2>&1 &
    iostat -dx $LEN 2          >> $DEST/$d-iostat-overall 2>&1 &
+   mpstat -P ALL 1 $LEN       >> $DEST/$d-mpstat 2>&1 &
+   mpstat -P ALL $LEN 1       >> $DEST/$d-mpstat-overall 2>&1 &
    mysqladmin ext -i1 -c$LEN  >> $DEST/$d-mysqladmin 2>&1 &
    mysqladmin_pid=$!
 
