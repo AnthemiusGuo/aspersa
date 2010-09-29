@@ -328,33 +328,39 @@ main() {
       usage
    fi
 
-   if [ -z "${1}" ]; then
+   if [ $# -eq 0 ]; then
       # There's no file to analyze, so we'll make one.
-      BINARY=${BINARY}
-      if [ -z "${PID}" ]; then
-         PID=$(pidof -s "${BINARY}" 2>/dev/null);
+      if which strace >/dev/null; then
+         BINARY=${BINARY}
          if [ -z "${PID}" ]; then
-            PID=$(ps -eaf | grep "${BINARY}" | grep -v grep | awk '{print $2}' | head -n1);
+            PID=$(pidof -s "${BINARY}" 2>/dev/null);
+            if [ -z "${PID}" ]; then
+               PID=$(ps -eaf | grep "${BINARY}" | grep -v grep | awk '{print $2}' | head -n1);
+            fi
+         fi
+         date;
+         if [ "${PID}" ]; then
+            lsof -s -p "${PID}" > /tmp/aspersa
+            strace -T -s 0 -f -e trace=file -e trace=desc -p ${PID} >> \
+               /tmp/aspersa 2>&1 &
+            tokill=$!
+            sleep ${STIME}
+            kill ${tokill}
+            # Summarize the output we just generated.
+            tabulate_strace /tmp/aspersa > /tmp/aspersa2
+         else
+            echo "No such process"
+            exit 1
          fi
       fi
-      date;
-      if [ "${PID}" ]; then
-         lsof -s -p "${PID}" > /tmp/aspersa
-         strace -T -s 0 -f -e trace=file -e trace=desc -p ${PID} >> \
-            /tmp/aspersa 2>&1 &
-         tokill=$!
-         sleep ${STIME}
-         kill ${tokill}
-      else
-         echo "No such process"
-         exit 1
-      fi
+   else
+      # Summarize the files the user passed in.
+      tabulate_strace $* > /tmp/aspersa2
    fi
 
-   tabulate_strace "${1:-/tmp/aspersa}" > /tmp/aspersa2
-
-   # Assuming all the inputs are filenames, now we ignore $* and re-send the
-   # pre-processed command-line options to the summarize_strace function.
+   # Assuming all the inputs are filenames that have been processed above, now
+   # we ignore $* and re-send the pre-processed command-line options to the
+   # summarize_strace function.
    summarize_strace -a ${FUNC} -c ${CELL} -g ${GROUPBY} /tmp/aspersa2
    rm -f /tmp/aspersa{,.awk,2,3}
 }
