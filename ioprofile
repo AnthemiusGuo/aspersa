@@ -4,6 +4,8 @@
 # ########################################################################
 # This script uses strace and lsof to watch a process's IO and print out a table
 # of files and I/O activity.
+# TODO: make a more complete list of IO functions, such as stat, lstat, unlink,
+# chmod, chown, ...
 #
 # Author: Baron Schwartz
 # ########################################################################
