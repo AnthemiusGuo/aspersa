@@ -70,7 +70,8 @@ tabulate_strace() {
    BEGIN {
       # These are function names, or partial function names, that we care about.
       # Later we will ignore any function whose name doesn't look like these.
-      wanted_pat  = "read|write|sync|open|close|getdents|seek";
+      # Keep this in sync with wanted_pat in summarize_strace, too.
+      wanted_pat  = "read|write|sync|open|close|getdents|seek|fcntl|ftrunc";
       cwd         = ""; # The process's cwd to prepend to ./ filenames later.
       mode        = 0;  # Whether we're in the lsof or strace part of the input.
    }
@@ -133,7 +134,7 @@ tabulate_strace() {
 
                else {
                   fd  = substr(\$3, index(\$3, "(") + 1);
-                  fd  = substr(fd, 1, length(fd) - 1);
+                  gsub(/[^0-9].*/, "", fd);
                }
 
                # Save unfinished calls for later
@@ -192,7 +193,8 @@ summarize_strace() {
    BEGIN {
       # These are function names, or partial function names, that we care about.
       # Later we will ignore any function whose name doesn't look like these.
-      wanted_pat  = "read|write|sync|open|close|getdents|seek";
+      # Keep this in sync with wanted_pat in tabulate_strace, too.
+      wanted_pat  = "read|write|sync|open|close|getdents|seek|fcntl|ftrunc";
       wanted["1"] = "read"; # Will match pread, pread64, etc.
       wanted["2"] = "write";
       wanted["3"] = "sync";
@@ -200,7 +202,9 @@ summarize_strace() {
       wanted["5"] = "close";
       wanted["6"] = "getdents";
       wanted["7"] = "seek";
-      num_wanted  = 7;
+      wanted["8"] = "fcntl";
+      wanted["9"] = "ftrunc";
+      num_wanted  = 9;
       col_pat     = "%10d ";
       hdr_pat     = "%10s ";
       if ( "${CELL}" == "times" ) {
@@ -341,8 +345,7 @@ main() {
          date;
          if [ "${PID}" ]; then
             lsof -s -p "${PID}" > /tmp/aspersa
-            strace -T -s 0 -f -e trace=file -e trace=desc -p ${PID} >> \
-               /tmp/aspersa 2>&1 &
+            strace -T -s 0 -f -p ${PID} >> /tmp/aspersa 2>&1 &
             tokill=$!
             sleep ${STIME}
             kill ${tokill}
