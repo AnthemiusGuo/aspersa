@@ -14,10 +14,11 @@ usage() {
    if [ "${OPT_ERR}" ]; then
       echo "${OPT_ERR}"
    fi
-   echo "Usage: $0 -p <pid> -b <binary> -i <iterations> -s <sleeptime> -l <maxlen> [FILE]"
+   echo "Usage: $0 -p <pid> -b <binary> -i <iterations> -s <sleeptime> -l <maxlen> -k <keepfile> [FILE]"
    echo "   $0 does two things: 1) get a GDB backtrace 2) aggregate it."
    echo "   If you specify -p, then -b is ignored.  Otherwise that binary is traced."
    echo "   If you specify -l, then only the topmost N functions are aggregated."
+   echo "   If you specify -k, then the backtraces are saved in that file."
    echo "   If you specify a FILE, then step 1) above is not performed."
    exit 1
 }
@@ -106,6 +107,7 @@ aggregate_stacktrace() {
       }
 EOF
    awk -f /tmp/aspersa.awk $* | sort | uniq -c | sort -r -n -k 1,1
+   rm -f /tmp/aspersa
 }
 
 # The main program to run.
@@ -133,6 +135,9 @@ main() {
          -l)
             shift; maxlen="${1}"; shift;
             ;;
+         -k)
+            shift; keepfile="${1}"; shift;
+            ;;
          -*)
             OPT_ERR="Unknown option '${o}'."
                usage 1
@@ -156,13 +161,17 @@ main() {
       fi
       date;
       for x in $(seq 1 $iterations); do
-         gdb -ex "set pagination 0" -ex "thread apply all bt" -batch -p $pid >> /tmp/aspersa
+         gdb -ex "set pagination 0" -ex "thread apply all bt" -batch -p $pid >> "${keepfile:-/tmp/aspersa}"
          sleep $sleeptime
       done
    fi
 
-   aggregate_stacktrace "${maxlen:-0}" "${1:-/tmp/aspersa}"
-   rm -f /tmp/aspersa
+   if [ $# -eq 0 ]; then
+      aggregate_stacktrace "${maxlen:-0}" "${keepfile:-/tmp/aspersa}"
+      rm -f /tmp/aspersa
+   else
+      aggregate_stacktrace "${maxlen:-0}" $*
+   fi
 }
 
 # Execute the program if it was not included from another file.  This makes it
