@@ -55,10 +55,10 @@ validate_opts() {
          ;;
    esac
    case "${GROUPBY}" in
-      filename|pid)
+      all|filename|pid)
          ;;
       *)
-         OPT_ERR="Unknown group-by item '${GROUPBY}'; use filename|pid."
+         OPT_ERR="Unknown group-by item '${GROUPBY}'; use all|filename|pid."
          ;;
    esac
 }
@@ -219,6 +219,7 @@ summarize_strace() {
       size     = \$4;
       timing   = \$5;
       filename = \$6;
+      all      = "all";
       if ( funcn ~ wanted_pat ) {
          func_names[funcn]++;
          groupby[${GROUPBY}]++;
@@ -230,7 +231,9 @@ summarize_strace() {
    END {
       # Choose which functions we want to print out, ordered by wanted[].
       num_functions = 0;
-      printf(hdr_pat, "total");
+      if ( "${GROUPBY}" != "all" ) {
+         printf(hdr_pat, "total");
+      }
       for (i = 1; i <= num_wanted; i++) {
          pat = wanted[i];
          for (funcn in func_names) {
@@ -238,13 +241,17 @@ summarize_strace() {
                num_functions++;
                funcs_to_print[num_functions] = funcn;
                accepted[funcn]++;
-               printf(hdr_pat, funcn);
+               if ( "${GROUPBY}" != "all" ) {
+                  printf(hdr_pat, funcn);
+               }
             }
          }
       }
-      print "${GROUPBY}";
+      if ( "${GROUPBY}" != "all" ) {
+         print "${GROUPBY}";
+      }
 
-      # groupby[] contains only files that have been referenced by some
+      # groupby[] contains only files/pids that have been referenced by some
       # functions, so we are automatically including only files that have some
       # activity from wanted functions. We iterate through each function name
       # and print the cell of the table.
@@ -267,7 +274,12 @@ summarize_strace() {
                   result = 0;
                }
             }
-            output = output sprintf(col_pat, result);
+            if ( "${GROUPBY}" != "all" ) {
+               output = output sprintf(col_pat, result);
+            }
+            else {
+               printf(col_pat funcn "\\n", result);
+            }
          }
          total_result = total_${CELL};
          if ( "${FUNC}" == "avg" ) {
@@ -278,14 +290,25 @@ summarize_strace() {
                total_result = 0;
             }
          }
-         printf(col_pat "%s%s\\n", total_result, output, thing);
+         printf(col_pat, total_result);
+         if ( "${GROUPBY}" != "all" ) {
+            print(output thing);
+         }
+         else {
+            print "TOTAL";
+         }
       }
    }
 EOF
 
    awk -f /tmp/aspersa.awk $* > /tmp/aspersa3
-   head -n1 /tmp/aspersa3
-   tail -n +2 /tmp/aspersa3 | sort -rn -k1
+   if [ "${GROUPBY}" != "all" ]; then
+      head -n1 /tmp/aspersa3
+      tail -n +2 /tmp/aspersa3 | sort -rn -k1
+   else
+      grep TOTAL /tmp/aspersa3
+      grep -v TOTAL /tmp/aspersa3 | sort -rn -k1
+   fi
 }
 
 # The main code that runs by default.  Arguments are the command-line options.
