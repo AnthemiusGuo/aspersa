@@ -20,19 +20,20 @@ usage() {
       echo "${OPT_ERR}"
    fi
    cat <<EOF
-Usage: $0 -abcgps [FILE]
+Usage: $0 -abcgkps [FILE]
    $0 does two things:
       1) get lsof+strace for -s seconds.
       2) aggregate the lsof+strace result.
    If you specify -p, then -b is ignored.  Otherwise that binary is profiled.
    If you specify a FILE, then step 1) above is not performed.
 Options:
-   -a <func>    The aggregate function for the cells of the table (default sum).
-   -b <binary>  The process name to profile (default mysqld).
-   -c <cell>    The item to place into the cell (default timing).
-   -g <groupby> The item by which to group the table (default filename).
-   -p <pid>     The process ID to profile.
-   -s <time>    The number of seconds to profile (default 30).
+   -a <func>     The aggregate function for the cells of the table (default sum).
+   -b <binary>   The process name to profile (default mysqld).
+   -c <cell>     The item to place into the cell (default timing).
+   -g <groupby>  The item by which to group the table (default filename).
+   -k <keepfile> A file to save the raw strace data for further analysis.
+   -p <pid>      The process ID to profile.
+   -s <time>     The number of seconds to profile (default 30).
 EOF
    exit 1
 }
@@ -309,6 +310,9 @@ main() {
          -g)
             shift; GROUPBY="${1}"; shift;
             ;;
+         -k)
+            shift; KEEPFILE="${1}"; shift;
+            ;;
          -p)
             shift; PID="${1}"; shift;
             ;;
@@ -327,6 +331,7 @@ main() {
    FUNC="${FUNC:-sum}"
    CELL="${CELL:-times}"
    GROUPBY="${GROUPBY:-filename}"
+   KEEPFILE="${KEEPFILE:-/tmp/aspersa}"
    validate_opts
    if [ "${OPT_ERR}" ]; then
       usage
@@ -344,13 +349,15 @@ main() {
          fi
          date;
          if [ "${PID}" ]; then
-            lsof -s -p "${PID}" > /tmp/aspersa
-            strace -T -s 0 -f -p ${PID} >> /tmp/aspersa 2>&1 &
+            lsof -s -p "${PID}" > "${KEEPFILE}"
+            strace -T -s 0 -f -p ${PID} >> "${KEEPFILE}" 2>&1 &
             tokill=$!
             sleep ${STIME}
             kill ${tokill}
+            # Sometimes strace leaves threads/processes in T status.
+            kill -CONT ${PID}
             # Summarize the output we just generated.
-            tabulate_strace /tmp/aspersa > /tmp/aspersa2
+            tabulate_strace "${KEEPFILE}" > /tmp/aspersa2
          else
             echo "No such process"
             exit 1
