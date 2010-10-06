@@ -94,6 +94,7 @@ fi
       echo "TS $ts" >> $DEST/$d-df;        df -h               >> $DEST/$d-df 2>&1 &
       echo "TS $ts" >> $DEST/$d-lsof;      lsof -p $p -bw      >> $DEST/$d-lsof 2>&1 &
       echo "TS $ts" >> $DEST/$d-netstat;   netstat -antp       >> $DEST/$d-netstat 2>&1 &
+      echo "TS $ts" >> $DEST/$d-netstat_s; netstat -s          >> $DEST/$d-netstat_s 2>&1 &
       sleep 1
    done
    # Tools to work with the data collected above will rely on <data><timestamp>
