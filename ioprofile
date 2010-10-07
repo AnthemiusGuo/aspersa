@@ -376,9 +376,11 @@ main() {
             strace -T -s 0 -f -p ${PID} >> "${KEEPFILE}" 2>&1 &
             tokill=$!
             sleep ${STIME}
-            kill ${tokill}
+            kill -s 2 ${tokill}
+            sleep 1
+            kill -s 15 ${tokill}
             # Sometimes strace leaves threads/processes in T status.
-            kill -CONT ${PID}
+            kill -s 18 ${PID}
             # Summarize the output we just generated.
             tabulate_strace "${KEEPFILE}" > /tmp/aspersa2
          else
