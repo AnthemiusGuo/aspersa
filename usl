@@ -1,135 +1,267 @@
 #!/usr/bin/env bash
+# This program is part of Aspersa (http://code.google.com/p/aspersa/)
+
+# ########################################################################
+# A tool to do Universal Scalability Law modeling, based on Neil Gunther's
+# book Guerrilla Capacity Planning.
+#
+# Authors:
+#  Baron Schwartz
+# ########################################################################
+
+# Print a usage message and exit.
+usage() {
+   if [ "${OPT_ERR}" ]; then
+      echo "${OPT_ERR}"
+   fi
+   cat <<-EOF
+Usage: $0 [OPTIONS] FILE [FILE...]
+   $0 performs Universal Scalability Law modelling.  It expects as input a file
+   with columns N (load; concurrency; independentvar) and X (throughput).  The
+   file may contain comment lines beginning with the # character.  The tool
+   outputs .png images with the deviation, efficiency, residuals, and
+   model-vs-actual data.  It also prints out gnuplot's error estimates.
+Options:
+   -c <conversion>   Converts the input file into N-vs-X format as specified:
+      globalstatus   Convert from MySQL's SHOW GLOBAL STATUS
+   -i <interval>     When -c is given, group the input into -i second intervals.
+   -k <keepfile>     Save the N-vs-X data in the specified file.
+   -m <threads>      When -c is given, max valid value of N, to filter outliers.
+   -n <adjustment>   Adjust the N variable downwards to compensate for known
+                     errors such as error of observation.
+   -x <adjustment>   Multiply the X(1) regression parameter by this factor.
+	EOF
+   exit 1
+}
 
 # Converts SHOW GLOBAL STATUS into concurrency-vs-throughput.  There are
 # basically three things we are interested in from SHOW GLOBAL STATUS.
 # Questions       118357171
 # Threads_running 8
 # Uptime          614909
-# In the future, when we see Uptime, we need to check whether it is greater than
-# what we saw the first time.  If we see it decrease or stay the same, then this
-# output probably came from "mysqladmin ext -ri"  For now we assume not.
-convert_global_status_to_N_vs_X() {
-   # XXX This is hard-coded for right now.
-   NUM_SLAVES=3
+#
+# Command-line options (not optional)
+#  -i The time interval over which to aggregate.
+#  -n The number of slaves connected to the server, and
+#     thus running Binlog Dump commands.
+#  -m The max number of threads possible (to filter outliers).
+#
+# XXX In the future, when we see Uptime, we need to check whether it is greater
+# than what we saw the first time.  If we see it decrease or stay the same, then
+# this output probably came from "mysqladmin ext -ri"  For now we assume not.
+convert_globalstatus() {
+   # Get the -n command-line option.
+   for o; do
+      case "${o}" in
+         --)
+            break;
+            ;;
+         -i)
+            shift; INTERVAL="${1}"; shift;
+            ;;
+         -m)
+            shift; THREADS_MAX="${1}"; shift;
+            ;;
+         -n)
+            shift; NUM_SLAVES="${1}"; shift;
+            ;;
+      esac
+   done
 
    cat > /tmp/aspersa <<-EOF
+      BEGIN {
+         threads         = 0;
+         threads_sum     = 0;
+         threads_max     = ${THREADS_MAX};
+         questions       = 0;
+         start_questions = 0;
+         samples         = 0;
+         skipped         = 0;
+         start           = 0;
+      }
       /Threads_running/ {
          # There will always be at least 1 thread running, the one doing SHOW
          # STATUS.  And if there are slaves doing Binlog Dump, they really do
          # not count as concurrency, so we remove them too.
-         thd_pre = thd_cur;
-         thd_cur = \$2 - 1 - ${NUM_SLAVES};
-      }
-      /Questions/ {
-         que_pre = que_cur;
-         que_cur = \$2;
-      }
-      /Uptime/ {
-         upt_pre = upt_cur;
-         upt_cur = \$2;
-   
-         # This is where the main work takes place.  We compute the concurrency
-         # over the interval as the average of Threads_running at the beginning
-         # and end.  The number of questions (queries) and elapsed seconds are
-         # simple subtraction.
-         if ( upt_pre > 0 ) {
-            concurrency = (thd_cur + thd_pre) / 2;
-            if ( upt_cur == upt_pre ) {
-               print
-            }
-            throughput  = (que_cur - que_pre) / (upt_cur - upt_pre);
-            if ( concurrency > 0.1 ) {
-               printf "%f %f\\n", concurrency, throughput;
-            }
+         threads      = \$2 - 1 - ${NUM_SLAVES};
+         if ( threads_max > 0 && threads > threads_max ) {
+            # We do not count these.  Later we'll adjust the denominator of the
+            # average thread count accordingly.
+            skipped++;
+         }
+         else {
+            threads_sum += threads;
          }
       }
+      /Questions/ {
+         questions = \$2;
+         if ( start_questions == 0 ) { # Initial condition, runs only once.
+            start_questions = questions;
+         }
+      }
+      /Uptime/ {
+         end = \$2;
+         if ( start == 0 ) { # Initial condition, runs only once.
+            start = end;
+         }
+         # This is where the main work takes place.  We compute the concurrency
+         # over the interval as the average of Threads_running.
+         elapsed = end - start;
+         if ( elapsed > 0 && elapsed >= ${INTERVAL} && samples > skipped ) {
+            concurrency = threads_sum / (samples - skipped + 1);
+            throughput  = (questions - start_questions) / elapsed;
+            printf "%f %f\\n", concurrency, throughput;
+            start_questions = questions;
+            start           = end;
+            samples         = 0;
+            skipped         = 0;
+            threads_sum     = threads;
+            if ( threads_max > 0 && threads_sum > threads_max ) {
+               threads_sum = threads_max;
+            }
+         }
+         samples++;
+      }
 	EOF
-   
-   # Now we get concurrency vs throughput.
    awk -f /tmp/aspersa $*
 }
 
-# To find the deviation from linearity, we have to find the X(N) for N=1.  We
-# take an average.  Input columns must be N and X (throughput).
+# To find the deviation from linearity, we have to find the X(N) for N=1 (or if
+# 1 is not available, then we interpolate, which may require human judgment, as
+# in Gunther p.94).  We take an average.  Input columns must be N and X
+# (throughput).  The command-line parameter is the N value we wish to look for.
 find_X_of_one() {
    cat > /tmp/aspersa <<-EOF
-   {
-      if ( \$1 == 1 ) {
+   /^[^#]/ {
+      if ( \$1 == $1 ) {
          count++;
          sum += \$2;
       }
    }
    END {
       if ( count > 0 ) {
-         print sum/count;
+         print (sum/count) / $1;
       }
       else {
          print 0;
       }
    }
 	EOF
-   awk -f /tmp/aspersa $*
+   awk -f /tmp/aspersa "$2"
 }
 
-# We will use an N-vs-X file to compute the columns in Figure 5.3 on Gunther
-# p76.
-build_scalability_spreadsheet() {
-   cat > /tmp/aspersa <<-EOF
-      # Again, columns are p and X (throughput).
-         # Otherwise we compare the X(p) to the X(1), and compute the deviation
-         # from linearity.  In a perfect system, this can't go over 1, but it
-         # can in real systems where the X(1) measurement might be artifically
-         # low or the X(p) might be too high for some reason.  The data should
-         # be inspected to look for problems such as this.
-         else if ( \$1 > 1 && X_one_count > 0 ) {
-            p          = \$1;
-            X          = \$2;
-            X_of_one   = (X_one_sum/X_one_count);
-            C          = X / X_of_one;
-            efficiency = C / p;
-            linearity  = p - 1;
-            deviation  = (p/C) - 1;
-            print p, X, rel_cap, efficiency, linearity, deviation;
-         }
-      }
-	EOF
-   awk -f /tmp/aspersa $*
-}
-
+# The main code that runs by default.  Arguments are the command-line options.
 main() {
-   # We transform SHOW GLOBAL STATUS into throughput, and sort it so that we can
-   # find X(1) easily in the next step.  Output columns are p and X.
-   #   convert_global_status_to_p_vs_x $* | sort -n -k1 > /tmp/aspersa-p-vs-x
+
+   # Get command-line options.
+   for o; do
+      case "${o}" in
+         --)
+            break;
+            ;;
+         -c)
+            shift; CONV="${1}"; shift;
+            ;;
+         -i)
+            shift; INT="${1}"; shift;
+            ;;
+         -k)
+            shift; KEEP="${1}"; shift;
+            ;;
+         -m)
+            shift; MXT="${1}"; shift;
+            ;;
+         -n)
+            shift; ADJ="${1}"; shift;
+            ;;
+         -x)
+            shift; XAD="${1}"; shift;
+            ;;
+         -*)
+            OPT_ERR="Unknown option '${o}'."
+               usage 1
+            ;;
+      esac
+   done
+
+   ADJ=${ADJ:-0}
+   INT=${INT:-0}
+   MXT=${MXT:-0}
+   XAD=${XAD:-1}
+   FILE="${KEEP:-/tmp/aspersa-N-X}"
+
+   if [ "${CONV}" ]; then
+      case "${CONV}" in
+         globalstatus)
+            convert_globalstatus -i ${INT} -m ${MXT} -n ${ADJ} $* \
+               > "${FILE}"
+            ;;
+         *)
+            echo "Unknown -c value"
+            exit 1
+      esac
+   else
+      cat $* > "${FILE}"
+   fi
 
    # ######################################################################
-   # From here on, everything assumes an input file with N in the first column,
-   # and X in the second.
+   # From here on, we have an input file with N in the first column,
+   # and X in the second column.
    # ######################################################################
-   cat $* > /tmp/aspersa-N-X
 
-   # We need to find X(1) for subsequent operations.
-   X_of_one="$(find_X_of_one /tmp/aspersa-N-X)"
-   max_N=$(awk '{if($1>max){max=$1}}END{print max}' /tmp/aspersa-N-X);
+   # We need to find some data points such as X(1) for subsequent operations.
+   min_N=$(awk 'BEGIN{min=999999}/^[^#]/{if($1<min&&$1>0){min=$1}}END{print min}' \
+      "${FILE}");
+   max_N=$(awk '/^[^#]/{if($1>max){max=$1}}END{print max}' "${FILE}");
+   max_X=$(awk '/^[^#]/{if($2>max){max=$2}}END{print max}' "${FILE}");
+
+   # Find X(1) if it exists, else use X(min(N)).
+   N_one=$(awk '{if($1 == 1) {print 1; exit}}' "${FILE}");
+   if [ "$N_one" = "1" ]; then
+      X_of_one="$(find_X_of_one 1 "${FILE}")"
+   else
+      X_of_one="$(find_X_of_one ${min_N} "${FILE}")"
+   fi
+
+   echo "Parameters to the model:"
+   echo "min(N)  ${min_N}"
+   echo "max(N)  ${max_N}"
+   echo "max(X)  ${max_X}"
+   echo "X(1)    ${X_of_one}"
+   echo "N=1 ??? ${N_one:-no}"
 
    # Use gnuplot to 1) find the scalability law parameters and 2) plot the
    # original data with the model.
    cat > /tmp/aspersa <<-EOF
-      X1 = ${X_of_one}
+      # Set up parameters.
+      X1 = ${X_of_one} * ${XAD}
       max_N = ${max_N}
+      max_X = ${max_X}
+      max(a,b) = (a > b) ? a : b
       set terminal png
+
+      # Plot the efficiency relative to X(1).
       set output "efficiency.png"
       plot 1 title 'unity', \\
-         "/tmp/aspersa-N-X" using 1:(\$2/X1/\$1) title 'computed efficiency'
+         "${FILE}" using 1:(\$2/X1/\$1) title 'computed efficiency'
 
+      # Fit and plot the deviation from linearity relative to X(1).
       set output "deviation.png"
       set fit logfile "/dev/null"
       # defines a_err and b_err
       set fit errorvariables
       f(x) = a*x*x + b*x
-      fit f(x) '/tmp/aspersa-N-X' using (\$1-1):(\$1/(\$2/X1)-1) via a, b
-      plot f(x), "/tmp/aspersa-N-X" using (\$1-1):(\$1/(\$2/X1)-1) \\
+      fit f(x) '${FILE}' using (\$1-1):(\$1/(\$2/X1)-1) via a, b
+      plot f(x), "${FILE}" using (\$1-1):(\$1/(\$2/X1)-1) \\
          title 'deviation from linearity'
 
+      # Plot the residual errors to look for a pattern in them.
+      set output "residuals.png"
+      plot "${FILE}" using (\$1-1):((\$1/(\$2/X1)-1)-f(\$1-1)) \\
+         title 'residuals'
+
+      # Substitute in for the Universal Scalability Law and plot the original
+      # points and the model's predictions.
       kappa = a
       sigma = b - kappa
       kappa_best  = a - a_err
@@ -138,14 +270,14 @@ main() {
       sigma_worst = (b + b_err) - kappa_worst
       set output "model-vs-actual.png"
       N_star = floor(sqrt((1-sigma)/kappa))
-      max_X  = N_star*X1 / (1 + sigma*(N_star-1) + kappa*N_star*(N_star-1))
-      p_label = sprintf("Peak capacity is X=%d at N=%d", max_X, N_star)
+      modelX = N_star*X1 / (1 + sigma*(N_star-1) + kappa*N_star*(N_star-1))
+      p_label = sprintf("Peak capacity is X=%d at N=%d", modelX, N_star)
       set xlabel "N (concurrency)"
       set ylabel "X (throughput)"
       set label p_label at max_N/2, X1
-      set xrange [0:max_N * 2]
-      set yrange [0:max_X * 1.3]
-      plot "/tmp/aspersa-N-X" using 1:2 title 'measured', \\
+      set xrange [0:max(N_star, max_N) * 2]
+      set yrange [0:max(max_X, modelX * 1.3)]
+      plot "${FILE}" using 1:2 title 'measured', \\
          x*X1 / (1 + sigma*(x-1) + kappa*x*(x-1)) title 'modeled', \\
          x*X1 / (1 + sigma_best*(x-1) + kappa_best*x*(x-1)) title 'ubound', \\
          x*X1 / (1 + sigma_worst*(x-1) + kappa_worst*x*(x-1)) title 'lbound'
@@ -154,9 +286,22 @@ main() {
       s=sprintf("Kappa = %f (%f - %f)", kappa, kappa_best, kappa_worst)
       print s
 	EOF
-   gnuplot /tmp/aspersa > fit.parameters 2>&1
-   sed -n -e '/the fit converged/,$p' fit.parameters
+   gnuplot /tmp/aspersa > /tmp/aspersa.log 2>&1
+   sed -n -e '/the fit converged/,$p' /tmp/aspersa.log
+   rm -f /tmp/aspersa{,-N-X}
 
+   # If everything went OK, then the fit should have converged and it's OK to
+   # delete the log from gnuplot, otherwise save it for the user.
+   if grep 'the fit converged' /tmp/aspersa.log >/dev/null; then
+      rm /tmp/aspersa.log;
+   else
+      tail /tmp/aspersa.log
+      exit 1;
+   fi
 }
 
-main $*
+# Execute the program if it was not included from another file.  This makes it
+# possible to include without executing, and thus test.
+if [ $(basename "$0") = "usl" ] || [ $(basename "$0") = "bash" -a "$_" = "$0" ]; then
+   main $*
+fi
