@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+
+# Converts SHOW GLOBAL STATUS into concurrency-vs-throughput.  There are
+# basically three things we are interested in from SHOW GLOBAL STATUS.
+# Questions       118357171
+# Threads_running 8
+# Uptime          614909
+# In the future, when we see Uptime, we need to check whether it is greater than
+# what we saw the first time.  If we see it decrease or stay the same, then this
+# output probably came from "mysqladmin ext -ri"  For now we assume not.
+convert_global_status_to_N_vs_X() {
+   # XXX This is hard-coded for right now.
+   NUM_SLAVES=3
+
+   cat > /tmp/aspersa <<-EOF
+      /Threads_running/ {
+         # There will always be at least 1 thread running, the one doing SHOW
+         # STATUS.  And if there are slaves doing Binlog Dump, they really do
+         # not count as concurrency, so we remove them too.
+         thd_pre = thd_cur;
+         thd_cur = \$2 - 1 - ${NUM_SLAVES};
+      }
+      /Questions/ {
+         que_pre = que_cur;
+         que_cur = \$2;
+      }
+      /Uptime/ {
+         upt_pre = upt_cur;
+         upt_cur = \$2;
+   
+         # This is where the main work takes place.  We compute the concurrency
+         # over the interval as the average of Threads_running at the beginning
+         # and end.  The number of questions (queries) and elapsed seconds are
+         # simple subtraction.
+         if ( upt_pre > 0 ) {
+            concurrency = (thd_cur + thd_pre) / 2;
+            if ( upt_cur == upt_pre ) {
+               print
+            }
+            throughput  = (que_cur - que_pre) / (upt_cur - upt_pre);
+            if ( concurrency > 0.1 ) {
+               printf "%f %f\\n", concurrency, throughput;
+            }
+         }
+      }
+	EOF
+   
+   # Now we get concurrency vs throughput.
+   awk -f /tmp/aspersa $*
+}
+
+# To find the deviation from linearity, we have to find the X(N) for N=1.  We
+# take an average.  Input columns must be N and X (throughput).
+find_X_of_one() {
+   cat > /tmp/aspersa <<-EOF
+   {
+      if ( \$1 == 1 ) {
+         count++;
+         sum += \$2;
+      }
+   }
+   END {
+      if ( count > 0 ) {
+         print sum/count;
+      }
+      else {
+         print 0;
+      }
+   }
+	EOF
+   awk -f /tmp/aspersa $*
+}
+
+# We will use an N-vs-X file to compute the columns in Figure 5.3 on Gunther
+# p76.
+build_scalability_spreadsheet() {
+   cat > /tmp/aspersa <<-EOF
+      # Again, columns are p and X (throughput).
+         # Otherwise we compare the X(p) to the X(1), and compute the deviation
+         # from linearity.  In a perfect system, this can't go over 1, but it
+         # can in real systems where the X(1) measurement might be artifically
+         # low or the X(p) might be too high for some reason.  The data should
+         # be inspected to look for problems such as this.
+         else if ( \$1 > 1 && X_one_count > 0 ) {
+            p          = \$1;
+            X          = \$2;
+            X_of_one   = (X_one_sum/X_one_count);
+            C          = X / X_of_one;
+            efficiency = C / p;
+            linearity  = p - 1;
+            deviation  = (p/C) - 1;
+            print p, X, rel_cap, efficiency, linearity, deviation;
+         }
+      }
+	EOF
+   awk -f /tmp/aspersa $*
+}
+
+main() {
+   # We transform SHOW GLOBAL STATUS into throughput, and sort it so that we can
+   # find X(1) easily in the next step.  Output columns are p and X.
+#   convert_global_status_to_p_vs_x $* | sort -n -k1 > /tmp/aspersa-p-vs-x
+
+   # Convert that into something we can run our stats against.
+   build_scalability_spreadsheet /tmp/aspersa-p-vs-x > /tmp/aspersa-spreadsheet
+
+   # Now it's time to run gnuplot against this.  First we are going to fit a
+   # curve to the deviation from linearity.
+#cat > /tmp/aspersa <<EOF
+   #f(x) = a*x*x + b*x + 0
+   #fit f(x) '/tmp/aspersa-dev-from-linear' using 4:5 via a, b
+#EOF
+
+}
+
+main $*
