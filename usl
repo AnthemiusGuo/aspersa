@@ -99,17 +99,63 @@ build_scalability_spreadsheet() {
 main() {
    # We transform SHOW GLOBAL STATUS into throughput, and sort it so that we can
    # find X(1) easily in the next step.  Output columns are p and X.
-#   convert_global_status_to_p_vs_x $* | sort -n -k1 > /tmp/aspersa-p-vs-x
+   #   convert_global_status_to_p_vs_x $* | sort -n -k1 > /tmp/aspersa-p-vs-x
 
-   # Convert that into something we can run our stats against.
-   build_scalability_spreadsheet /tmp/aspersa-p-vs-x > /tmp/aspersa-spreadsheet
+   # ######################################################################
+   # From here on, everything assumes an input file with N in the first column,
+   # and X in the second.
+   # ######################################################################
+   cat $* > /tmp/aspersa-N-X
 
-   # Now it's time to run gnuplot against this.  First we are going to fit a
-   # curve to the deviation from linearity.
-#cat > /tmp/aspersa <<EOF
-   #f(x) = a*x*x + b*x + 0
-   #fit f(x) '/tmp/aspersa-dev-from-linear' using 4:5 via a, b
-#EOF
+   # We need to find X(1) for subsequent operations.
+   X_of_one="$(find_X_of_one /tmp/aspersa-N-X)"
+   max_N=$(awk '{if($1>max){max=$1}}END{print max}' /tmp/aspersa-N-X);
+
+   # Use gnuplot to 1) find the scalability law parameters and 2) plot the
+   # original data with the model.
+   cat > /tmp/aspersa <<-EOF
+      X1 = ${X_of_one}
+      max_N = ${max_N}
+      set terminal png
+      set output "efficiency.png"
+      plot 1 title 'unity', \\
+         "/tmp/aspersa-N-X" using 1:(\$2/X1/\$1) title 'computed efficiency'
+
+      set output "deviation.png"
+      set fit logfile "/dev/null"
+      # defines a_err and b_err
+      set fit errorvariables
+      f(x) = a*x*x + b*x
+      fit f(x) '/tmp/aspersa-N-X' using (\$1-1):(\$1/(\$2/X1)-1) via a, b
+      plot f(x), "/tmp/aspersa-N-X" using (\$1-1):(\$1/(\$2/X1)-1) \\
+         title 'deviation from linearity'
+
+      kappa = a
+      sigma = b - kappa
+      kappa_best  = a - a_err
+      kappa_worst = a + a_err
+      sigma_best  = (b - b_err) - kappa_best
+      sigma_worst = (b + b_err) - kappa_worst
+      set output "model-vs-actual.png"
+      N_star = floor(sqrt((1-sigma)/kappa))
+      max_X  = N_star*X1 / (1 + sigma*(N_star-1) + kappa*N_star*(N_star-1))
+      p_label = sprintf("Peak capacity is X=%d at N=%d", max_X, N_star)
+      set xlabel "N (concurrency)"
+      set ylabel "X (throughput)"
+      set label p_label at max_N/2, X1
+      set xrange [0:max_N * 2]
+      set yrange [0:max_X * 1.3]
+      plot "/tmp/aspersa-N-X" using 1:2 title 'measured', \\
+         x*X1 / (1 + sigma*(x-1) + kappa*x*(x-1)) title 'modeled', \\
+         x*X1 / (1 + sigma_best*(x-1) + kappa_best*x*(x-1)) title 'ubound', \\
+         x*X1 / (1 + sigma_worst*(x-1) + kappa_worst*x*(x-1)) title 'lbound'
+      s=sprintf("Sigma = %f (%f - %f)", sigma, sigma_best, sigma_worst)
+      print s
+      s=sprintf("Kappa = %f (%f - %f)", kappa, kappa_best, kappa_worst)
+      print s
+	EOF
+   gnuplot /tmp/aspersa > fit.parameters 2>&1
+   sed -n -e '/the fit converged/,$p' fit.parameters
 
 }
 
