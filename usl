@@ -17,19 +17,19 @@ usage() {
    cat <<-EOF
 Usage: $0 [OPTIONS] FILE [FILE...]
    $0 performs Universal Scalability Law modelling.  It expects as input a file
-   with columns N (load; concurrency; independentvar) and X (throughput).  The
+   with columns N (load; concurrency; independentvar) and C (throughput).  The
    file may contain comment lines beginning with the # character.  The tool
    outputs .png images with the deviation, efficiency, residuals, and
    model-vs-actual data.  It also prints out gnuplot's error estimates.
 Options:
-   -c <conversion>   Converts the input file into N-vs-X format as specified:
+   -c <conversion>   Converts the input file into N-vs-C format as specified:
       globalstatus   Convert from MySQL's SHOW GLOBAL STATUS
    -i <interval>     When -c is given, group the input into -i second intervals.
-   -k <keepfile>     Save the N-vs-X data in the specified file.
+   -k <keepfile>     Save the N-vs-C data in the specified file.
    -m <threads>      When -c is given, max valid value of N, to filter outliers.
    -n <adjustment>   Adjust the N variable downwards to compensate for known
                      errors such as error of observation.
-   -x <adjustment>   Multiply the X(1) regression parameter by this factor.
+   -x <adjustment>   Multiply the C(1) regression parameter by this factor.
 	EOF
    exit 1
 }
@@ -126,11 +126,11 @@ convert_globalstatus() {
    awk -f /tmp/aspersa $*
 }
 
-# To find the deviation from linearity, we have to find the X(N) for N=1 (or if
+# To find the deviation from linearity, we have to find the C(N) for N=1 (or if
 # 1 is not available, then we interpolate, which may require human judgment, as
-# in Gunther p.94).  We take an average.  Input columns must be N and X
+# in Gunther p.94).  We take an average.  Input columns must be N and C
 # (throughput).  The command-line parameter is the N value we wish to look for.
-find_X_of_one() {
+find_C_of_one() {
    cat > /tmp/aspersa <<-EOF
    /^[^#]/ {
       if ( \$1 == $1 ) {
@@ -188,7 +188,7 @@ main() {
    INT=${INT:-0}
    MXT=${MXT:-0}
    XAD=${XAD:-1}
-   FILE="${KEEP:-/tmp/aspersa-N-X}"
+   FILE="${KEEP:-/tmp/aspersa-N-C}"
 
    if [ "${CONV}" ]; then
       case "${CONV}" in
@@ -206,58 +206,58 @@ main() {
 
    # ######################################################################
    # From here on, we have an input file with N in the first column,
-   # and X in the second column.
+   # and C in the second column.
    # ######################################################################
 
-   # We need to find some data points such as X(1) for subsequent operations.
+   # We need to find some data points such as C(1) for subsequent operations.
    min_N=$(awk 'BEGIN{min=999999}/^[^#]/{if($1<min&&$1>0){min=$1}}END{print min}' \
       "${FILE}");
    max_N=$(awk '/^[^#]/{if($1>max){max=$1}}END{print max}' "${FILE}");
-   max_X=$(awk '/^[^#]/{if($2>max){max=$2}}END{print max}' "${FILE}");
+   max_C=$(awk '/^[^#]/{if($2>max){max=$2}}END{print max}' "${FILE}");
 
-   # Find X(1) if it exists, else use X(min(N)).
+   # Find C(1) if it exists, else use C(min(N)).
    N_one=$(awk '{if($1 == 1) {print 1; exit}}' "${FILE}");
    if [ "$N_one" = "1" ]; then
-      X_of_one="$(find_X_of_one 1 "${FILE}")"
+      C_of_one="$(find_C_of_one 1 "${FILE}")"
    else
-      X_of_one="$(find_X_of_one ${min_N} "${FILE}")"
+      C_of_one="$(find_C_of_one ${min_N} "${FILE}")"
    fi
 
    echo "Parameters to the model:"
    echo "min(N)  ${min_N}"
    echo "max(N)  ${max_N}"
-   echo "max(X)  ${max_X}"
-   echo "X(1)    ${X_of_one}"
+   echo "max(C)  ${max_C}"
+   echo "C(1)    ${C_of_one}"
    echo "N=1 ??? ${N_one:-no}"
 
    # Use gnuplot to 1) find the scalability law parameters and 2) plot the
    # original data with the model.
    cat > /tmp/aspersa <<-EOF
       # Set up parameters.
-      X1 = ${X_of_one} * ${XAD}
+      C1 = ${C_of_one} * ${XAD}
       max_N = ${max_N}
-      max_X = ${max_X}
+      max_C = ${max_C}
       max(a,b) = (a > b) ? a : b
       set terminal png
 
-      # Plot the efficiency relative to X(1).
+      # Plot the efficiency relative to C(1).
       set output "efficiency.png"
       plot 1 title 'unity', \\
-         "${FILE}" using 1:(\$2/X1/\$1) title 'computed efficiency'
+         "${FILE}" using 1:(\$2/C1/\$1) title 'computed efficiency'
 
-      # Fit and plot the deviation from linearity relative to X(1).
+      # Fit and plot the deviation from linearity relative to C(1).
       set output "deviation.png"
       set fit logfile "/dev/null"
       # defines a_err and b_err
       set fit errorvariables
       f(x) = a*x*x + b*x
-      fit f(x) '${FILE}' using (\$1-1):(\$1/(\$2/X1)-1) via a, b
-      plot f(x), "${FILE}" using (\$1-1):(\$1/(\$2/X1)-1) \\
+      fit f(x) '${FILE}' using (\$1-1):(\$1/(\$2/C1)-1) via a, b
+      plot f(x), "${FILE}" using (\$1-1):(\$1/(\$2/C1)-1) \\
          title 'deviation from linearity'
 
       # Plot the residual errors to look for a pattern in them.
       set output "residuals.png"
-      plot "${FILE}" using (\$1-1):((\$1/(\$2/X1)-1)-f(\$1-1)) \\
+      plot "${FILE}" using (\$1-1):((\$1/(\$2/C1)-1)-f(\$1-1)) \\
          title 'residuals'
 
       # Substitute in for the Universal Scalability Law and plot the original
@@ -270,17 +270,17 @@ main() {
       sigma_worst = (b + b_err) - kappa_worst
       set output "model-vs-actual.png"
       N_star = floor(sqrt((1-sigma)/kappa))
-      modelX = N_star*X1 / (1 + sigma*(N_star-1) + kappa*N_star*(N_star-1))
-      p_label = sprintf("Peak capacity is X=%d at N=%d", modelX, N_star)
+      modelC = N_star*C1 / (1 + sigma*(N_star-1) + kappa*N_star*(N_star-1))
+      p_label = sprintf("Peak capacity is C=%d at N=%d", modelC, N_star)
       set xlabel "N (concurrency)"
-      set ylabel "X (throughput)"
-      set label p_label at max_N/2, X1
+      set ylabel "C (throughput)"
+      set label p_label at max_N/2, C1
       set xrange [0:max(N_star, max_N) * 2]
-      set yrange [0:max(max_X, modelX * 1.3)]
+      set yrange [0:max(max_C, modelC * 1.3)]
       plot "${FILE}" using 1:2 title 'measured', \\
-         x*X1 / (1 + sigma*(x-1) + kappa*x*(x-1)) title 'modeled', \\
-         x*X1 / (1 + sigma_best*(x-1) + kappa_best*x*(x-1)) title 'ubound', \\
-         x*X1 / (1 + sigma_worst*(x-1) + kappa_worst*x*(x-1)) title 'lbound'
+         x*C1 / (1 + sigma*(x-1) + kappa*x*(x-1)) title 'modeled', \\
+         x*C1 / (1 + sigma_best*(x-1) + kappa_best*x*(x-1)) title 'ubound', \\
+         x*C1 / (1 + sigma_worst*(x-1) + kappa_worst*x*(x-1)) title 'lbound'
       s=sprintf("Sigma = %f (%f - %f)", sigma, sigma_best, sigma_worst)
       print s
       s=sprintf("Kappa = %f (%f - %f)", kappa, kappa_best, kappa_worst)
@@ -288,7 +288,7 @@ main() {
 	EOF
    gnuplot /tmp/aspersa > /tmp/aspersa.log 2>&1
    sed -n -e '/the fit converged/,$p' /tmp/aspersa.log
-   rm -f /tmp/aspersa{,-N-X}
+   rm -f /tmp/aspersa{,-N-C}
 
    # If everything went OK, then the fit should have converged and it's OK to
    # delete the log from gnuplot, otherwise save it for the user.
