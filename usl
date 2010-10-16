@@ -29,6 +29,7 @@ Options:
    -m <threads>      When -c is given, max valid value of N, to filter outliers.
    -n <adjustment>   Adjust the N variable downwards to compensate for known
                      errors such as error of observation.
+   -p <prefix>       Prefix for the generated image file names.
    -x <adjustment>   Multiply the C(1) regression parameter by this factor.
 	EOF
    exit 1
@@ -174,6 +175,9 @@ main() {
          -n)
             shift; ADJ="${1}"; shift;
             ;;
+         -p)
+            shift; PRE="${1}"; shift;
+            ;;
          -x)
             shift; XAD="${1}"; shift;
             ;;
@@ -241,12 +245,12 @@ main() {
       set terminal png
 
       # Plot the efficiency relative to C(1).
-      set output "efficiency.png"
+      set output "${PRE}efficiency.png"
       plot 1 title 'unity', \\
          "${FILE}" using 1:(\$2/C1/\$1) title 'computed efficiency'
 
       # Fit and plot the deviation from linearity relative to C(1).
-      set output "deviation.png"
+      set output "${PRE}deviation.png"
       set fit logfile "/dev/null"
       # defines a_err and b_err
       set fit errorvariables
@@ -256,7 +260,7 @@ main() {
          title 'deviation from linearity'
 
       # Plot the residual errors to look for a pattern in them.
-      set output "residuals.png"
+      set output "${PRE}residuals.png"
       plot "${FILE}" using (\$1-1):((\$1/(\$2/C1)-1)-f(\$1-1)) \\
          title 'residuals'
 
@@ -268,7 +272,7 @@ main() {
       kappa_worst = a + a_err
       sigma_best  = (b - b_err) - kappa_best
       sigma_worst = (b + b_err) - kappa_worst
-      set output "model-vs-actual.png"
+      set output "${PRE}model-vs-actual.png"
       N_star = floor(sqrt((1-sigma)/kappa))
       modelC = N_star*C1 / (1 + sigma*(N_star-1) + kappa*N_star*(N_star-1))
       p_label = sprintf("Peak capacity is C=%d at N=%d", modelC, N_star)
