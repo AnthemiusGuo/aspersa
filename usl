@@ -30,7 +30,7 @@ Options:
    -n <adjustment>   Adjust the N variable downwards to compensate for known
                      errors such as error of observation.
    -p <prefix>       Prefix for the generated image file names.
-   -t <filetype>     Type for the image files (png, eps).
+   -t <filetype>     Type for the image files (png, pdf, eps).
    -x <adjustment>   Multiply the C(1) regression parameter by this factor.
 	EOF
    exit 1
@@ -198,6 +198,7 @@ main() {
    TYP=${TYP:-png}
    XAD=${XAD:-1}
    FILE="${KEEP:-/tmp/aspersa-N-C}"
+   EXT="${TYP}"
 
    # ######################################################################
    # Set up the gnuplot instructions for filetype.
@@ -209,11 +210,15 @@ main() {
          GNUPLOT_SIGMA='sigma'
          GNUPLOT_KAPPA='kappa'
          ;;
-      eps)
-         GNUPLOT_TERM="set terminal postscript ${TYP} enhanced solid"
+      eps|pdf)
+         # We make PDFs as EPSs and then convert them.
+         GNUPLOT_TERM="set terminal postscript eps enhanced solid"
          GNUPLOT_SIZE="set size 0.6, 0.6"
          GNUPLOT_SIGMA='{/Symbol s}'
          GNUPLOT_KAPPA='{/Symbol k}'
+         if [ "${TYP}" = "pdf" ]; then
+            EXT="eps"
+         fi
          ;;
       *)
          echo "Unknown -t value ${TYP}"
@@ -285,7 +290,7 @@ main() {
 
    # Plot the efficiency relative to C(1).
    cat > /tmp/aspersa-gnuplot1 <<-EOF
-      set output "${PRE}efficiency.${TYP}"
+      set output "${PRE}efficiency.${EXT}"
       set ylabel "Relative Efficiency"
       plot 1 title 'Unity', \\
          "${FILE}" using 1:(\$2/C1/\$1) pt 6 title 'Computed Efficiency'
@@ -308,6 +313,8 @@ main() {
    PARAM_A_ERR="$(awk '/^a / { print $5 }' /tmp/aspersa.params)"
    PARAM_B="$(awk '/^b / { print $3 }' /tmp/aspersa.params)"
    PARAM_B_ERR="$(awk '/^b / { print $5 }' /tmp/aspersa.params)"
+   echo "a       ${PARAM_A}"
+   echo "b       ${PARAM_B}"
 
    # Now find the coefficient of determination, R^2.  Although gnuplot
    # documentation says it is not the best metric, it's the one everyone is used
@@ -329,9 +336,11 @@ main() {
    echo "R^2     ${R_SQUARED}"
 
    cat > /tmp/aspersa-gnuplot1 <<-EOF
-      set output "${PRE}deviation.${TYP}"
+      set output "${PRE}deviation.${EXT}"
       set ylabel "Deviation From Linearity"
       set label "R^2 = ${R_SQUARED}" at graph .1, .5
+      set label "a = ${PARAM_A}"     at graph .1, .57
+      set label "b = ${PARAM_A}"     at graph .1, .64
       set key left
       f(x) = ${PARAM_A}*x*x + ${PARAM_B}*x
       plot f(x) title 'Modeled' w lines, \\
@@ -343,7 +352,7 @@ main() {
    cat > /tmp/aspersa-gnuplot1 <<-EOF
       set key off
       set ylabel "Residual Errors"
-      set output "${PRE}residuals.${TYP}"
+      set output "${PRE}residuals.${EXT}"
       f(x) = ${PARAM_A}*x*x + ${PARAM_B}*x
       plot "${FILE}" using (\$1-1):((\$1/(\$2/C1)-1)-f(\$1-1))
 	EOF
@@ -353,7 +362,7 @@ main() {
    cat > /tmp/aspersa-gnuplot1 <<-EOF
       set key off
       set ylabel "Residual Squared"
-      set output "${PRE}residuals-squared.${TYP}"
+      set output "${PRE}residuals-squared.${EXT}"
       f(x) = ${PARAM_A}*x*x + ${PARAM_B}*x
       plot "${FILE}" using (\$1-1):((\$1/(\$2/C1)-1)-f(\$1-1))**2:1, \\
                   '' using 1:((\$1/(\$2/C1)-1)-f(\$1-1))**2:1 w labels
@@ -373,7 +382,7 @@ main() {
       kappa_worst = a + a_err
       sigma_best  = (b - b_err) - kappa_best
       sigma_worst = (b + b_err) - kappa_worst
-      set output "${PRE}model-vs-actual.${TYP}"
+      set output "${PRE}model-vs-actual.${EXT}"
       N_star = floor(sqrt((1-sigma)/kappa))
       modelC = N_star*C1 / (1 + sigma*(N_star-1) + kappa*N_star*(N_star-1))
       set label sprintf("Peak capacity is C=%d at N=%d", modelC, N_star) at graph 0.1, 0.9
@@ -394,6 +403,15 @@ main() {
 	EOF
    gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
    #rm -f /tmp/aspersa{,-N-C}
+
+   # The type "pdf" is really just eps, and now we need to convert it to pdf.
+   if [ "${TYP}" = "pdf" ]; then
+      for f in efficiency deviation residuals{,-squared} model-vs-actual; do
+         file="${PRE}${f}.eps"
+         epstopdf "${file}"
+         rm "${file}"
+      done
+   fi
 
    # If everything went OK, then the fit should have converged and it's OK to
    # delete the log from gnuplot, otherwise save it for the user.
