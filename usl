@@ -275,7 +275,11 @@ main() {
 
    # ######################################################################
    # Use gnuplot to 1) find the scalability law parameters and 2) plot the
-   # original data with the model.
+   # original data with the model.  We have to go about the fitting in a funny
+   # way, because gnuplot can get stuck at a local maximum with the fitting if
+   # we don't give it good starting parameters.  So we use the quadratic
+   # equation to figure out the starting parameters, and then refit with the USL
+   # equation for the final result.  This results in a better fit.
    # ######################################################################
 
    # Sets up parameters.  We'll always load this file.
@@ -287,6 +291,8 @@ main() {
       max_N = ${max_N}
       max_C = ${max_C}
       max(a,b) = (a > b) ? a : b
+      f(x) = a*x*x + b*x
+      g(x) = x*C1/(1+sigma*(x-1) + kappa*x*(x-1))
 	EOF
 
    # Plot the efficiency relative to C(1).
@@ -299,23 +305,29 @@ main() {
    gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
 
    # Fit the deviation from linearity relative to C(1).
+   echo "# Fitting the transformed data against a 2nd-degree polynomial."
    cat > /tmp/aspersa-gnuplot1 <<-EOF
       set fit logfile "/dev/null"
       # defines a_err and b_err
       set fit errorvariables
-      f(x) = a*x*x + b*x
       fit f(x) '${FILE}' using (\$1-1):(\$1/(\$2/C1)-1) via a, b
 	EOF
-   gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1 2> /tmp/aspersa.log
+   gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1 2> /tmp/aspersa-qfit.log
+
+   # If everything went OK, then the fit should have converged.
+   if ! grep 'the fit converged' /tmp/aspersa-qfit.log >/dev/null ; then
+      echo "The quadratic regression failed, check /tmp/aspersa-qfit.log"
+      exit 1;
+   fi
 
    # Now we can check the log and extract the parameters from it.
-   sed -n -e '/the fit converged/,/^b /p' /tmp/aspersa.log > /tmp/aspersa.params
+   sed -n -e '/the fit converged/,/^b /p' /tmp/aspersa-qfit.log > /tmp/aspersa.params
    PARAM_A="$(awk '/^a / { print $3 }' /tmp/aspersa.params)"
    PARAM_A_ERR="$(awk '/^a / { print $5 }' /tmp/aspersa.params)"
    PARAM_B="$(awk '/^b / { print $3 }' /tmp/aspersa.params)"
    PARAM_B_ERR="$(awk '/^b / { print $5 }' /tmp/aspersa.params)"
-   echo "a       ${PARAM_A}"
-   echo "b       ${PARAM_B}"
+   echo "   a       ${PARAM_A} +/- ${PARAM_A_ERR}"
+   echo "   b       ${PARAM_B} +/- ${PARAM_B_ERR}"
 
    # Now find the coefficient of determination, R^2.  Although gnuplot
    # documentation says it is not the best metric, it's the one everyone is used
@@ -334,16 +346,17 @@ main() {
       }
 	EOF
    R_SQUARED="$(awk -f /tmp/aspersa "${FILE}")"
-   echo "R^2     ${R_SQUARED}"
+   echo "   R^2     ${R_SQUARED}"
 
    cat > /tmp/aspersa-gnuplot1 <<-EOF
       set output "${PRE}deviation.${EXT}"
       set ylabel "Deviation From Linearity"
       set label "R^2 = ${R_SQUARED}" at graph .1, .5
-      set label "a = ${PARAM_A}"     at graph .1, .57
-      set label "b = ${PARAM_A}"     at graph .1, .64
+      set label "b = ${PARAM_B}"     at graph .1, .57
+      set label "a = ${PARAM_A}"     at graph .1, .64
       set key left
-      f(x) = ${PARAM_A}*x*x + ${PARAM_B}*x
+      a = ${PARAM_A}
+      b = ${PARAM_B}
       plot f(x) title 'Modeled' w lines, \\
          "${FILE}" using (\$1-1):(\$1/(\$2/C1)-1) pt 6 title 'Measured'
 	EOF
@@ -353,8 +366,9 @@ main() {
    cat > /tmp/aspersa-gnuplot1 <<-EOF
       set key off
       set ylabel "Residual Errors"
-      set output "${PRE}residuals.${EXT}"
-      f(x) = ${PARAM_A}*x*x + ${PARAM_B}*x
+      set output "${PRE}quadratic-residuals.${EXT}"
+      a = ${PARAM_A}
+      b = ${PARAM_B}
       plot "${FILE}" using (\$1-1):((\$1/(\$2/C1)-1)-f(\$1-1))
 	EOF
    gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
@@ -363,26 +377,80 @@ main() {
    cat > /tmp/aspersa-gnuplot1 <<-EOF
       set key off
       set ylabel "Residual Squared"
-      set output "${PRE}residuals-squared.${EXT}"
-      f(x) = ${PARAM_A}*x*x + ${PARAM_B}*x
+      set output "${PRE}quadratic-residuals-squared.${EXT}"
+      a = ${PARAM_A}
+      b = ${PARAM_B}
       plot "${FILE}" using (\$1-1):((\$1/(\$2/C1)-1)-f(\$1-1))**2:1, \\
                   '' using 1:((\$1/(\$2/C1)-1)-f(\$1-1))**2:1 w labels
 	EOF
    gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
 
-   # Substitute in for the Universal Scalability Law, and plot the original
-   # points and the model's predictions.
+   # Re-fit against the Universal Scalability Law -- it will be more accurate.
+   echo "# Re-fitting against the USL with (a, b-a) as a starting point."
    cat > /tmp/aspersa-gnuplot1 <<-EOF
       a = ${PARAM_A}
       b = ${PARAM_B}
-      a_err = ${PARAM_A_ERR}
-      b_err = ${PARAM_B_ERR}
       kappa = a
       sigma = b - kappa
-      kappa_best  = a - a_err
-      kappa_worst = a + a_err
-      sigma_best  = (b - b_err) - kappa_best
-      sigma_worst = (b + b_err) - kappa_worst
+      set fit logfile "/dev/null"
+      # defines sigma_err and kappa_err
+      set fit errorvariables
+      fit g(x) '${FILE}' using 1:2 via sigma, kappa
+	EOF
+   gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1 2> /tmp/aspersa-ufit.log
+
+   # If everything went OK, then the fit should have converged.
+   if ! grep 'the fit converged' /tmp/aspersa-ufit.log >/dev/null ; then
+      echo "The USL regression failed, check /tmp/aspersa-ufit.log"
+      exit 1;
+   fi
+
+   # Now check the log again, and extract the parameters from it.
+   sed -n -e '/the fit converged/,/^kappa /p' /tmp/aspersa-ufit.log > /tmp/aspersa.params
+   PARAM_SIGMA="$(awk '/^sigma / { print $3 }' /tmp/aspersa.params)"
+   PARAM_SIGMA_ERR="$(awk '/^sigma / { print $5 }' /tmp/aspersa.params)"
+   PARAM_KAPPA="$(awk '/^kappa / { print $3 }' /tmp/aspersa.params)"
+   PARAM_KAPPA_ERR="$(awk '/^kappa / { print $5 }' /tmp/aspersa.params)"
+   echo "   sigma   ${PARAM_SIGMA} +/- ${PARAM_SIGMA_ERR}"
+   echo "   kappa   ${PARAM_KAPPA} +/- ${PARAM_KAPPA_ERR}"
+
+   # Now find the coefficient of determination again, this time against the USL
+   # model.
+   cat > /tmp/aspersa <<-EOF
+      /^[^#]/{
+         x  = \$1;
+         y  = \$2;
+         g  = x*${C_of_one}/(1+${PARAM_SIGMA}*(x-1) + ${PARAM_KAPPA}*x*(x-1));
+         sum_of_squares        += y * y;
+         sum_of_squared_errors += (g - y) * (g - y);
+      }
+      END {
+         print 1 - (sum_of_squared_errors / sum_of_squares);
+      }
+	EOF
+   R_SQUARED="$(awk -f /tmp/aspersa "${FILE}")"
+   echo "   R^2     ${R_SQUARED}"
+
+   # Plot the residuals squared, for finding outliers and removing them.
+   cat > /tmp/aspersa-gnuplot1 <<-EOF
+      set key off
+      set ylabel "Residual Errors Squared"
+      set output "${PRE}usl-residuals-squared.${EXT}"
+      sigma = ${PARAM_SIGMA}
+      kappa = ${PARAM_KAPPA}
+      plot "${FILE}" using 1:((g(\$1)-\$2)**2), \\
+           ''        using (\$1+1):((g(\$1)-\$2)**2):1 w labels
+	EOF
+   gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
+
+   # Plot the original points and the Universal Scalability Law's predictions.
+   cat > /tmp/aspersa-gnuplot1 <<-EOF
+      sigma = ${PARAM_SIGMA}
+      kappa = ${PARAM_KAPPA}
+      sigma_best  = sigma - ${PARAM_SIGMA_ERR};
+      sigma_worst = sigma + ${PARAM_SIGMA_ERR};
+      kappa_best  = kappa - ${PARAM_KAPPA};
+      kappa_worst = kappa + ${PARAM_KAPPA_ERR};
       set output "${PRE}model-vs-actual.${EXT}"
       N_star = floor(sqrt((1-sigma)/kappa))
       modelC = N_star*C1 / (1 + sigma*(N_star-1) + kappa*N_star*(N_star-1))
@@ -397,13 +465,8 @@ main() {
          x*C1/(1+sigma_worst*(x-1) + kappa_worst*x*(x-1)) title '',\\
          x*C1/(1+sigma*(x-1) + kappa*x*(x-1)) title 'Modeled' w lines, \\
          "${FILE}" using 1:2 pt 6 title 'Measured'
-      s=sprintf("Sigma = %f +/- (%f - %f)", sigma, sigma_best, sigma_worst)
-      print s
-      s=sprintf("Kappa = %f +/- (%f - %f)", kappa, kappa_best, kappa_worst)
-      print s
 	EOF
    gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
-   #rm -f /tmp/aspersa{,-N-C}
 
    # The type "pdf" is really just eps, and now we need to convert it to pdf.
    if [ "${TYP}" = "pdf" ]; then
@@ -414,14 +477,8 @@ main() {
       done
    fi
 
-   # If everything went OK, then the fit should have converged and it's OK to
-   # delete the log from gnuplot, otherwise save it for the user.
-   if grep 'the fit converged' /tmp/aspersa.log >/dev/null; then
-      rm /tmp/aspersa.log;
-   else
-      tail /tmp/aspersa.log
-      exit 1;
-   fi
+   # Remove temp files.
+   rm -f /tmp/aspersa{,-N-C,.params,-gnuplot0,-gnuplot1,-qfit.log,-ufit.log}
 }
 
 # Execute the program if it was not included from another file.  This makes it
