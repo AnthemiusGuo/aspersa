@@ -80,6 +80,7 @@ fi
    iostat -dx $LEN 2          >> $DEST/$d-iostat-overall 2>&1 &
    mpstat -P ALL 1 $LEN       >> $DEST/$d-mpstat 2>&1 &
    mpstat -P ALL $LEN 1       >> $DEST/$d-mpstat-overall 2>&1 &
+   lsof -p $p -bw             >> $DEST/$d-lsof 2>&1 &
    mysqladmin ext -i1 -c$LEN  >> $DEST/$d-mysqladmin 2>&1 &
    mysqladmin_pid=$!
 
@@ -92,7 +93,6 @@ fi
       echo "TS $ts" >> $DEST/$d-diskstats; cat /proc/diskstats >> $DEST/$d-diskstats 2>&1 &
       echo "TS $ts" >> $DEST/$d-procstat;  cat /proc/stat      >> $DEST/$d-procstat 2>&1 &
       echo "TS $ts" >> $DEST/$d-df;        df -h               >> $DEST/$d-df 2>&1 &
-      echo "TS $ts" >> $DEST/$d-lsof;      lsof -p $p -bw      >> $DEST/$d-lsof 2>&1 &
       echo "TS $ts" >> $DEST/$d-netstat;   netstat -antp       >> $DEST/$d-netstat 2>&1 &
       echo "TS $ts" >> $DEST/$d-netstat_s; netstat -s          >> $DEST/$d-netstat_s 2>&1 &
       sleep 1
@@ -103,7 +103,6 @@ fi
    echo "TS $ts" >> $DEST/$d-diskstats;
    echo "TS $ts" >> $DEST/$d-procstat;
    echo "TS $ts" >> $DEST/$d-df;
-   echo "TS $ts" >> $DEST/$d-lsof;
    echo "TS $ts" >> $DEST/$d-netstat;
 
    if [ "${OPC}" = "yes" ]; then
