@@ -44,6 +44,7 @@ while true; do
    # XXX it into $detected, and if $detected > $THRESHOLD, then we'll execute
    # XXX the collection process.
    detected=$(mysqladmin ext | grep ${VARIABLE} | awk '{print $4}');
+   execute="no"
    if [ -z "${detected}" -a ${MAYBE_EMPTY} = "no" ]; then
       execute="yes" # Oops, couldn't connect, maybe max_connections problem.
       echo "The detected value is empty; something failed?  Exit status is $?"
