@@ -35,7 +35,7 @@ Options:
    -n ADJUSTMENT   Adjust the N variable downwards to compensate for known
                    errors such as error of observation.
    -p PREFIX       Prefix for the generated image file names.
-   -P PORT         TCP port for when -c tcpdump is used.
+   -P PORT         TCP port for when -c tcpdump is used (default 3306).
    -t FILETYPE     Type for the image files (png, pdf, eps).
    -x ADJUSTMENT   Multiply the C(1) regression parameter by this factor.
 	EOF
