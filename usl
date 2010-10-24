@@ -434,7 +434,7 @@ main() {
 
    # Plot the efficiency relative to C(1).
    cat > /tmp/aspersa-gnuplot1 <<-EOF
-      set output "${PRE}efficiency.${EXT}"
+      set output "${PRE}usl-efficiency.${EXT}"
       set ylabel "Relative Efficiency"
       plot 1 title 'Unity', \\
          "${FILE}" using 1:(\$2/C1/\$1) pt 6 title 'Computed Efficiency'
@@ -488,7 +488,7 @@ main() {
    echo "   R^2     ${R_SQUARED}"
 
    cat > /tmp/aspersa-gnuplot1 <<-EOF
-      set output "${PRE}deviation.${EXT}"
+      set output "${PRE}usl-deviation.${EXT}"
       set ylabel "Deviation From Linearity"
       set label "R^2 = ${R_SQUARED}" at graph .1, .5
       set label "b = ${PARAM_B}"     at graph .1, .57
@@ -505,7 +505,7 @@ main() {
    cat > /tmp/aspersa-gnuplot1 <<-EOF
       set key off
       set ylabel "Residual Errors"
-      set output "${PRE}quadratic-residuals.${EXT}"
+      set output "${PRE}usl-quadratic-residuals.${EXT}"
       a = ${PARAM_A}
       b = ${PARAM_B}
       plot "${FILE}" using (\$1-1):((\$1/(\$2/C1)-1)-f(\$1-1))
@@ -516,7 +516,7 @@ main() {
    cat > /tmp/aspersa-gnuplot1 <<-EOF
       set key off
       set ylabel "Residual Squared"
-      set output "${PRE}quadratic-residuals-squared.${EXT}"
+      set output "${PRE}usl-quadratic-residuals-squared.${EXT}"
       a = ${PARAM_A}
       b = ${PARAM_B}
       plot "${FILE}" using (\$1-1):((\$1/(\$2/C1)-1)-f(\$1-1))**2:1, \\
