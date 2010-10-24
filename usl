@@ -26,6 +26,7 @@ Options:
    -a              Set X-axis label to 'node count' (default is concurrency).
    -c CONVERSION   Converts the input file into N-vs-C format as specified:
       globalstatus   Convert from MySQL's SHOW GLOBAL STATUS
+      tcpdump        Convert from 'tcpdump -tttt -nnq' format
    -e              Omit the error lines on the final plot.
    -i INTERVAL     When -c is given, group the input into -i second intervals.
    -k KEEPFILE     Save the N-vs-C data in the specified file.
@@ -34,6 +35,7 @@ Options:
    -n ADJUSTMENT   Adjust the N variable downwards to compensate for known
                    errors such as error of observation.
    -p PREFIX       Prefix for the generated image file names.
+   -P PORT         TCP port for when -c tcpdump is used.
    -t FILETYPE     Type for the image files (png, pdf, eps).
    -x ADJUSTMENT   Multiply the C(1) regression parameter by this factor.
 	EOF
@@ -132,6 +134,119 @@ convert_globalstatus() {
    awk -f /tmp/aspersa $*
 }
 
+# Converts tcpdump into concurrency-vs-throughput.  Use a tcpdump command line
+# such as the following:
+#   tcpdump -i lo -tttt -nnq port 3306
+#
+# Command-line options (not optional)
+#  -P The TCP port that the server is listening on.
+convert_tcpdump() {
+   # For ease of testing, this process is split into two parts, and this
+   # function is just a wrapper around helpers that do the main work.
+   convert_tcpdump_tabulate $* | convert_tcpdump_tabulated_to_1sec
+}
+
+# Accepts the same input as convert_tcpdump().  Output fields:
+# 1 - date
+# 2 - time
+# 3 - timestamp as a number (NOTE: doesn't handle wrapping past midnight)
+# 4 - client IP address and port number
+# 5 - response time
+# 6 - number of requests still pending / in progress
+# 7 - total time spent serving requests (increases while #6 is nonzero)
+# 8 - weighted time spent serving requests (incremented by #6 * elapsed)
+convert_tcpdump_tabulate() {
+   # Get the command-line options.
+   for o; do
+      case "${o}" in
+         --)
+            break;
+            ;;
+         -P)
+            shift; PORT="${1}"; shift;
+            ;;
+      esac
+   done
+
+   cat > /tmp/aspersa-convert_tcpdump_tabulate <<-EOF
+   BEGIN {
+      watch_port = ${PORT};
+      from_pat   = "[.]" watch_port "$"; # Matches IP.port combination
+      to_pat     = "[.]" watch_port ":$";
+      pending    = 0; # The number of requests that haven't been replied yet.
+      # Other global variables:
+      # current    # The queries that have been sent to the server.
+      # last_ts    # Used for computing weighted time spent doing queries.
+      # busy       # Like Field 10 in /proc/diskstats: increases while pending > 0.
+      # weighted   # The time spent doing IO, like Field 11 in /proc/diskstats.
+   }
+   
+   # Ignore any zero-length, it's usually just an ack or something.
+   # ts   = \$1 \$2
+   # from = \$4
+   # to   = \$6
+   \$NF > 0 {
+      ts = (3600 * substr(\$2, 1, 2)) + (60 * substr(\$2, 4, 2)) + substr(\$2, 7);
+   
+      # Packets from the client.
+      if ( \$6 ~ to_pat ) {
+         current[\$4] = ts;
+         if ( last_ts ) {
+            weighted += pending * (ts - last_ts);
+            if ( pending > 0 ) {
+               busy += (ts - last_ts);
+            }
+         }
+         last_ts = ts;
+         pending++;
+      }
+   
+      # Packets from the server we're watching to the client.
+      else if ( \$4 ~ from_pat ) {
+         client = substr(\$6, 1, length(\$6) - 1);
+         if ( current[client] ) {
+            rt        = ts - current[client];
+            weighted += pending * (ts - last_ts);
+            busy     += (ts - last_ts);
+            last_ts   = ts;
+            pending--;
+            delete current[client];
+            printf("%s %s %12.6f %-21s %10.6f %3d %10.6f %10.6f\\n", \$1, \$2, ts, client, rt, pending, busy, weighted);
+         }
+      }
+   }
+	EOF
+   awk -f /tmp/aspersa-convert_tcpdump_tabulate $*
+}
+
+# Takes in the output of convert_tcpdump_tabulate() and outputs one line per
+# second, showing the concurrency and throughput for that second.
+convert_tcpdump_tabulated_to_1sec() {
+   cat > /tmp/aspersa-convert_tcpdump_tabulated_to_1sec <<-EOF
+   {
+      if ( !ts ) { # Initial condition
+         ts = \$3; # timestamp
+         ct = 0;   # count of queries
+         bt = \$7; # busy time
+         wt = \$8; # weighted busy time
+      }
+      if ( \$3 >= ts + 1 ) {
+         concurrency = (\$8 - wt) / (\$7 - bt);
+         throughput  = ct / (\$7 - bt);
+         printf "%.6f %.6f %s %s\\n", concurrency, throughput, \$1, \$2;
+         ts = \$3; # timestamp
+         ct = 0;   # count of queries
+         bt = \$7; # busy time
+         wt = \$8; # weighted busy time
+      }
+      else {
+         ct++;
+      }
+   }
+	EOF
+   awk -f /tmp/aspersa-convert_tcpdump_tabulated_to_1sec $*
+}
+
 # To find the deviation from linearity, we have to find the C(N) for N=1 (or if
 # 1 is not available, then we interpolate, which may require human judgment, as
 # in Gunther p.94).  We take an average.  Input columns must be N and C
@@ -192,6 +307,9 @@ main() {
          -p)
             shift; PRE="${1}"; shift;
             ;;
+         -P)
+            shift; PORT="${1}"; shift;
+            ;;
          -t)
             shift; TYP="${1}"; shift;
             ;;
@@ -215,6 +333,7 @@ main() {
    EXT="${TYP}"
    LIM="${LIM:-0}"
    X_AXIS="${X_AXIS:-concurrency}"
+   PORT="${PORT:-3306}"
 
    # ######################################################################
    # Set up the gnuplot instructions for filetype.
@@ -252,6 +371,9 @@ main() {
          globalstatus)
             convert_globalstatus -i ${INT} -m ${MXT} -n ${ADJ} $* \
                > "${FILE}"
+            ;;
+         tcpdump)
+            convert_tcpdump -P $PORT $* > "${FILE}"
             ;;
          *)
             echo "Unknown -c value ${CONV}"
