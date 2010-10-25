@@ -9,6 +9,14 @@
 #  Baron Schwartz
 # ########################################################################
 
+# TODO: need to make it optionally make logarithmic X axis graph.  Also, apply
+# -i and -n and so on in the main body, not in the converter itself, so that I
+# can convert a file and then manipulate it separately.
+# TODO: I want it to entirely skip samples that have too-large concurrency, as
+# defined by -m.  I don't want it to just average the concurrency across the
+# other samples; it will introduce skew into the throughput for that sample,
+# too.
+
 # Print a usage message and exit.
 usage() {
    if [ "${OPT_ERR}" ]; then
@@ -177,7 +185,7 @@ convert_tcpdump_tabulate() {
       # Other global variables:
       # current    # The queries that have been sent to the server.
       # last_ts    # Used for computing weighted time spent doing queries.
-      # busy       # Like Field 10 in /proc/diskstats: increases while pending > 0.
+      # busy       # Like Field 10 in /proc/diskstats: increases if pending > 0.
       # weighted   # The time spent doing IO, like Field 11 in /proc/diskstats.
    }
    
@@ -190,21 +198,40 @@ convert_tcpdump_tabulate() {
    
       # Packets from the client.
       if ( \$6 ~ to_pat ) {
-         current[\$4] = ts;
-         if ( last_ts ) {
-            weighted += pending * (ts - last_ts);
-            if ( pending > 0 ) {
-               busy += (ts - last_ts);
+         client = \$4;
+         if ( !current[client] ) {
+            if ( ${MKDEBUG:-0} > 0 ) {
+               printf "MKDEBUG: new request from '%s' at line %d\\n", client, NR;
             }
+            current[client] = ts;
+            if ( last_ts ) {
+               elapsed = ts - last_ts;
+               if ( ${MKDEBUG:-0} > 0 ) {
+                  printf "MKDEBUG: weighted (%.6f) += %.6f\\n", weighted, elapsed;
+               }
+               weighted += pending * elapsed;
+               if ( pending > 0 ) {
+                  if ( ${MKDEBUG:-0} > 0 ) {
+                     printf "MKDEBUG: busy (%.6f) += %.6f\\n", busy, elapsed;
+                  }
+                  busy += (ts - last_ts);
+               }
+            }
+            last_ts = ts;
+            pending++;
          }
-         last_ts = ts;
-         pending++;
+         else if ( ${MKDEBUG:-0} > 0 ) {
+            print "MKDEBUG: existing request for client";
+         }
       }
-   
+
       # Packets from the server we're watching to the client.
       else if ( \$4 ~ from_pat ) {
          client = substr(\$6, 1, length(\$6) - 1);
          if ( current[client] ) {
+            if ( ${MKDEBUG:-0} > 0 ) {
+               printf "MKDEBUG: reply to '%s' at line %d\\n", client, NR;
+            }
             rt        = ts - current[client];
             weighted += pending * (ts - last_ts);
             busy     += (ts - last_ts);
@@ -212,6 +239,19 @@ convert_tcpdump_tabulate() {
             pending--;
             delete current[client];
             printf("%s %s %12.6f %-21s %10.6f %3d %10.6f %10.6f\\n", \$1, \$2, ts, client, rt, pending, busy, weighted);
+         }
+         else if ( ${MKDEBUG:-0} > 0 ) {
+            printf "MKDEBUG: reply to '%s' at line %d (DNE)\\n", client, NR;
+         }
+      }
+   }
+   END {
+      if ( ${MKDEBUG:-0} > 0 ) {
+         printf "MKDEBUG: %d sessions currently open\\n", pending;
+         for (c in current) {
+            if ( current[c] ) {
+               printf "MKDEBUG: client '%s' started %.6f\\n", c, current[c];
+            }
          }
       }
    }
@@ -498,6 +538,7 @@ main() {
       b = ${PARAM_B}
       plot f(x) title 'Modeled' w lines, \\
          "${FILE}" using (\$1-1):(\$1/(\$2/C1)-1) pt 6 title 'Measured'
+                # '' using (\$1-1):(\$1/(\$2/C1)):1 w labels
 	EOF
    gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
 
@@ -592,7 +633,7 @@ main() {
       sigma_worst = sigma + ${PARAM_SIGMA_ERR};
       kappa_best  = kappa - ${PARAM_KAPPA};
       kappa_worst = kappa + ${PARAM_KAPPA_ERR};
-      set output "${PRE}model-vs-actual.${EXT}"
+      set output "${PRE}usl-model-vs-actual.${EXT}"
       N_star = floor(sqrt((1-sigma)/kappa))
       modelC = N_star*C1 / (1 + sigma*(N_star-1) + kappa*N_star*(N_star-1))
       set label sprintf("Peak capacity is C=%d at N=%d", modelC, N_star) at graph 0.1, 0.9
@@ -618,7 +659,7 @@ main() {
    # The type "pdf" is really just eps, and now we need to convert it to pdf.
    if [ "${TYP}" = "pdf" ]; then
       for f in efficiency deviation residuals{,-squared} model-vs-actual; do
-         file="${PRE}${f}.eps"
+         file="${PRE}usl-${f}.eps"
          epstopdf "${file}"
          rm "${file}"
       done
