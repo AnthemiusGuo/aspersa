@@ -378,7 +378,7 @@ main() {
             sleep ${STIME}
             kill -s 2 ${tokill}
             sleep 1
-            kill -s 15 ${tokill}
+            kill -s 15 ${tokill} 2>/dev/null
             # Sometimes strace leaves threads/processes in T status.
             kill -s 18 ${PID}
             # Summarize the output we just generated.
