@@ -39,13 +39,16 @@ Options:
    -i INTERVAL     When -c is given, group the input into -i second intervals.
    -k KEEPFILE     Save the N-vs-C data in the specified file.
    -l LIMIT        X-axis limit for the final plot.
+   -L COLOR        The color for plotting points (default lt rgb "#8B0000").
    -m THREADS      When -c is given, max valid value of N, to filter outliers.
    -n ADJUSTMENT   Adjust the N variable downwards to compensate for known
                    errors such as error of observation.
    -o ONLY         Only produce plots specified in this comma-separated list.
    -p PREFIX       Prefix for the generated image file names.
    -P PORT         TCP port for when -c tcpdump is used (default 3306).
+   -r              Render pdf and eps plots in color.
    -t FILETYPE     Type for the image files (png, pdf, eps).
+   -T POINTTYPE    Point-type and options for the plots (default 6).
    -x ADJUSTMENT   Multiply the C(1) regression parameter by this factor.
 	EOF
    exit 1
@@ -339,6 +342,9 @@ main() {
          -l)
             shift; LIM="${1}"; shift;
             ;;
+         -L)
+            shift; LTY="${1}"; shift;
+            ;;
          -m)
             shift; MXT="${1}"; shift;
             ;;
@@ -354,8 +360,14 @@ main() {
          -P)
             shift; PORT="${1}"; shift;
             ;;
+         -r)
+            shift; COLOR="color";
+            ;;
          -t)
             shift; TYP="${1}"; shift;
+            ;;
+         -T)
+            shift; PTY="${1}"; shift;
             ;;
          -x)
             shift; XAD="${1}"; shift;
@@ -378,6 +390,11 @@ main() {
    LIM="${LIM:-0}"
    X_AXIS="${X_AXIS:-concurrency}"
    PORT="${PORT:-3306}"
+   PTY="${PTY:-6}"
+   if [ "${COLOR}" ]; then
+      LTY="${LTY:-lt rgb \"#8B0000\"}"
+      BLUE=" lt rgb \"#0000FF\"";
+   fi
 
    # ######################################################################
    # Set up the gnuplot instructions for filetype.
@@ -391,7 +408,7 @@ main() {
          ;;
       eps|pdf)
          # We make PDFs as EPSs and then convert them.
-         GNUPLOT_TERM="set terminal postscript eps enhanced solid"
+         GNUPLOT_TERM="set terminal postscript eps enhanced ${COLOR} solid"
          GNUPLOT_SIZE="set size 0.6, 0.6"
          GNUPLOT_SIGMA='{/Symbol s}'
          GNUPLOT_KAPPA='{/Symbol k}'
@@ -481,7 +498,7 @@ main() {
       set output "${PRE}usl-efficiency.${EXT}"
       set ylabel "Relative Efficiency"
       plot 1 title 'Unity', \\
-         "${FILE}" using 1:(\$2/C1/\$1) pt 6 title 'Computed Efficiency'
+         "${FILE}" using 1:(\$2/C1/\$1) pt ${PTY}${BLUE} title 'Computed Efficiency'
 	EOF
    gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
 
@@ -540,8 +557,8 @@ main() {
       set key left
       a = ${PARAM_A}
       b = ${PARAM_B}
-      plot f(x) title 'Modeled' w lines, \\
-         "${FILE}" using (\$1-1):(\$1/(\$2/C1)-1) pt 6 title 'Measured'
+      plot f(x) title 'Modeled' w lines${BLUE}, \\
+         "${FILE}" using (\$1-1):(\$1/(\$2/C1)-1) pt ${PTY} ${LTY} title 'Measured'
                 # '' using (\$1-1):(\$1/(\$2/C1)):1 w labels
 	EOF
    gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
@@ -553,7 +570,7 @@ main() {
       set output "${PRE}usl-quadratic-residuals.${EXT}"
       a = ${PARAM_A}
       b = ${PARAM_B}
-      plot "${FILE}" using (\$1-1):((\$1/(\$2/C1)-1)-f(\$1-1))
+      plot "${FILE}" using (\$1-1):((\$1/(\$2/C1)-1)-f(\$1-1)) pt ${PTY}${BLUE}
 	EOF
    gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
 
@@ -564,7 +581,7 @@ main() {
       set output "${PRE}usl-quadratic-squared.${EXT}"
       a = ${PARAM_A}
       b = ${PARAM_B}
-      plot "${FILE}" using (\$1-1):((\$1/(\$2/C1)-1)-f(\$1-1))**2:1, \\
+      plot "${FILE}" using (\$1-1):((\$1/(\$2/C1)-1)-f(\$1-1))**2:1 pt ${PTY}${BLUE}, \\
                   '' using 1:((\$1/(\$2/C1)-1)-f(\$1-1))**2:1 w labels
 	EOF
    gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
@@ -624,7 +641,7 @@ main() {
       set output "${PRE}usl-residuals-squared.${EXT}"
       sigma = ${PARAM_SIGMA}
       kappa = ${PARAM_KAPPA}
-      plot "${FILE}" using 1:((g(\$1)-\$2)**2), \\
+      plot "${FILE}" using 1:((g(\$1)-\$2)**2) pt ${PTY}${BLUE}, \\
            ''        using (\$1+1):((g(\$1)-\$2)**2):1 w labels
 	EOF
    gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
@@ -647,16 +664,16 @@ main() {
       set key bottom
       xlimit = ${LIM}
       if ( xlimit == 0 ) xlimit = max(N_star, max_N) * 2
-      set xrange [0.5:xlimit]
+      set xrange [0.0:xlimit]
       set yrange [0:max(max_C, modelC * 1.3)]
       if ( ${ERRL} == 1 ) plot \\
          x*C1/(1+sigma_best*(x-1) + kappa_best*x*(x-1)) title '',\\
          x*C1/(1+sigma_worst*(x-1) + kappa_worst*x*(x-1)) title '',\\
-         x*C1/(1+sigma*(x-1) + kappa*x*(x-1)) title 'Modeled' w lines, \\
-         "${FILE}" using 1:2 pt 6 title 'Measured'
+         x*C1/(1+sigma*(x-1) + kappa*x*(x-1)) title 'Modeled' w lines${BLUE}, \\
+         "${FILE}" using 1:2 pt ${PTY} ${LTY} title 'Measured'
       if ( ${ERRL} == 0 ) plot \\
-         x*C1/(1+sigma*(x-1) + kappa*x*(x-1)) title 'Modeled' w lines, \\
-         "${FILE}" using 1:2 pt 6 title 'Measured'
+         x*C1/(1+sigma*(x-1) + kappa*x*(x-1)) title 'Modeled' w lines${BLUE}, \\
+         "${FILE}" using 1:2 pt ${PTY} ${LTY} title 'Measured'
 	EOF
    gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
 
