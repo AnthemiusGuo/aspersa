@@ -42,6 +42,7 @@ Options:
    -m THREADS      When -c is given, max valid value of N, to filter outliers.
    -n ADJUSTMENT   Adjust the N variable downwards to compensate for known
                    errors such as error of observation.
+   -o ONLY         Only produce plots specified in this comma-separated list.
    -p PREFIX       Prefix for the generated image file names.
    -P PORT         TCP port for when -c tcpdump is used (default 3306).
    -t FILETYPE     Type for the image files (png, pdf, eps).
@@ -344,6 +345,9 @@ main() {
          -n)
             shift; ADJ="${1}"; shift;
             ;;
+         -o)
+            shift; ONLY="${1}"; shift;
+            ;;
          -p)
             shift; PRE="${1}"; shift;
             ;;
@@ -557,7 +561,7 @@ main() {
    cat > /tmp/aspersa-gnuplot1 <<-EOF
       set key off
       set ylabel "Residual Squared"
-      set output "${PRE}usl-quadratic-residuals-squared.${EXT}"
+      set output "${PRE}usl-quadratic-squared.${EXT}"
       a = ${PARAM_A}
       b = ${PARAM_B}
       plot "${FILE}" using (\$1-1):((\$1/(\$2/C1)-1)-f(\$1-1))**2:1, \\
@@ -613,7 +617,7 @@ main() {
    R_SQUARED="$(awk -f /tmp/aspersa "${FILE}")"
    echo "   R^2     ${R_SQUARED}"
 
-   # Plot the residuals squared, for finding outliers and removing them.
+   # Plot the USL residuals squared, for finding outliers and removing them.
    cat > /tmp/aspersa-gnuplot1 <<-EOF
       set key off
       set ylabel "Residual Errors Squared"
@@ -656,12 +660,26 @@ main() {
 	EOF
    gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
 
+   # Remove files not mentioned in -o.
+   if [ "${ONLY}" ]; then
+      for f in deviation efficiency quadratic-residuals residuals-squared \
+            quadratic-squared model-vs-actual; do
+         if [[ "${ONLY}" != *$f* ]]; then
+            file="${PRE}usl-${f}.${EXT}"
+            rm "${file}"
+         fi
+      done
+   fi
+
    # The type "pdf" is really just eps, and now we need to convert it to pdf.
    if [ "${TYP}" = "pdf" ]; then
-      for f in efficiency deviation residuals{,-squared} model-vs-actual; do
+      for f in deviation efficiency quadratic-residuals residuals-squared \
+            quadratic-squared model-vs-actual; do
          file="${PRE}usl-${f}.eps"
-         epstopdf "${file}"
-         rm "${file}"
+         if [ -e "${file}" ]; then
+            epstopdf "${file}"
+            rm "${file}"
+         fi
       done
    fi
 
