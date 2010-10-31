@@ -15,6 +15,17 @@
 # ########################################################################
 
 # ########################################################################
+# Some global setup is necessary for cross-platform compatibility, even
+# when sourcing this script for testing purposes.
+# ########################################################################
+AP_AWK="$(which awk)"
+which gawk >/dev/null 2>&1 && AP_AWK="$(which gawk)"
+AP_SED="$(which sed)"
+which gsed >/dev/null 2>&1 && AP_SED="$(which gsed)"
+AP_GREP="$(which grep)"
+which ggrep >/dev/null 2>&1 && AP_GREP="$(which ggrep)"
+
+# ########################################################################
 # Globals, helper functions
 # ########################################################################
 
@@ -98,13 +109,13 @@ shorten() {
       size=1048576
       unit=M
    fi
-   result=$(echo "$1 $size ${2:-0}" | awk '{printf "%." $3 "f", $1 / $2}')
+   result=$(echo "$1 $size ${2:-0}" | $AP_AWK '{printf "%." $3 "f", $1 / $2}')
    echo "${result}${unit}"
 }
 
 # Accepts a number of seconds, and outputs a d+h:m:s formatted string
 secs_to_time () {
-   echo "$1" | awk '{
+   echo "$1" | $AP_AWK '{
       printf( "%d+%02d:%02d:%02d", $1 / 86400, ($1 % 86400) / 3600, ($1 % 3600) / 60, $1 % 60);
    }'
 }
@@ -112,31 +123,31 @@ secs_to_time () {
 # gets a value from /tmp/aspersa-mysql-variables.  Returns zero if it doesn't
 # exist.
 get_var () {
-   v="$(awk "\$1 ~ /^$1$/ { print \$2 }" /tmp/aspersa-mysql-variables)"
+   v="$($AP_AWK "\$1 ~ /^$1$/ { print \$2 }" /tmp/aspersa-mysql-variables)"
    echo "${v:-0}"
 }
 
 # Returns true if a variable exists
 var_exists () {
-   grep "$1" /tmp/aspersa-mysql-variables >/dev/null 2>&1;
+   $AP_GREP "$1" /tmp/aspersa-mysql-variables >/dev/null 2>&1;
 }
 
 # gets a value from /tmp/aspersa-mysql-status.  Returns zero if it doesn't
 # exist.
 get_stat () {
-   v="$(awk "\$1 ~ /^$1$/ { print \$2 }" /tmp/aspersa-mysql-status)"
+   v="$($AP_AWK "\$1 ~ /^$1$/ { print \$2 }" /tmp/aspersa-mysql-status)"
    echo "${v:-0}"
 }
 
 # Does fuzzy rounding: rounds to nearest interval, but the interval gets larger
 # as the number gets larger.  This is to make things easier to diff.
 fuzz () {
-   echo $1 | awk "{fuzzy_var=\$1; ${fuzzy_formula} print fuzzy_var;}"
+   echo $1 | $AP_AWK "{fuzzy_var=\$1; ${fuzzy_formula} print fuzzy_var;}"
 }
 
 # Fuzzy computes the percent that $1 is of $2
 fuzzy_pct () {
-   pct=$(echo $1 $2 | awk '{ if ($2 > 0) { printf "%d", $1/$2*100; } else {print 0} }');
+   pct=$(echo $1 $2 | $AP_AWK '{ if ($2 > 0) { printf "%d", $1/$2*100; } else {print 0} }');
    echo "$(fuzz ${pct})%"
 }
 
@@ -148,22 +159,22 @@ fuzzy_pct () {
 # put sample data into /tmp/aspersa and call it.
 # ##############################################################################
 
-# Parses the output of 'ps -e -o args | grep mysqld'
+# Parses the output of 'ps -e -o args | $AP_GREP mysqld'
 # which should be in /tmp/aspersa.
 parse_mysqld_instances () {
    echo "  Port  Data Directory             Socket"
    echo "  ===== ========================== ======"
-   grep '/mysqld ' /tmp/aspersa | while read line; do
+   $AP_GREP '/mysqld ' /tmp/aspersa | while read line; do
       for word in ${line}; do
          # Some grep doesn't have -o, so I have to pull out the words I want by
          # looking at each word
-         if echo "${word}" | grep -- "--socket=" > /dev/null; then
+         if echo "${word}" | $AP_GREP -- "--socket=" > /dev/null; then
             socket="$(echo "${word}" | cut -d= -f2)"
          fi
-         if echo "${word}" | grep -- "--port=" > /dev/null; then
+         if echo "${word}" | $AP_GREP -- "--port=" > /dev/null; then
             port="$(echo "${word}" | cut -d= -f2)"
          fi
-         if echo "${word}" | grep -- "--datadir=" > /dev/null; then
+         if echo "${word}" | $AP_GREP -- "--datadir=" > /dev/null; then
             datadir="$(echo "${word}" | cut -d= -f2)"
          fi
       done
@@ -175,8 +186,8 @@ parse_mysqld_instances () {
 # /tmp/aspersa.  You have to specify the port for the instance you are
 # interested in, in case there are multiple instances.
 find_my_cnf_file() {
-   grep '/mysqld' /tmp/aspersa | grep -- "--port=$1" \
-      | awk 'BEGIN{RS=" "; FS="=";} $1 ~ /--defaults-file/ { print $2 }'
+   $AP_GREP '/mysqld' /tmp/aspersa | $AP_GREP -- "--port=$1" \
+      | $AP_AWK 'BEGIN{RS=" "; FS="=";} $1 ~ /--defaults-file/ { print $2 }'
 }
 
 # Gets the MySQL system time.  Uses input from /tmp/aspersa-mysql-variables.
@@ -206,8 +217,8 @@ get_mysql_uptime () {
 # Summarizes the output of SHOW MASTER LOGS, which is in /tmp/aspersa
 summarize_binlogs () {
    name_val "Binlogs" $(wc -l /tmp/aspersa)
-   name_val "Zero-Sized" $(grep -c '\<0$' /tmp/aspersa)
-   size=$(awk '{t += $2} END{printf "%0.f\n", t}' /tmp/aspersa)
+   name_val "Zero-Sized" $($AP_GREP -c '\<0$' /tmp/aspersa)
+   size=$($AP_AWK '{t += $2} END{printf "%0.f\n", t}' /tmp/aspersa)
    name_val "Total Size" $(shorten ${size} 1)
 }
 
@@ -223,9 +234,9 @@ format_binlog_filters () {
 # samples.  Omits any rows that are all zeroes.
 format_status_variables () {
    # First, figure out the intervals.
-   utime1=$(awk '/Uptime /{print $2}' /tmp/aspersa);
-   utime2=$(awk '/Uptime /{print $3}' /tmp/aspersa);
-   awk "
+   utime1=$($AP_AWK '/Uptime /{print $2}' /tmp/aspersa);
+   utime2=$($AP_AWK '/Uptime /{print $3}' /tmp/aspersa);
+   ${AP_AWK} "
    BEGIN {
       utime1 = ${utime1};
       utime2 = ${utime2};
@@ -281,7 +292,7 @@ summarize_processlist () {
       echo "  ------------------------------" \
          "-------- ------- --------- ---------"
       cut -c1-80 /tmp/aspersa-mysql-processlist \
-         | awk "
+         | $AP_AWK "
          \$1 == \"${param}:\" {
             p = substr(\$0, index(\$0, \":\") + 2);
             if ( index(p, \":\") > 0 ) {
@@ -326,7 +337,7 @@ summarize_processlist () {
 # sets in regular expressions, like [[:space:]] (looking at you, Debian).  So
 # the below patterns contain [<space><tab>] and must remain that way.
 pretty_print_cnf_file () {
-   awk '
+   $AP_AWK '
    BEGIN {
       FS="="
    }
@@ -351,20 +362,20 @@ pretty_print_cnf_file () {
 # Summarizes various things about InnoDB status that are not easy to see by eye.
 # Input file is /tmp/aspersa-innodb-status.
 format_innodb_status () {
-   oldest=$(sed -n -e '/^---TRANSACTION.*[0-9] sec,/{s/^.* \([0-9]*\) sec.*$/\1/; p}' \
+   oldest=$($AP_SED -n -e '/^---TRANSACTION.*[0-9] sec,/{s/^.* \([0-9]*\) sec.*$/\1/; p}' \
       /tmp/aspersa-innodb-status | sort -rn | head -n1);
    echo "Oldest Transaction ${oldest} Seconds"
    echo "Transaction States"
-   awk -F, '/^---TRANSACTION/{print $2}' /tmp/aspersa-innodb-status \
-      | sed -e 's/ [0-9]* sec.*//' | sort | uniq -c | sort -rn
+   $AP_AWK -F, '/^---TRANSACTION/{print $2}' /tmp/aspersa-innodb-status \
+      | $AP_SED -e 's/ [0-9]* sec.*//' | sort | uniq -c | sort -rn
    echo "Tables Locked"
-   awk '/^TABLE LOCK table/{print $4}' /tmp/aspersa-innodb-status \
+   $AP_AWK '/^TABLE LOCK table/{print $4}' /tmp/aspersa-innodb-status \
       | sort | uniq -c | sort -rn
    echo "Semaphore Waits"
-   grep 'has waited at' /tmp/aspersa-innodb-status | cut -d' ' -f6-8 | sort \
+   $AP_GREP 'has waited at' /tmp/aspersa-innodb-status | cut -d' ' -f6-8 | sort \
       | uniq -c | sort -rn
    echo "Semaphore Holders"
-   awk '/has reserved it in mode/{
+   $AP_AWK '/has reserved it in mode/{
       print substr($0, 1 + index($0, "("), index($0, ")") - index($0, "(") - 1);
    }' /tmp/aspersa-innodb-status | sort | uniq -c | sort -rn
 }
@@ -377,7 +388,7 @@ format_overall_db_stats () {
    # We keep counts of everything in an associative array keyed by db name, and
    # what it is.  The num_dbs counter is to ensure sort order is consistent when
    # we run the awk commands following this one.
-   awk '
+   $AP_AWK '
       BEGIN {
          num_dbs = 0;
       }
@@ -429,7 +440,7 @@ format_overall_db_stats () {
 
    echo
    # Now do the summary of engines per DB
-   awk '
+   $AP_AWK '
       BEGIN {
          num_dbs     = 0;
          num_engines = 0;
@@ -482,7 +493,7 @@ format_overall_db_stats () {
    echo
    # Now do the summary of index types per DB. Careful -- index is a reserved
    # word in awk.
-   awk '
+   $AP_AWK '
       BEGIN {
          num_dbs   = 0;
          num_idxes = 0;
@@ -546,7 +557,7 @@ format_overall_db_stats () {
 
    echo
    # Now do the summary of datatypes per DB
-   awk '
+   $AP_AWK '
       BEGIN {
          num_dbs     = 0;
          num_types = 0;
@@ -624,7 +635,7 @@ format_overall_db_stats () {
          }
       }
    ' /tmp/aspersa-mysqldump > /tmp/aspersa
-   hdr=$(grep -n Database /tmp/aspersa | cut -d: -f1);
+   hdr=$($AP_GREP -n Database /tmp/aspersa | cut -d: -f1);
    head -n${hdr} /tmp/aspersa
    tail -n+$((${hdr} + 1)) /tmp/aspersa | sort
    echo
@@ -638,9 +649,11 @@ format_overall_db_stats () {
 main () {
 
    # Begin by setting the $PATH to include some common locations that are not
-   # always in the $PATH, including the "sbin" locations.
+   # always in the $PATH, including the "sbin" locations.  On SunOS systems,
+   # prefix the path with the location of more sophisticated utilities.
    export PATH="${PATH}:/usr/local/bin:/usr/bin:/bin:/usr/libexec"
-   export PATH="${PATH}:/usr/local/sbin:/usr/sbin:/sbin"
+   export PATH="${PATH}:/usr/mysql/bin/:/usr/local/sbin:/usr/sbin:/sbin"
+   export PATH="/usr/gnu/bin/:/usr/xpg4/bin/:${PATH}"
 
    # Set up temporary files.
    temp_files "rm"
@@ -652,13 +665,13 @@ main () {
    section Aspersa_MySQL_Summary_Report
    name_val "System time" "`date -u +'%F %T UTC'` (local TZ: `date +'%Z %z'`)"
    section Instances
-   ps -ea -o args | grep mysqld > /tmp/aspersa
+   ps -ea -o args | $AP_GREP mysqld > /tmp/aspersa
    parse_mysqld_instances
 
    # ########################################################################
    # Fetch some basic info so we can start
    # ########################################################################
-   mysql -ss -e 'SELECT CURRENT_USER()' > /tmp/aspersa
+   mysql $* -ss -e 'SELECT CURRENT_USER()' > /tmp/aspersa
    if [ "$?" != "0" ]; then
       echo "Cannot connect to mysql, please specify command-line options."
       temp_files "rm"
@@ -688,13 +701,13 @@ main () {
       > /tmp/aspersa
    name_val Started "$(get_mysql_uptime)"
 
-   name_val Databases "$(grep -c . /tmp/aspersa-mysql-databases)"
+   name_val Databases "$($AP_GREP -c . /tmp/aspersa-mysql-databases)"
    name_val Datadir "$(get_var datadir)"
    procs="$(get_stat Threads_connected)"
    procr="$(get_stat Threads_running)"
    name_val Processes "$(fuzz ${procs}) connected, $(fuzz ${procr}) running"
    if [ -s /tmp/aspersa-mysql-slave ]; then slave=""; else slave="not "; fi
-   slavecount=$(grep -c 'Binlog Dump' /tmp/aspersa-mysql-processlist)
+   slavecount=$($AP_GREP -c 'Binlog Dump' /tmp/aspersa-mysql-processlist)
    name_val Replication "Is ${slave}a slave, has ${slavecount} slaves connected"
 
    # ########################################################################
@@ -735,7 +748,7 @@ main () {
    do
       echo "${var}" >> /tmp/aspersa-noncounters
    done
-   format_status_variables | grep -v -f /tmp/aspersa-noncounters
+   format_status_variables | $AP_GREP -v -f /tmp/aspersa-noncounters
 
    # ########################################################################
    # Table cache
@@ -773,9 +786,9 @@ main () {
       read reply
       reply=${reply:-n}
    fi
-   if echo "${reply:-n}" | grep -i '^y' > /dev/null ; then
+   if echo "${reply:-n}" | $AP_GREP -i '^y' > /dev/null ; then
       # If mysqldump supports triggers, then add options for routines.
-      if mysqldump --help --verbose 2>&1 | grep triggers >/dev/null; then
+      if mysqldump --help --verbose 2>&1 | $AP_GREP triggers >/dev/null; then
          trg_arg="--routines"
       fi
       if [ "${trg_arg}" ]; then
@@ -798,7 +811,7 @@ main () {
       # Test the result by checking the file, not by the exit status, because we
       # might get partway through and then die, and the info is worth analyzing
       # anyway.
-      if grep 'CREATE DATABASE' /tmp/aspersa-mysqldump >/dev/null 2>&1; then
+      if $AP_GREP 'CREATE DATABASE' /tmp/aspersa-mysqldump >/dev/null 2>&1; then
          format_overall_db_stats
       else
          echo "Skipping schema analysis due to apparent error in dump file"
@@ -813,22 +826,22 @@ main () {
    # ########################################################################
    section Noteworthy_Technologies
    if [ -e /tmp/aspersa-mysqldump ]; then
-      if grep FULLTEXT /tmp/aspersa-mysqldump > /dev/null; then
+      if $AP_GREP FULLTEXT /tmp/aspersa-mysqldump > /dev/null; then
          name_val "Full Text Indexing" Yes
       else
          name_val "Full Text Indexing" No
       fi
-      if grep 'GEOMETRY\|POINT\|LINESTRING\|POLYGON' /tmp/aspersa-mysqldump > /dev/null; then
+      if $AP_GREP 'GEOMETRY\|POINT\|LINESTRING\|POLYGON' /tmp/aspersa-mysqldump > /dev/null; then
          name_val "Geospatial Types" Yes
       else
          name_val "Geospatial Types" No
       fi
-      if grep 'FOREIGN KEY' /tmp/aspersa-mysqldump > /dev/null; then
+      if $AP_GREP 'FOREIGN KEY' /tmp/aspersa-mysqldump > /dev/null; then
          name_val "Foreign Keys" Yes
       else
          name_val "Foreign Keys" No
       fi
-      if grep 'PARTITION BY' /tmp/aspersa-mysqldump > /dev/null; then
+      if $AP_GREP 'PARTITION BY' /tmp/aspersa-mysqldump > /dev/null; then
          name_val "Partitioning" Yes
       else
          name_val "Partitioning" No
@@ -932,7 +945,7 @@ main () {
    section Security
    users="$(mysql -ss \
       -e 'SELECT COUNT(*), SUM(user=""), SUM(password=""), SUM(password NOT LIKE "*%") FROM mysql.user' $* 2>/dev/null \
-      | awk '{printf "%d users, %d anon, %d w/o pw, %d old pw\n", $1, $2, $3, $4}')"
+      | $AP_AWK '{printf "%d users, %d anon, %d w/o pw, %d old pw\n", $1, $2, $3, $4}')"
    name_val Users "${users}"
    name_val "Old Passwords" $(get_var old_passwords)
 
@@ -983,7 +996,7 @@ main () {
    # If there is a my.cnf in a standard location, see if we can pretty-print it.
    # ########################################################################
    section Configuration_File
-   ps -ea -o args | grep mysqld > /tmp/aspersa
+   ps -ea -o args | $AP_GREP mysqld > /tmp/aspersa
    cnf_file=$(find_my_cnf_file ${port});
    if [ ! -e "${cnf_file}" ]; then
       name_val "Config File" "Cannot autodetect, trying common locations"
