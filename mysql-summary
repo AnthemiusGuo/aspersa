@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This program is part of Aspersa (http://code.google.com/p/aspersa/)
 
 # TODO: parse queries out of processlist and aggregate them.
@@ -646,7 +646,7 @@ format_overall_db_stats () {
 # The main() function is called at the end of the script.  This makes it
 # testable.  Major bits of parsing are separated into functions for testability.
 # ##############################################################################
-main () {
+main() {
 
    # Begin by setting the $PATH to include some common locations that are not
    # always in the $PATH, including the "sbin" locations.  On SunOS systems,
