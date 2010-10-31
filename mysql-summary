@@ -436,7 +436,7 @@ format_overall_db_stats () {
       }
    ' /tmp/aspersa-mysqldump > /tmp/aspersa
    head -n2 /tmp/aspersa
-   tail -n+3 /tmp/aspersa | sort
+   tail -n +3 /tmp/aspersa | sort
 
    echo
    # Now do the summary of engines per DB
@@ -488,7 +488,7 @@ format_overall_db_stats () {
       }
    ' /tmp/aspersa-mysqldump > /tmp/aspersa
    head -n1 /tmp/aspersa
-   tail -n+2 /tmp/aspersa | sort
+   tail -n +2 /tmp/aspersa | sort
 
    echo
    # Now do the summary of index types per DB. Careful -- index is a reserved
@@ -553,7 +553,7 @@ format_overall_db_stats () {
       }
    ' /tmp/aspersa-mysqldump > /tmp/aspersa
    head -n1 /tmp/aspersa
-   tail -n+2 /tmp/aspersa | sort
+   tail -n +2 /tmp/aspersa | sort
 
    echo
    # Now do the summary of datatypes per DB
@@ -637,7 +637,7 @@ format_overall_db_stats () {
    ' /tmp/aspersa-mysqldump > /tmp/aspersa
    hdr=$($AP_GREP -n Database /tmp/aspersa | cut -d: -f1);
    head -n${hdr} /tmp/aspersa
-   tail -n+$((${hdr} + 1)) /tmp/aspersa | sort
+   tail -n +$((${hdr} + 1)) /tmp/aspersa | sort
    echo
 
 }
