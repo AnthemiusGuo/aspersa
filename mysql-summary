@@ -359,11 +359,30 @@ pretty_print_cnf_file () {
    }' /tmp/aspersa
 }
 
+find_max_trx_time() {
+   $AP_AWK '
+   BEGIN {
+      max = 0;
+   }
+   /^---TRANSACTION.* sec,/ {
+      for ( i = 0; i < 7; ++i ) {
+         if ( $i == "sec," ) {
+            j = i-1;
+            if ( max < $j ) {
+               max = $j;
+            }
+         }
+      }
+   }
+   END {
+      print max;
+   }' $*
+}
+
 # Summarizes various things about InnoDB status that are not easy to see by eye.
 # Input file is /tmp/aspersa-innodb-status.
 format_innodb_status () {
-   oldest=$($AP_SED -n -e '/^---TRANSACTION.*[0-9] sec,/{s/^.* \([0-9]*\) sec.*$/\1/; p}' \
-      /tmp/aspersa-innodb-status | sort -rn | head -n1);
+   oldest=$(find_max_trx_time /tmp/aspersa-innodb-status);
    echo "Oldest Transaction ${oldest} Seconds"
    echo "Transaction States"
    $AP_AWK -F, '/^---TRANSACTION/{print $2}' /tmp/aspersa-innodb-status \
@@ -665,7 +684,7 @@ main() {
    section Aspersa_MySQL_Summary_Report
    name_val "System time" "`date -u +'%F %T UTC'` (local TZ: `date +'%Z %z'`)"
    section Instances
-   ps -ea -o args | $AP_GREP mysqld > /tmp/aspersa
+   ps -ea -o args 2>/dev/null | $AP_GREP mysqld > /tmp/aspersa
    parse_mysqld_instances
 
    # ########################################################################
@@ -996,7 +1015,7 @@ main() {
    # If there is a my.cnf in a standard location, see if we can pretty-print it.
    # ########################################################################
    section Configuration_File
-   ps -ea -o args | $AP_GREP mysqld > /tmp/aspersa
+   ps -ea -o args 2>/dev/null | $AP_GREP mysqld > /tmp/aspersa
    cnf_file=$(find_my_cnf_file ${port});
    if [ ! -e "${cnf_file}" ]; then
       name_val "Config File" "Cannot autodetect, trying common locations"
@@ -1004,6 +1023,9 @@ main() {
    fi
    if [ ! -e "${cnf_file}" ]; then
       cnf_file="/etc/mysql/my.cnf";
+   fi
+   if [ ! -e "${cnf_file}" ]; then
+      cnf_file="/var/db/mysql/my.cnf";
    fi
    if [ -e "${cnf_file}" ]; then
       name_val "Config File" "${cnf_file}"
