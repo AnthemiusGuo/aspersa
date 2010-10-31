@@ -159,7 +159,7 @@ fuzzy_pct () {
 # put sample data into /tmp/aspersa and call it.
 # ##############################################################################
 
-# Parses the output of 'ps -e -o args | $AP_GREP mysqld'
+# Parses the output of 'ps -e -o args | $AP_GREP mysqld' or 'ps auxww...'
 # which should be in /tmp/aspersa.
 parse_mysqld_instances () {
    echo "  Port  Data Directory             Socket"
@@ -684,7 +684,7 @@ main() {
    section Aspersa_MySQL_Summary_Report
    name_val "System time" "`date -u +'%F %T UTC'` (local TZ: `date +'%Z %z'`)"
    section Instances
-   ps -ea -o args 2>/dev/null | $AP_GREP mysqld > /tmp/aspersa
+   ps auxww 2>/dev/null | $AP_GREP mysqld > /tmp/aspersa
    parse_mysqld_instances
 
    # ########################################################################
@@ -1015,7 +1015,7 @@ main() {
    # If there is a my.cnf in a standard location, see if we can pretty-print it.
    # ########################################################################
    section Configuration_File
-   ps -ea -o args 2>/dev/null | $AP_GREP mysqld > /tmp/aspersa
+   ps auxww 2>/dev/null | $AP_GREP mysqld > /tmp/aspersa
    cnf_file=$(find_my_cnf_file ${port});
    if [ ! -e "${cnf_file}" ]; then
       name_val "Config File" "Cannot autodetect, trying common locations"
