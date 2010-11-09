@@ -77,8 +77,8 @@ fi
    top -bn1                   >> $DEST/$d-top 2>&1 &
    vmstat 1 $LEN              >> $DEST/$d-vmstat 2>&1 &
    vmstat $LEN 2              >> $DEST/$d-vmstat-overall 2>&1 &
-   iostat -dx 1 $LEN          >> $DEST/$d-iostat 2>&1 &
-   iostat -dx $LEN 2          >> $DEST/$d-iostat-overall 2>&1 &
+   iostat -dxn 1 $LEN         >> $DEST/$d-iostat 2>&1 &
+   iostat -dxn $LEN 2         >> $DEST/$d-iostat-overall 2>&1 &
    mpstat -P ALL 1 $LEN       >> $DEST/$d-mpstat 2>&1 &
    mpstat -P ALL $LEN 1       >> $DEST/$d-mpstat-overall 2>&1 &
    lsof -nP -p $p -bw         >> $DEST/$d-lsof 2>&1 &
