@@ -58,8 +58,9 @@ fi
    # Get a sample of SHOW INNODB STATUS and SHOW FULL PROCESSLIST right away, so
    # we can get these without interaction with the other commands we're about to
    # run.
+   INNOSTAT="SHOW /*!40100 ENGINE*/ INNODB STATUS\G"
    mysql -e 'SHOW GLOBAL VARIABLES'   >> $DEST/$d-variables 2>&1 &
-   mysql -e 'SHOW INNODB STATUS\G'    >> $DEST/$d-innodbstatus1 2>&1 &
+   mysql -e "${INNOSTAT}"             >> $DEST/$d-innodbstatus1 2>&1 &
    mysql -e 'SHOW FULL PROCESSLIST\G' >> $DEST/$d-processlist1  2>&1 &
 
    # Next, start oprofile gathering data during the whole rest of this process.
@@ -80,7 +81,7 @@ fi
    iostat -dx $LEN 2          >> $DEST/$d-iostat-overall 2>&1 &
    mpstat -P ALL 1 $LEN       >> $DEST/$d-mpstat 2>&1 &
    mpstat -P ALL $LEN 1       >> $DEST/$d-mpstat-overall 2>&1 &
-   lsof -p $p -bw             >> $DEST/$d-lsof 2>&1 &
+   lsof -nP -p $p -bw         >> $DEST/$d-lsof 2>&1 &
    mysqladmin ext -i1 -c$LEN  >> $DEST/$d-mysqladmin 2>&1 &
    mysqladmin_pid=$!
 
@@ -115,7 +116,7 @@ fi
       echo "opreport --demangle=smart --symbols --merge tgid session:$d <bin>"
    fi
 
-   mysql -e 'SHOW INNODB STATUS\G'    >> $DEST/$d-innodbstatus2 2>&1 &
+   mysql -e "${INNOSTAT}"             >> $DEST/$d-innodbstatus2 2>&1 &
    mysql -e 'SHOW FULL PROCESSLIST\G' >> $DEST/$d-processlist2  2>&1 &
 
    # mysqladmin in 5.1 has a bunch of obnoxious bugs.  Among them, -c does not
