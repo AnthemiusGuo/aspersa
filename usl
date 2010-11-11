@@ -47,6 +47,7 @@ Options:
    -p PREFIX       Prefix for the generated image file names.
    -P PORT         TCP port for when -c tcpdump is used (default 3306).
    -r              Render pdf and eps plots in color.
+   -R              Don't re-fit the data; use the results from quadratic fit.
    -t FILETYPE     Type for the image files (png, pdf, eps).
    -T POINTTYPE    Point-type and options for the plots (default 6).
    -x ADJUSTMENT   Multiply the C(1) regression parameter by this factor.
@@ -363,6 +364,9 @@ main() {
          -r)
             shift; COLOR="color";
             ;;
+         -R)
+            shift; REFIT=0;
+            ;;
          -t)
             shift; TYP="${1}"; shift;
             ;;
@@ -391,6 +395,7 @@ main() {
    X_AXIS="${X_AXIS:-concurrency}"
    PORT="${PORT:-3306}"
    PTY="${PTY:-6}"
+   REFIT="${REFIT:-1}"
    if [ "${COLOR}" ]; then
       LTY="${LTY:-lt rgb \"#8B0000\"}"
       BLUE=" lt rgb \"#0000FF\"";
@@ -586,65 +591,85 @@ main() {
 	EOF
    gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
 
-   # Re-fit against the Universal Scalability Law -- it will be more accurate.
-   echo "# Re-fitting against the USL with (a, b-a) as a starting point."
-   cat > /tmp/aspersa-gnuplot1 <<-EOF
-      a = ${PARAM_A}
-      b = ${PARAM_B}
-      kappa = a
-      sigma = b - kappa
-      set fit logfile "/dev/null"
-      # defines sigma_err and kappa_err
-      set fit errorvariables
-      fit g(x) '${FILE}' using 1:2 via sigma, kappa
-	EOF
-   gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1 2> /tmp/aspersa-ufit.log
+   if [ "${REFIT}" = "1" ]; then
+      # Re-fit against the Universal Scalability Law -- it will be more
+      # accurate.
+      echo "# Re-fitting against the USL with (a, b-a) as a starting point."
+      cat > /tmp/aspersa-gnuplot1 <<-EOF
+         a = ${PARAM_A}
+         b = ${PARAM_B}
+         kappa = a
+         sigma = b - kappa
+         set fit logfile "/dev/null"
+         # defines sigma_err and kappa_err
+         set fit errorvariables
+         fit g(x) '${FILE}' using 1:2 via sigma, kappa
+		EOF
+      gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1 2> /tmp/aspersa-ufit.log
 
-   # If everything went OK, then the fit should have converged.
-   if ! grep 'the fit converged' /tmp/aspersa-ufit.log >/dev/null ; then
-      echo "The USL regression failed, check /tmp/aspersa-ufit.log"
-      exit 1;
+      # If everything went OK, then the fit should have converged.
+      if ! grep 'the fit converged' /tmp/aspersa-ufit.log >/dev/null ; then
+         echo "The USL regression failed, check /tmp/aspersa-ufit.log"
+         exit 1;
+      fi
+
+      # Now check the log again, and extract the parameters from it.
+      sed -n -e '/the fit converged/,/^kappa /p' /tmp/aspersa-ufit.log > /tmp/aspersa.params
+      PARAM_SIGMA="$(awk '/^sigma / { print $3 }' /tmp/aspersa.params)"
+      PARAM_SIGMA_ERR="$(awk '/^sigma / { print $5 }' /tmp/aspersa.params)"
+      PARAM_SIGMA_PCT="$(awk '/^sigma / { print substr($6, 2, length($6)-3) }' /tmp/aspersa.params)"
+      PARAM_KAPPA="$(awk '/^kappa / { print $3 }' /tmp/aspersa.params)"
+      PARAM_KAPPA_ERR="$(awk '/^kappa / { print $5 }' /tmp/aspersa.params)"
+      PARAM_KAPPA_PCT="$(awk '/^kappa / { print substr($6, 2, length($6)-3) }' /tmp/aspersa.params)"
+      echo "   sigma   ${PARAM_SIGMA} +/- ${PARAM_SIGMA_ERR} (${PARAM_SIGMA_PCT}%)"
+      echo "   kappa   ${PARAM_KAPPA} +/- ${PARAM_KAPPA_ERR} (${PARAM_KAPPA_PCT}%)"
+
+      # Now find the coefficient of determination again, this time against the
+      # USL model.
+      cat > /tmp/aspersa <<-EOF
+         /^[^#]/{
+            x  = \$1;
+            y  = \$2;
+            g  = x*${C_of_one}/(1+${PARAM_SIGMA}*(x-1) + ${PARAM_KAPPA}*x*(x-1));
+            sum_of_squares        += y * y;
+            sum_of_squared_errors += (g - y) * (g - y);
+         }
+         END {
+            print 1 - (sum_of_squared_errors / sum_of_squares);
+         }
+	   EOF
+      R_SQUARED="$(awk -f /tmp/aspersa "${FILE}")"
+      echo "   R^2     ${R_SQUARED}"
+
+      # Plot the USL residuals squared, for finding outliers and removing them.
+      cat > /tmp/aspersa-gnuplot1 <<-EOF
+         set key off
+         set ylabel "Residual Errors Squared"
+         set output "${PRE}usl-residuals-squared.${EXT}"
+         sigma = ${PARAM_SIGMA}
+         kappa = ${PARAM_KAPPA}
+         plot "${FILE}" using 1:((g(\$1)-\$2)**2) pt ${PTY}${BLUE}, \\
+              ''        using (\$1+1):((g(\$1)-\$2)**2):1 w labels
+		EOF
+      gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
+   else
+      # We need to set the PARAM_SIGMA and PARAM_KAPPA stuff.
+      echo | awk "BEGIN{
+         a     = ${PARAM_A};
+         a_err = ${PARAM_A_ERR};
+         b     = ${PARAM_B};
+         b_err = ${PARAM_B_ERR};
+         printf \"PARAM_SIGMA=%.6f\\n\", b - a;
+         printf \"PARAM_KAPPA=%.6f\\n\", a;
+         print \"PARAM_SIGMA_ERR=0\";
+         print \"PARAM_SIGMA_PCT=0\";
+         print \"PARAM_KAPPA_ERR=0\";
+         print \"PARAM_KAPPA_PCT=0\";
+      }" > /tmp/aspersa
+      . /tmp/aspersa
+      echo "   sigma   ${PARAM_SIGMA} +/- ${PARAM_SIGMA_ERR} (${PARAM_SIGMA_PCT}%)"
+      echo "   kappa   ${PARAM_KAPPA} +/- ${PARAM_KAPPA_ERR} (${PARAM_KAPPA_PCT}%)"
    fi
-
-   # Now check the log again, and extract the parameters from it.
-   sed -n -e '/the fit converged/,/^kappa /p' /tmp/aspersa-ufit.log > /tmp/aspersa.params
-   PARAM_SIGMA="$(awk '/^sigma / { print $3 }' /tmp/aspersa.params)"
-   PARAM_SIGMA_ERR="$(awk '/^sigma / { print $5 }' /tmp/aspersa.params)"
-   PARAM_SIGMA_PCT="$(awk '/^sigma / { print substr($6, 2, length($6)-3) }' /tmp/aspersa.params)"
-   PARAM_KAPPA="$(awk '/^kappa / { print $3 }' /tmp/aspersa.params)"
-   PARAM_KAPPA_ERR="$(awk '/^kappa / { print $5 }' /tmp/aspersa.params)"
-   PARAM_KAPPA_PCT="$(awk '/^kappa / { print substr($6, 2, length($6)-3) }' /tmp/aspersa.params)"
-   echo "   sigma   ${PARAM_SIGMA} +/- ${PARAM_SIGMA_ERR} (${PARAM_SIGMA_PCT}%)"
-   echo "   kappa   ${PARAM_KAPPA} +/- ${PARAM_KAPPA_ERR} (${PARAM_KAPPA_PCT}%)"
-
-   # Now find the coefficient of determination again, this time against the USL
-   # model.
-   cat > /tmp/aspersa <<-EOF
-      /^[^#]/{
-         x  = \$1;
-         y  = \$2;
-         g  = x*${C_of_one}/(1+${PARAM_SIGMA}*(x-1) + ${PARAM_KAPPA}*x*(x-1));
-         sum_of_squares        += y * y;
-         sum_of_squared_errors += (g - y) * (g - y);
-      }
-      END {
-         print 1 - (sum_of_squared_errors / sum_of_squares);
-      }
-	EOF
-   R_SQUARED="$(awk -f /tmp/aspersa "${FILE}")"
-   echo "   R^2     ${R_SQUARED}"
-
-   # Plot the USL residuals squared, for finding outliers and removing them.
-   cat > /tmp/aspersa-gnuplot1 <<-EOF
-      set key off
-      set ylabel "Residual Errors Squared"
-      set output "${PRE}usl-residuals-squared.${EXT}"
-      sigma = ${PARAM_SIGMA}
-      kappa = ${PARAM_KAPPA}
-      plot "${FILE}" using 1:((g(\$1)-\$2)**2) pt ${PTY}${BLUE}, \\
-           ''        using (\$1+1):((g(\$1)-\$2)**2):1 w labels
-	EOF
-   gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
 
    # Plot the original points and the Universal Scalability Law's predictions.
    cat > /tmp/aspersa-gnuplot1 <<-EOF
@@ -683,7 +708,7 @@ main() {
             quadratic-squared model-vs-actual; do
          if [[ "${ONLY}" != *$f* ]]; then
             file="${PRE}usl-${f}.${EXT}"
-            rm "${file}"
+            rm -f "${file}"
          fi
       done
    fi
@@ -695,7 +720,7 @@ main() {
          file="${PRE}usl-${f}.eps"
          if [ -e "${file}" ]; then
             epstopdf "${file}"
-            rm "${file}"
+            rm -f "${file}"
          fi
       done
    fi
