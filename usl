@@ -637,7 +637,7 @@ main() {
          END {
             print 1 - (sum_of_squared_errors / sum_of_squares);
          }
-	   EOF
+		EOF
       R_SQUARED="$(awk -f /tmp/aspersa "${FILE}")"
       echo "   R^2     ${R_SQUARED}"
 
