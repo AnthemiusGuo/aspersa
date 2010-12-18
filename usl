@@ -35,6 +35,7 @@ Options:
    -c CONVERSION   Converts the input file into N-vs-C format as specified:
       globalstatus   Convert from MySQL's SHOW GLOBAL STATUS
       tcpdump        Convert from 'tcpdump -tttt -nnq' format
+   -C              Perform regression to determine C(1).
    -e              Omit the error lines on the final plot.
    -i INTERVAL     When -c is given, group the input into -i second intervals.
    -k KEEPFILE     Save the N-vs-C data in the specified file.
@@ -328,6 +329,9 @@ main() {
          -a)
             shift; X_AXIS="node count";
             ;;
+         -C)
+            shift; CPARAM=", C1";
+            ;;
          -c)
             shift; CONV="${1}"; shift;
             ;;
@@ -469,7 +473,8 @@ main() {
       C_of_one="$(find_C_of_one ${min_N} "${FILE}")"
    fi
 
-   echo "Parameters to the model:"
+   echo "# Using $(gnuplot -V)"
+   echo "# Parameters to the model:"
    echo "min(N)  ${min_N}"
    echo "max(N)  ${max_N}"
    echo "max(C)  ${max_C}"
@@ -494,6 +499,7 @@ main() {
       max_N = ${max_N}
       max_C = ${max_C}
       max(a,b) = (a > b) ? a : b
+      min(a,b) = (a > b) ? b : a
       f(x) = a*x*x + b*x
       g(x) = x*C1/(1+sigma*(x-1) + kappa*x*(x-1))
 	EOF
@@ -603,7 +609,7 @@ main() {
          set fit logfile "/dev/null"
          # defines sigma_err and kappa_err
          set fit errorvariables
-         fit g(x) '${FILE}' using 1:2 via sigma, kappa
+         fit g(x) '${FILE}' using 1:2 via sigma, kappa${CPARAM}
 		EOF
       gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1 2> /tmp/aspersa-ufit.log
 
@@ -614,15 +620,19 @@ main() {
       fi
 
       # Now check the log again, and extract the parameters from it.
-      sed -n -e '/the fit converged/,/^kappa /p' /tmp/aspersa-ufit.log > /tmp/aspersa.params
+      sed -n -e '/the fit converged/,/^C1 /p' /tmp/aspersa-ufit.log > /tmp/aspersa.params
       PARAM_SIGMA="$(awk '/^sigma / { print $3 }' /tmp/aspersa.params)"
       PARAM_SIGMA_ERR="$(awk '/^sigma / { print $5 }' /tmp/aspersa.params)"
       PARAM_SIGMA_PCT="$(awk '/^sigma / { print substr($6, 2, length($6)-3) }' /tmp/aspersa.params)"
       PARAM_KAPPA="$(awk '/^kappa / { print $3 }' /tmp/aspersa.params)"
       PARAM_KAPPA_ERR="$(awk '/^kappa / { print $5 }' /tmp/aspersa.params)"
       PARAM_KAPPA_PCT="$(awk '/^kappa / { print substr($6, 2, length($6)-3) }' /tmp/aspersa.params)"
+      PARAM_C_ONE="$(awk '/^C1 / { print $3 }' /tmp/aspersa.params)"
+      PARAM_C_ONE_ERR="$(awk '/^C1 / { print $5 }' /tmp/aspersa.params)"
+      PARAM_C_ONE_PCT="$(awk '/^C1 / { print substr($6, 2, length($6)-3) }' /tmp/aspersa.params)"
       echo "   sigma   ${PARAM_SIGMA} +/- ${PARAM_SIGMA_ERR} (${PARAM_SIGMA_PCT}%)"
       echo "   kappa   ${PARAM_KAPPA} +/- ${PARAM_KAPPA_ERR} (${PARAM_KAPPA_PCT}%)"
+      echo "   C(1)    ${PARAM_C_ONE} +/- ${PARAM_C_ONE_ERR} (${PARAM_C_ONE_PCT}%)"
 
       # Now find the coefficient of determination again, this time against the
       # USL model.
@@ -630,7 +640,7 @@ main() {
          /^[^#]/{
             x  = \$1;
             y  = \$2;
-            g  = x*${C_of_one}/(1+${PARAM_SIGMA}*(x-1) + ${PARAM_KAPPA}*x*(x-1));
+            g  = x*${PARAM_C_ONE}/(1+${PARAM_SIGMA}*(x-1) + ${PARAM_KAPPA}*x*(x-1));
             sum_of_squares        += y * y;
             sum_of_squared_errors += (g - y) * (g - y);
          }
@@ -675,6 +685,7 @@ main() {
    cat > /tmp/aspersa-gnuplot1 <<-EOF
       sigma = ${PARAM_SIGMA}
       kappa = ${PARAM_KAPPA}
+      C1    = ${PARAM_C_ONE}
       sigma_best  = sigma - ${PARAM_SIGMA_ERR};
       sigma_worst = sigma + ${PARAM_SIGMA_ERR};
       kappa_best  = kappa - ${PARAM_KAPPA};
