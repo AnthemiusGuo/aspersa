@@ -35,7 +35,6 @@ Options:
    -c CONVERSION   Converts the input file into N-vs-C format as specified:
       globalstatus   Convert from MySQL's SHOW GLOBAL STATUS
       tcpdump        Convert from 'tcpdump -tttt -nnq' format
-   -C              Perform regression to determine C(1).
    -e              Omit the error lines on the final plot.
    -i INTERVAL     When -c is given, group the input into -i second intervals.
    -k KEEPFILE     Save the N-vs-C data in the specified file.
@@ -329,9 +328,6 @@ main() {
          -a)
             shift; X_AXIS="node count";
             ;;
-         -C)
-            shift; CPARAM=", C1";
-            ;;
          -c)
             shift; CONV="${1}"; shift;
             ;;
@@ -609,7 +605,7 @@ main() {
          set fit logfile "/dev/null"
          # defines sigma_err and kappa_err
          set fit errorvariables
-         fit g(x) '${FILE}' using 1:2 via sigma, kappa${CPARAM}
+         fit g(x) '${FILE}' using 1:2 via sigma, kappa, C1
 		EOF
       gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1 2> /tmp/aspersa-ufit.log
 
