@@ -23,6 +23,40 @@
 # Globals, helper functions
 # ########################################################################
 
+# The awk code for fuzzy rounding.  (It's used in a few places, so makes sense
+# not to duplicate).  It fuzzy-rounds the variable named fuzzy_var.  It goes in
+# steps of 5, 10, 25, then repeats by a factor of 10 larger (50, 100, 250), and
+# so on, until it finds a number that's large enough.  The pattern is slightly
+# broken between the initial 1 and 50, because rounding to the nearest 2.5
+# doesn't seem right to me.
+fuzzy_formula='
+   rounded = 0;
+   if (fuzzy_var <= 10 ) {
+      rounded   = 1;
+   }
+   factor = 1;
+   while ( rounded == 0 ) {
+      if ( fuzzy_var <= 50 * factor ) {
+         fuzzy_var = sprintf("%.0f", fuzzy_var / (5 * factor)) * 5 * factor;
+         rounded   = 1;
+      }
+      else if ( fuzzy_var <= 100  * factor) {
+         fuzzy_var = sprintf("%.0f", fuzzy_var / (10 * factor)) * 10 * factor;
+         rounded   = 1;
+      }
+      else if ( fuzzy_var <= 250  * factor) {
+         fuzzy_var = sprintf("%.0f", fuzzy_var / (25 * factor)) * 25 * factor;
+         rounded   = 1;
+      }
+      factor = factor * 10;
+   }'
+
+# Does fuzzy rounding: rounds to nearest interval, but the interval gets larger
+# as the number gets larger.  This is to make things easier to diff.
+fuzz () {
+   echo $1 | $AP_AWK "{fuzzy_var=\$1; ${fuzzy_formula} print fuzzy_var;}"
+}
+
 # The temp files are for storing working results so we don't call commands many
 # times (gives inconsistent results, maybe adds load on things I don't want to
 # such as RAID controllers).  They must not exist -- if they did, someone would
@@ -168,7 +202,7 @@ parse_free_minus_b () {
 
    cached=$(awk '/Mem/{print $7}' /tmp/aspersa);
    shorten ${cached} cached
-   name_val Caches ${cached}
+   name_val Caches "${cached} $(awk '/Dirty/ {print $1, $2, $3}' /proc/meminfo)"
 }
 
 # ##############################################################################
@@ -232,24 +266,40 @@ parse_netstat () {
    awk '$1 ~ /^tcp/ && $5 ~ /^[1-9]/ {
       print substr($5, 0, index($5, ":") - 1);
    }' /tmp/aspersa | sort | uniq -c \
-      | awk '{printf "    %-15s %5d\n", $2, $1}' \
+      | awk "{
+         fuzzy_var=\$1;
+         ${fuzzy_formula}
+         printf \"    %-15s %5d\\n\", \$2, fuzzy_var;
+         }" \
       | sort -n -t . -k 1,1 -k 2,2 -k 3,3 -k 4,4
    echo "  Connections to local IP addresses"
    awk '$1 ~ /^tcp/ && $5 ~ /^[1-9]/ {
       print substr($4, 0, index($4, ":") - 1);
    }' /tmp/aspersa | sort | uniq -c \
-      | awk '{printf "    %-15s %5d\n", $2, $1}' \
+      | awk "{
+         fuzzy_var=\$1;
+         ${fuzzy_formula}
+         printf \"    %-15s %5d\\n\", \$2, fuzzy_var;
+         }" \
       | sort -n -t . -k 1,1 -k 2,2 -k 3,3 -k 4,4
    echo "  Connections to top 10 local ports"
    awk '$1 ~ /^tcp/ && $5 ~ /^[1-9]/ {
       print substr($4, index($4, ":") + 1);
    }' /tmp/aspersa | sort | uniq -c | sort -rn | head -n10 \
-      | awk '{printf "    %-15s %5d\n", $2, $1}' | sort
+      | awk "{
+         fuzzy_var=\$1;
+         ${fuzzy_formula}
+         printf \"    %-15s %5d\\n\", \$2, fuzzy_var;
+         }" | sort
    echo "  States of connections"
    awk '$1 ~ /^tcp/ {
       print $6;
    }' /tmp/aspersa | sort | uniq -c | sort -rn \
-      | awk '{printf "    %-15s %5d\n", $2, $1}' | sort
+      | awk "{
+         fuzzy_var=\$1;
+         ${fuzzy_formula}
+         printf \"    %-15s %5d\\n\", \$2, fuzzy_var;
+         }" | sort
 }
 
 # ##############################################################################
@@ -659,16 +709,35 @@ parse_lsi_megaraid_virtual_devices () {
 # system activity is enough.
 # ##############################################################################
 format_vmstat () {
-   awk '
+   cat > /tmp/aspersa.awk <<-EOF
+      BEGIN {
+         format = "  %2s %2s  %4s %4s %5s %5s %6s %6s %3s %3s %3s %3s %3s\n";
+      }
       /procs/ {
          print  "  procs  ---swap-- -----io---- ---system---- --------cpu--------";
       }
-      $0 !~ /procs/ {
-         printf "  %2s %2s  %4s %4s %5s %5s %6s %6s %3s %3s %3s %3s %3s\n",
-            $1, $2, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17;
+      /bo/ {
+         printf format, "r", "b", "si", "so", "bi", "bo", "ir", "cs", "us", "sy", "il", "wa", "st";
       }
-   ' /tmp/aspersa
-}
+      \$0 !~ /r/ {
+            fuzzy_var = \$1;   ${fuzzy_formula}  r   = fuzzy_var;
+            fuzzy_var = \$2;   ${fuzzy_formula}  b   = fuzzy_var;
+            fuzzy_var = \$7;   ${fuzzy_formula}  si  = fuzzy_var;
+            fuzzy_var = \$8;   ${fuzzy_formula}  so  = fuzzy_var;
+            fuzzy_var = \$9;   ${fuzzy_formula}  bi  = fuzzy_var;
+            fuzzy_var = \$10;  ${fuzzy_formula}  bo  = fuzzy_var;
+            fuzzy_var = \$11;  ${fuzzy_formula}  ir  = fuzzy_var;
+            fuzzy_var = \$12;  ${fuzzy_formula}  cs  = fuzzy_var;
+            fuzzy_var = \$13;  ${fuzzy_formula}  us  = fuzzy_var;
+            fuzzy_var = \$14;  ${fuzzy_formula}  sy  = fuzzy_var;
+            fuzzy_var = \$15;  ${fuzzy_formula}  il  = fuzzy_var;
+            fuzzy_var = \$16;  ${fuzzy_formula}  wa  = fuzzy_var;
+            fuzzy_var = \$17;  ${fuzzy_formula}  st  = fuzzy_var;
+            printf format, r, b, si, so, bi, bo, ir, cs, us, sy, il, wa, st;
+         }
+	EOF
+      awk -f /tmp/aspersa.awk /tmp/aspersa
+   }
 
 # ##############################################################################
 # The main() function is called at the end of the script.  This makes it
@@ -919,7 +988,6 @@ main () {
       # /proc/sys/net/netfilter/nf_conntrack_max or /proc/sys/net/nf_conntrack_max
       # in new kernels like Fedora 12?
 
-       
       # TODO: use fuzzy-rounding
       section Interface_Statistics
       if ip -s link > /tmp/aspersa 2>/dev/null; then
@@ -938,7 +1006,7 @@ main () {
       # ########################################################################
       section Top_Processes
       top -bn 1 | sed -e 's# *$##g' -e '/./{H;$!d;}' -e 'x;/PID/!d;' | grep . | head
-      section "Simplified_vmstat_(wait_please)"
+      section "Simplified_and_fuzzy_rounded_vmstat_(wait_please)"
       vmstat 1 5 > /tmp/aspersa
       format_vmstat
    fi

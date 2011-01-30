@@ -11,7 +11,7 @@ cat <<EOF > $1
     3306                3
   States of connections
     ESTABLISHED         4
-    LISTEN             14
+    LISTEN             15
 EOF
 
 cat samples/netstat-001.txt > $2
