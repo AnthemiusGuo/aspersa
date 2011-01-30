@@ -725,7 +725,7 @@ main () {
           code=`cat /etc/apt/sources.list |awk  '/^deb/ {print $3}' |awk -F/ '{print $1}'| awk 'BEGIN {FS="|"}{print $1}' | sort | uniq -c | sort -rn |head -n1 |awk '{print $2}'`
           release="${release} (${code})"
       fi
-   elif ls /etc/*release 2>/dev/null; then
+   elif ls /etc/*release >/dev/null 2>&1; then
       if grep -q DISTRIB_DESCRIPTION /etc/*release; then
          release=$(grep DISTRIB_DESCRIPTION /etc/*release | head -n1);
       else
