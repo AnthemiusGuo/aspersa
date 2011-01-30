@@ -51,6 +51,7 @@ Options:
    -t FILETYPE     Type for the image files (png, pdf, eps).
    -T POINTTYPE    Point-type and options for the plots (default 6).
    -x ADJUSTMENT   Multiply the C(1) regression parameter by this factor.
+   -X              Include C(1) as a fit parameter for USL regression.
 	EOF
    exit 1
 }
@@ -319,6 +320,8 @@ find_C_of_one() {
 # The main code that runs by default.  Arguments are the command-line options.
 main() {
 
+   echo "# Command-line: $0 $*"
+
    # Get command-line options.
    for o; do
       case "${o}" in
@@ -376,6 +379,9 @@ main() {
          -x)
             shift; XAD="${1}"; shift;
             ;;
+         -X)
+            shift; FITC1=", C1";
+            ;;
          -*)
             OPT_ERR="Unknown option '${o}'."
                usage 1
@@ -396,6 +402,7 @@ main() {
    PORT="${PORT:-3306}"
    PTY="${PTY:-6}"
    REFIT="${REFIT:-1}"
+   FITC1="${FITC1:-}"
    if [ "${COLOR}" ]; then
       LTY="${LTY:-lt rgb \"#8B0000\"}"
       BLUE=" lt rgb \"#0000FF\"";
@@ -474,7 +481,7 @@ main() {
    echo "min(N)  ${min_N}"
    echo "max(N)  ${max_N}"
    echo "max(C)  ${max_C}"
-   echo "C(1)    ${C_of_one}"
+   echo "C(1)    ${C_of_one} (pre-adjustment by ${XAD})"
    echo "N=1 ??? ${N_one:-no}"
 
    # ######################################################################
@@ -487,11 +494,15 @@ main() {
    # ######################################################################
 
    # Sets up parameters.  We'll always load this file.
+   if [ "${XAD}" != "1" ]; then
+      echo "# Adjusting C(1) by ${XAD}"
+      C_of_one="$(echo ${C_of_one} | awk "{print \$1 * ${XAD}}")";
+   fi
    cat > /tmp/aspersa-gnuplot0 <<-EOF
       ${GNUPLOT_TERM}
       ${GNUPLOT_SIZE}
       ${GNUPLOT_LABEL}
-      C1 = ${C_of_one} * ${XAD}
+      C1 = ${C_of_one}
       max_N = ${max_N}
       max_C = ${max_C}
       max(a,b) = (a > b) ? a : b
@@ -595,8 +606,11 @@ main() {
 
    if [ "${REFIT}" = "1" ]; then
       # Re-fit against the Universal Scalability Law -- it will be more
-      # accurate.
+      # accurate.  Put the C(1) point into a new file for this purpose.
       echo "# Re-fitting against the USL with (a, b-a) as a starting point."
+      echo "# Treating (1, ${C_of_one}) as a point in original measurements."
+      echo "1 ${C_of_one}" > /tmp/aspersa-usl-input-extended
+      cat "${FILE}" >> /tmp/aspersa-usl-input-extended
       cat > /tmp/aspersa-gnuplot1 <<-EOF
          a = ${PARAM_A}
          b = ${PARAM_B}
@@ -605,7 +619,7 @@ main() {
          set fit logfile "/dev/null"
          # defines sigma_err and kappa_err
          set fit errorvariables
-         fit g(x) '${FILE}' using 1:2 via sigma, kappa, C1
+         fit g(x) '/tmp/aspersa-usl-input-extended' using 1:2 via sigma, kappa${FITC1}
 		EOF
       gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1 2> /tmp/aspersa-ufit.log
 
@@ -616,19 +630,33 @@ main() {
       fi
 
       # Now check the log again, and extract the parameters from it.
-      sed -n -e '/the fit converged/,/^C1 /p' /tmp/aspersa-ufit.log > /tmp/aspersa.params
-      PARAM_SIGMA="$(awk '/^sigma / { print $3 }' /tmp/aspersa.params)"
-      PARAM_SIGMA_ERR="$(awk '/^sigma / { print $5 }' /tmp/aspersa.params)"
-      PARAM_SIGMA_PCT="$(awk '/^sigma / { print substr($6, 2, length($6)-3) }' /tmp/aspersa.params)"
-      PARAM_KAPPA="$(awk '/^kappa / { print $3 }' /tmp/aspersa.params)"
-      PARAM_KAPPA_ERR="$(awk '/^kappa / { print $5 }' /tmp/aspersa.params)"
-      PARAM_KAPPA_PCT="$(awk '/^kappa / { print substr($6, 2, length($6)-3) }' /tmp/aspersa.params)"
-      PARAM_C_ONE="$(awk '/^C1 / { print $3 }' /tmp/aspersa.params)"
-      PARAM_C_ONE_ERR="$(awk '/^C1 / { print $5 }' /tmp/aspersa.params)"
-      PARAM_C_ONE_PCT="$(awk '/^C1 / { print substr($6, 2, length($6)-3) }' /tmp/aspersa.params)"
-      echo "   sigma   ${PARAM_SIGMA} +/- ${PARAM_SIGMA_ERR} (${PARAM_SIGMA_PCT}%)"
-      echo "   kappa   ${PARAM_KAPPA} +/- ${PARAM_KAPPA_ERR} (${PARAM_KAPPA_PCT}%)"
-      echo "   C(1)    ${PARAM_C_ONE} +/- ${PARAM_C_ONE_ERR} (${PARAM_C_ONE_PCT}%)"
+      if [ "${FITC1}" ]; then
+         sed -n -e '/the fit converged/,/^C1 /p' /tmp/aspersa-ufit.log > /tmp/aspersa.params
+         PARAM_SIGMA="$(awk '/^sigma / { print $3 }' /tmp/aspersa.params)"
+         PARAM_SIGMA_ERR="$(awk '/^sigma / { print $5 }' /tmp/aspersa.params)"
+         PARAM_SIGMA_PCT="$(awk '/^sigma / { print substr($6, 2, length($6)-3) }' /tmp/aspersa.params)"
+         PARAM_KAPPA="$(awk '/^kappa / { print $3 }' /tmp/aspersa.params)"
+         PARAM_KAPPA_ERR="$(awk '/^kappa / { print $5 }' /tmp/aspersa.params)"
+         PARAM_KAPPA_PCT="$(awk '/^kappa / { print substr($6, 2, length($6)-3) }' /tmp/aspersa.params)"
+         PARAM_C_ONE="$(awk '/^C1 / { print $3 }' /tmp/aspersa.params)"
+         PARAM_C_ONE_ERR="$(awk '/^C1 / { print $5 }' /tmp/aspersa.params)"
+         PARAM_C_ONE_PCT="$(awk '/^C1 / { print substr($6, 2, length($6)-3) }' /tmp/aspersa.params)"
+         echo "   sigma   ${PARAM_SIGMA} +/- ${PARAM_SIGMA_ERR} (${PARAM_SIGMA_PCT}%)"
+         echo "   kappa   ${PARAM_KAPPA} +/- ${PARAM_KAPPA_ERR} (${PARAM_KAPPA_PCT}%)"
+         echo "   C(1)    ${PARAM_C_ONE} +/- ${PARAM_C_ONE_ERR} (${PARAM_C_ONE_PCT}%)"
+      else
+         sed -n -e '/the fit converged/,/^kappa /p' /tmp/aspersa-ufit.log > /tmp/aspersa.params
+         PARAM_SIGMA="$(awk '/^sigma / { print $3 }' /tmp/aspersa.params)"
+         PARAM_SIGMA_ERR="$(awk '/^sigma / { print $5 }' /tmp/aspersa.params)"
+         PARAM_SIGMA_PCT="$(awk '/^sigma / { print substr($6, 2, length($6)-3) }' /tmp/aspersa.params)"
+         PARAM_KAPPA="$(awk '/^kappa / { print $3 }' /tmp/aspersa.params)"
+         PARAM_KAPPA_ERR="$(awk '/^kappa / { print $5 }' /tmp/aspersa.params)"
+         PARAM_KAPPA_PCT="$(awk '/^kappa / { print substr($6, 2, length($6)-3) }' /tmp/aspersa.params)"
+         PARAM_C_ONE="${C_of_one}"
+         echo "   sigma   ${PARAM_SIGMA} +/- ${PARAM_SIGMA_ERR} (${PARAM_SIGMA_PCT}%)"
+         echo "   kappa   ${PARAM_KAPPA} +/- ${PARAM_KAPPA_ERR} (${PARAM_KAPPA_PCT}%)"
+         echo "   C(1)    ${PARAM_C_ONE}     (not a regression parameter)"
+      fi
 
       # Now find the coefficient of determination again, this time against the
       # USL model.
@@ -644,7 +672,7 @@ main() {
             print 1 - (sum_of_squared_errors / sum_of_squares);
          }
 		EOF
-      R_SQUARED="$(awk -f /tmp/aspersa "${FILE}")"
+      R_SQUARED="$(awk -f /tmp/aspersa "/tmp/aspersa-usl-input-extended")"
       echo "   R^2     ${R_SQUARED}"
 
       # Plot the USL residuals squared, for finding outliers and removing them.
@@ -654,12 +682,13 @@ main() {
          set output "${PRE}usl-residuals-squared.${EXT}"
          sigma = ${PARAM_SIGMA}
          kappa = ${PARAM_KAPPA}
-         plot "${FILE}" using 1:((g(\$1)-\$2)**2) pt ${PTY}${BLUE}, \\
+         plot "/tmp/aspersa-usl-input-extended" using 1:((g(\$1)-\$2)**2) pt ${PTY}${BLUE}, \\
               ''        using (\$1+1):((g(\$1)-\$2)**2):1 w labels
 		EOF
       gnuplot /tmp/aspersa-gnuplot0 /tmp/aspersa-gnuplot1
    else
       # We need to set the PARAM_SIGMA and PARAM_KAPPA stuff.
+      PARAM_C_ONE="${C_of_one}"
       echo | awk "BEGIN{
          a     = ${PARAM_A};
          a_err = ${PARAM_A_ERR};
@@ -733,7 +762,7 @@ main() {
    fi
 
    # Remove temp files.
-   rm -f /tmp/aspersa{,-N-C,.params,-gnuplot0,-gnuplot1,-qfit.log,-ufit.log}
+   rm -f /tmp/aspersa{,-N-C,.params,-gnuplot0,-gnuplot1,-qfit.log,-ufit.log,-usl-input-extended}
 }
 
 # Execute the program if it was not included from another file.  This makes it
