@@ -756,6 +756,29 @@ main () {
    fi
    name_val "SELinux" "${getenforce:-No SELinux detected}";
 
+   # We look in dmesg for virtualization information first, because it's often
+   # available to non-root users and usually has telltale signs.  It's most
+   # reliable to look at /var/log/dmesg if possible.  There are a number of
+   # other ways to find out if a system is virtualized.
+   cat /var/log/dmesg > /tmp/aspersa 2>/dev/null
+   if [ ! -s /tmp/aspersa ]; then
+      dmesg > /tmp/aspersa 2>/dev/null
+   fi
+   if [ -s /tmp/aspersa ]; then
+      virt="$(parse_virtualization_dmesg)"
+   fi
+   if [ -z "${virt}" ]; then
+      lspci > /tmp/aspersa 2>/dev/null
+      if grep -qi virtualbox /tmp/aspersa; then
+         virt=VirtualBox
+      elif grep -qi vmware /tmp/aspersa; then
+         virt=VMWare
+      elif [ -e /proc/user_beancounters ]; then
+         virt="OpenVZ/Virtuozzo"
+      fi
+   fi
+   name_val Virtualized "${virt:-No virtualization detected}"
+
    # ########################################################################
    # Processor/CPU, Memory, Swappiness, dmidecode
    # ########################################################################
@@ -878,32 +901,6 @@ main () {
       echo "   RAID controller software not found; try getting it from"
       echo "   ${notfound}"
    fi
-
-   # ########################################################################
-   # We look in dmesg for virtualization information first, because it's often
-   # available to non-root users and usually has telltale signs.  It's most
-   # reliable to look at /var/log/dmesg if possible.  There are a number of
-   # other ways to find out if a system is virtualized.
-   # ########################################################################
-   section Virtualization
-   cat /var/log/dmesg > /tmp/aspersa 2>/dev/null
-   if [ ! -s /tmp/aspersa ]; then
-      dmesg > /tmp/aspersa 2>/dev/null
-   fi
-   if [ -s /tmp/aspersa ]; then
-      virt="$(parse_virtualization_dmesg)"
-   fi
-   if [ -z "${virt}" ]; then
-      lspci > /tmp/aspersa 2>/dev/null
-      if grep -qi virtualbox /tmp/aspersa; then
-         virt=VirtualBox
-      elif grep -qi vmware /tmp/aspersa; then
-         virt=VMWare
-      elif [ -e /proc/user_beancounters ]; then
-         virt="OpenVZ/Virtuozzo"
-      fi
-   fi
-   name_val Technology "${virt:-No virtualization detected}"
 
    if [[ "${ASPERSA_SKIP}" != *NETWORK* ]]; then
       # #####################################################################
