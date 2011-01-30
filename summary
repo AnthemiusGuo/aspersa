@@ -202,7 +202,8 @@ parse_free_minus_b () {
 
    cached=$(awk '/Mem/{print $7}' /tmp/aspersa);
    shorten ${cached} cached
-   name_val Caches "${cached} $(awk '/Dirty/ {print $1, $2, $3}' /proc/meminfo)"
+   name_val Caches ${cached}
+   name_val Dirty "$(awk '/Dirty/ {print $2, $3}' /proc/meminfo)"
 }
 
 # ##############################################################################
@@ -728,11 +729,11 @@ format_vmstat () {
             fuzzy_var = \$10;  ${fuzzy_formula}  bo  = fuzzy_var;
             fuzzy_var = \$11;  ${fuzzy_formula}  ir  = fuzzy_var;
             fuzzy_var = \$12;  ${fuzzy_formula}  cs  = fuzzy_var;
-            fuzzy_var = \$13;  ${fuzzy_formula}  us  = fuzzy_var;
-            fuzzy_var = \$14;  ${fuzzy_formula}  sy  = fuzzy_var;
-            fuzzy_var = \$15;  ${fuzzy_formula}  il  = fuzzy_var;
-            fuzzy_var = \$16;  ${fuzzy_formula}  wa  = fuzzy_var;
-            fuzzy_var = \$17;  ${fuzzy_formula}  st  = fuzzy_var;
+            fuzzy_var = \$13;                    us  = fuzzy_var;
+            fuzzy_var = \$14;                    sy  = fuzzy_var;
+            fuzzy_var = \$15;                    il  = fuzzy_var;
+            fuzzy_var = \$16;                    wa  = fuzzy_var;
+            fuzzy_var = \$17;                    st  = fuzzy_var;
             printf format, r, b, si, so, bi, bo, ir, cs, us, sy, il, wa, st;
          }
 	EOF
