@@ -1,5 +1,4 @@
-#!/bin/sh
-
+# This function is common code copy/pasted from lib/options.
 generate_parse_options() {
    SELF="$1"; shift; # The file to read will be passed as $0 by caller
 
