@@ -1,0 +1,77 @@
+#!/bin/sh
+
+generate_parse_options() {
+   SELF="$1"; shift; # The file to read will be passed as $0 by caller
+
+   # The list of command-line options must be an indented USAGE here-doc.
+   # Options are lines that begin with a dash.  Options that take a value are
+   # followed by an uppercase WORD after the option name.  Lines with the text
+   # "one of the following:" begin a case-statement to specify allowed options;
+   # subsequent lines that contain a close-paren are allowed values.  Default
+   # values can be given on the same line as the option name, enclosed by the
+   # text "(default X)". Options are stored into exported variables named
+   # OPT_$o, where $o is the name of the option.
+   awk '
+   BEGIN {
+      print "parse_options() {";
+      print "   for o; do";
+      print "      case \"${o}\" in";
+      print "         --)";
+      print "            break;";
+      print "            ;;";
+   }
+   /^   cat <<-USAGE/,/^.USAGE/{
+      if ( $1 ~ /^-/ ) {
+         if ( in_case == 1 ) {
+            print "               *)";
+            print "                  OPT_ERR=\"Bad option value\";";
+            print "                  usage";
+            print "                  ;;";
+            print "            esac";
+            print "            ;;";
+            in_case = 0;
+         }
+         o = substr($1, 2);
+         if ( $0 ~ /\(default .*\)/ ) {
+            d = substr($0, index($0, "(default") + 9);
+            d = substr(d, 1, index(d, ")") - 1);
+            defaults[o] = d;
+         }
+         else {
+            defaults[o] = "";
+         }
+         print "         " $1 ")";
+         if ( $2 ~ /^[[:upper:]]*$/ ) {
+            print "            shift; OPT_" o "=\"${1}\"; shift;";
+         }
+         else {
+            print "            shift; OPT_" o "=1;";
+         }
+         if ( $0 ~ /one of the following:/ ) {
+            in_case = 1;
+            print "            case \"${OPT_" o "}\" in";
+         }
+         else {
+            print "            ;;";
+         }
+      }
+      else if ( in_case == 1 && $0 ~ /\)/ ) {
+         print "               " $1;
+         print "                  ;;";
+      }
+   }
+   END {
+      print "         -*)";
+      print "            OPT_ERR=\"Unknown option ${o}.\"";
+      print "            usage";
+      print "            ;;";
+      print "      esac";
+      print "   done";
+      for ( o in defaults ) {
+         print "   export OPT_" o "=\"${OPT_" o ":-" defaults[o] "}\";";
+      }
+      print "}";
+   }' "${SELF}" > /tmp/aspersa-options
+   . /tmp/aspersa-options
+   rm /tmp/aspersa-options
+}

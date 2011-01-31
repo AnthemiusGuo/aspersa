@@ -1,0 +1,18 @@
+# Print a usage message and exit.
+usage() {
+   if [ "${OPT_ERR}" ]; then
+      echo "${OPT_ERR}"
+   fi
+   cat <<-USAGE
+Usage: $0 [OPTIONS] FILE [FILE...]
+   $0 does wizzle-bang.
+Options:
+   -a              Foobity foo.
+                   Second line, different from the first.
+   -b BARBAR       Sets the bar.  Specify one of the following:
+      bingabang)   # Bing the bang
+      wobble)      # Different from wibble
+   -c BING         Apple pie (default 5).
+	USAGE
+   exit 1
+}

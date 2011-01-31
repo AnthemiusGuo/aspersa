@@ -1,0 +1,30 @@
+#!/bin/bash
+
+. ../options
+generate_parse_options samples/simple-prog-01
+
+parse_options -a
+if [ "${OPT_a}" != "1" ]; then
+   echo "NOK: -a not parsed right ($OPT_a)"
+else
+   echo "OK: -a parsed right"
+fi
+if [ "${OPT_c}" != "5" ]; then
+   echo "NOK: -c not defaulted right ($OPT_c)"
+else
+   echo "OK: -c parsed right"
+fi
+
+parse_options -c 10
+if [ "${OPT_c}" != "10" ]; then
+   echo "NOK: -c not defaulted right ($OPT_c)"
+else
+   echo "OK: -c parsed right"
+fi
+
+parse_options -b bingabang
+if [ "${OPT_b}" != "bingabang" ]; then
+   echo "NOK: -b not parsed right ($OPT_b)"
+else
+   echo "OK: -b parsed right"
+fi
