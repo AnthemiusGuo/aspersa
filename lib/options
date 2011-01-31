@@ -1,22 +1,24 @@
-# This function is common code copy/pasted from lib/options.
-generate_parse_options() {
-   SELF="$1"; shift; # The file to read will be passed as $0 by caller
-
-   # The list of command-line options must be an indented USAGE here-doc.
-   # Options are lines that begin with a dash.  Options that take a value are
-   # followed by an uppercase WORD after the option name.  Lines with the text
-   # "one of the following:" begin a case-statement to specify allowed options;
-   # subsequent lines that contain a close-paren are allowed values.  Default
-   # values can be given on the same line as the option name, enclosed by the
-   # text "(default X)". Options are stored into exported variables named
-   # OPT_$o, where $o is the name of the option.
+# To use, either source and execute this function against your script, and
+# generate and hard-code command-line option parsing code, or embed this file as
+# a function, then call the function with $0 and evaluate its output.  The list
+# of command-line options must be an indented USAGE here-doc.  Options are lines
+# that begin with a dash.  Options that take a value are followed by an
+# uppercase WORD after the option name.  Lines with the text "one of the
+# following:" begin a case-statement to specify allowed options; subsequent
+# lines that contain a close-paren are allowed values.  Default values can be
+# given on the same line as the option name, enclosed by the text "(default X)".
+# Options are stored into exported variables named OPT_$o, where $o is the name
+# of the option.
+generate_parse_options() { # This function is copy/pasted from lib/options.  
    awk '
    BEGIN {
-      print "parse_options() {";
       print "   for o; do";
       print "      case \"${o}\" in";
       print "         --)";
-      print "            break;";
+      print "            shift; break;";
+      print "            ;;";
+      print "         --help)";
+      print "            usage;";
       print "            ;;";
    }
    /^   cat <<-USAGE/,/^.USAGE/{
@@ -69,8 +71,5 @@ generate_parse_options() {
       for ( o in defaults ) {
          print "   export OPT_" o "=\"${OPT_" o ":-" defaults[o] "}\";";
       }
-      print "}";
-   }' "${SELF}" > /tmp/aspersa-options
-   . /tmp/aspersa-options
-   rm /tmp/aspersa-options
+   }' "${1:-$0}" # The file to read will usually be passed as $0 by caller
 }

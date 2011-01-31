@@ -1,7 +1,10 @@
 #!/bin/bash
 
 . ../options
-generate_parse_options samples/simple-prog-01
+echo "parse_options() {" > /tmp/aspersa
+generate_parse_options samples/simple-prog-01 >> /tmp/aspersa
+echo "}" >> /tmp/aspersa
+. /tmp/aspersa
 
 parse_options -a
 if [ "${OPT_a}" != "1" ]; then

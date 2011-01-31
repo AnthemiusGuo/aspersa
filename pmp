@@ -14,13 +14,84 @@ usage() {
    if [ "${OPT_ERR}" ]; then
       echo "${OPT_ERR}"
    fi
-   echo "Usage: $0 -p <pid> -b <binary> -i <iterations> -s <sleeptime> -l <maxlen> -k <keepfile> [FILE]"
-   echo "   $0 does two things: 1) get a GDB backtrace 2) aggregate it."
-   echo "   If you specify -p, then -b is ignored.  Otherwise that binary is traced."
-   echo "   If you specify -l, then only the topmost N functions are aggregated."
-   echo "   If you specify -k, then the backtraces are saved in that file."
-   echo "   If you specify a FILE, then step 1) above is not performed."
+   cat <<-USAGE
+Usage: $0 [OPTIONS] [FILE]
+   $0 does two things: 1) get a GDB backtrace 2) aggregate it.
+   If you specify a FILE, then step 1) is not performed.
+Options:
+   -b BINARY      Which binary to trace (default mysqld)
+   -i ITERATIONS  How many traces to gather and aggregate (default 1)
+   -k KEEPFILE    Keep the raw traces in this file after aggregation
+   -l NUMBER      Aggregate only first NUMBER functions; 0=infinity (default 0)
+   -p PID         Process ID of the process to trace; overrides -b
+   -s SLEEPTIME   Number of seconds to sleep between iterations (default 0)
+	USAGE
    exit 1
+}
+
+generate_parse_options() { # This function is copy/pasted from lib/options.  
+   awk '
+   BEGIN {
+      print "   for o; do";
+      print "      case \"${o}\" in";
+      print "         --)";
+      print "            shift; break;";
+      print "            ;;";
+      print "         --help)";
+      print "            usage;";
+      print "            ;;";
+   }
+   /^   cat <<-USAGE/,/^.USAGE/{
+      if ( $1 ~ /^-/ ) {
+         if ( in_case == 1 ) {
+            print "               *)";
+            print "                  OPT_ERR=\"Bad option value\";";
+            print "                  usage";
+            print "                  ;;";
+            print "            esac";
+            print "            ;;";
+            in_case = 0;
+         }
+         o = substr($1, 2);
+         if ( $0 ~ /\(default .*\)/ ) {
+            d = substr($0, index($0, "(default") + 9);
+            d = substr(d, 1, index(d, ")") - 1);
+            defaults[o] = d;
+         }
+         else {
+            defaults[o] = "";
+         }
+         print "         " $1 ")";
+         if ( $2 ~ /^[[:upper:]]*$/ ) {
+            print "            shift; OPT_" o "=\"${1}\"; shift;";
+         }
+         else {
+            print "            shift; OPT_" o "=1;";
+         }
+         if ( $0 ~ /one of the following:/ ) {
+            in_case = 1;
+            print "            case \"${OPT_" o "}\" in";
+         }
+         else {
+            print "            ;;";
+         }
+      }
+      else if ( in_case == 1 && $0 ~ /\)/ ) {
+         print "               " $1;
+         print "                  ;;";
+      }
+   }
+   END {
+      print "         -*)";
+      print "            OPT_ERR=\"Unknown option ${o}.\"";
+      print "            usage";
+      print "            ;;";
+      print "      esac";
+      print "   done";
+      for ( o in defaults ) {
+         print "   export OPT_" o "=\"${OPT_" o ":-" defaults[o] "}\";";
+      }
+   }' "${1:-$0}" # The file to read will usually be passed as $0 by caller
 }
 
 # Actually does the aggregation.  The arguments are the max number of functions
@@ -114,63 +185,31 @@ EOF
 main() {
    rm -f /tmp/aspersa
 
-   # Get command-line options.
-   for o; do
-      case "${o}" in
-         --)
-            break;
-            ;;
-         -p)
-            shift; pid="${1}"; shift;
-            ;;
-         -b)
-            shift; binary="${1}"; shift;
-            ;;
-         -i)
-            shift; iterations="${1}"; shift;
-            ;;
-         -s)
-            shift; sleeptime="${1}"; shift;
-            ;;
-         -l)
-            shift; maxlen="${1}"; shift;
-            ;;
-         -k)
-            shift; keepfile="${1}"; shift;
-            ;;
-         -*)
-            OPT_ERR="Unknown option '${o}'."
-               usage 1
-            ;;
-      esac
-   done
-   if [ "${OPT_ERR}" ]; then
-      usage
-   fi
+   # Get command-line options
+   generate_parse_options > /tmp/aspersa
+   . /tmp/aspersa
+   rm -f /tmp/aspersa
 
    if [ -z "${1}" ]; then
       # There's no file to analyze, so we'll make one.
-      iterations=${iterations:-1}
-      sleeptime=${sleeptime:-0}
-      binary=${binary:-mysqld}
-      if [ -z "${pid}" ]; then
-         pid=$(pidof -s "${binary}" 2>/dev/null);
-         if [ -z "${pid}" ]; then
-            pid=$(ps -eaf | grep "${binary}" | grep -v grep | awk '{print $2}' | head -n1);
+      if [ -z "${OPT_p}" ]; then
+         OPT_p=$(pidof -s "${OPT_b}" 2>/dev/null);
+         if [ -z "${OPT_p}" ]; then
+            OPT_p=$(ps -eaf | grep "${OPT_b}" | grep -v grep | awk '{print $2}' | head -n1);
          fi
       fi
       date;
-      for x in $(seq 1 $iterations); do
-         gdb -ex "set pagination 0" -ex "thread apply all bt" -batch -p $pid >> "${keepfile:-/tmp/aspersa}"
-         sleep $sleeptime
+      for x in $(seq 1 $OPT_i); do
+         gdb -ex "set pagination 0" -ex "thread apply all bt" -batch -p $OPT_p >> "${OPT_k:-/tmp/aspersa}"
+         sleep $OPT_s
       done
    fi
 
    if [ $# -eq 0 ]; then
-      aggregate_stacktrace "${maxlen:-0}" "${keepfile:-/tmp/aspersa}"
+      aggregate_stacktrace "${OPT_l}" "${OPT_k:-/tmp/aspersa}"
       rm -f /tmp/aspersa
    else
-      aggregate_stacktrace "${maxlen:-0}" $*
+      aggregate_stacktrace "${OPT_l}" $*
    fi
 }
 
