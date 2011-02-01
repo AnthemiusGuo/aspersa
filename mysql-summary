@@ -186,8 +186,15 @@ parse_mysqld_instances () {
 # /tmp/aspersa.  You have to specify the port for the instance you are
 # interested in, in case there are multiple instances.
 find_my_cnf_file() {
-   $AP_GREP '/mysqld' /tmp/aspersa | $AP_GREP -- "--port=$1" \
-      | $AP_AWK 'BEGIN{RS=" "; FS="=";} $1 ~ /--defaults-file/ { print $2 }'
+   if test -n "$1" && $AP_GREP -- "/mysqld.*--port=$1" /tmp/aspersa >/dev/null 2>&1 ; then
+      $AP_GREP -- "/mysqld.*--port=$1" /tmp/aspersa \
+         | $AP_AWK 'BEGIN{RS=" "; FS="=";} $1 ~ /--defaults-file/ { print $2; }' \
+         | head -n1
+   else
+      $AP_GREP '/mysqld' /tmp/aspersa \
+         | $AP_AWK 'BEGIN{RS=" "; FS="=";} $1 ~ /--defaults-file/ { print $2; }' \
+         | head -n1
+   fi
 }
 
 # Gets the MySQL system time.  Uses input from /tmp/aspersa-mysql-variables.
