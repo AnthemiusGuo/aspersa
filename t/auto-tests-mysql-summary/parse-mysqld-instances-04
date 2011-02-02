@@ -4,7 +4,7 @@
 cat <<EOF > $1
   Port  Data Directory             Socket
   ===== ========================== ======
-      0 /var/db/mysql              
+        /var/db/mysql              
 EOF
 
 cat <<EOF > $2

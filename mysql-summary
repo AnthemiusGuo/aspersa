@@ -64,7 +64,7 @@ fuzzy_formula='
 # function with "rm" or "touch" as an argument.
 temp_files() {
    for file in /tmp/aspersa{,-mysql-variables,-mysql-status,-innodb-status} \
-         /tmp/aspersa{,-mysql-databases,-mysql-processlist} \
+         /tmp/aspersa{,-mysql-databases,-mysql-processlist,-noncounters} \
          /tmp/aspersa-mysql{dump,-slave};
    do
       case "$1" in
@@ -132,6 +132,39 @@ var_exists () {
    $AP_GREP "$1" /tmp/aspersa-mysql-variables >/dev/null 2>&1;
 }
 
+# Returns "Enabled", "Disabled", or "Not Supported" depending on whether the
+# variable exists and is ON or enabled.  You can pass 2nd and 3rd variables to
+# control whether the variable should be 'gt' (numeric greater than) or 'eq'
+# (string equal) to some value.
+feat_on() {
+   if var_exists $1 ; then
+      var="$($AP_AWK "\$1 ~ /^$1$/ { print \$2 }" /tmp/aspersa-mysql-variables)"
+      if [ "${var}" = "ON" ]; then
+         echo "Enabled"
+      elif [ "${var}" = "OFF" -o "${var}" = "0" -o -z "${var}" ]; then
+         echo "Disabled"
+      elif [ "$2" = "ne" ]; then
+         if [ "${var}" != "$3" ]; then
+            echo "Enabled"
+         else
+            echo "Disabled"
+         fi
+      elif [ "$2" = "gt" ]; then
+         if [ "${var}" -gt "$3" ]; then
+            echo "Enabled"
+         else
+            echo "Disabled"
+         fi
+      elif [ "${var}" ]; then
+         echo "Enabled"
+      else
+         echo "Disabled"
+      fi
+   else
+      echo "Not Supported"
+   fi
+}
+
 # gets a value from /tmp/aspersa-mysql-status.  Returns zero if it doesn't
 # exist.
 get_stat () {
@@ -178,7 +211,7 @@ parse_mysqld_instances () {
             datadir="$(echo "${word}" | cut -d= -f2)"
          fi
       done
-      printf "  %5d %-26s %s\n" "${port}" "${datadir}" "${socket}"
+      printf "  %5s %-26s %s\n" "${port}" "${datadir}" "${socket}"
    done
 }
 
@@ -383,7 +416,7 @@ find_max_trx_time() {
    }
    END {
       print max;
-   }' $*
+   }' $@
 }
 
 # Summarizes various things about InnoDB status that are not easy to see by eye.
@@ -697,20 +730,20 @@ main() {
    # ########################################################################
    # Fetch some basic info so we can start
    # ########################################################################
-   mysql $* -ss -e 'SELECT CURRENT_USER()' > /tmp/aspersa
+   mysql $@ -ss -e 'SELECT CURRENT_USER()' > /tmp/aspersa
    if [ "$?" != "0" ]; then
       echo "Cannot connect to mysql, please specify command-line options."
       temp_files "rm"
       exit 1
    fi
    user="$(cat /tmp/aspersa)";
-   mysql -ss -e 'SHOW /*!40100 GLOBAL*/ VARIABLES' $* > /tmp/aspersa-mysql-variables
-   mysql -ss -e 'SHOW /*!50000 GLOBAL*/ STATUS' $* > /tmp/aspersa-mysql-status
-   mysql -ss -e 'SHOW DATABASES' $* > /tmp/aspersa-mysql-databases 2>/dev/null
-   mysql -ssE -e 'SHOW SLAVE STATUS' $* > /tmp/aspersa-mysql-slave 2>/dev/null
-   mysql -ssE -e 'SHOW /*!50000 ENGINE*/ INNODB STATUS' $* > /tmp/aspersa-innodb-status 2>/dev/null
-   mysql -ssE -e 'SHOW FULL PROCESSLIST' $* > /tmp/aspersa-mysql-processlist 2>/dev/null
-   now="$(mysql -ss -e 'SELECT NOW()' $*)"
+   mysql -ss -e 'SHOW /*!40100 GLOBAL*/ VARIABLES' $@ > /tmp/aspersa-mysql-variables
+   mysql -ss -e 'SHOW /*!50000 GLOBAL*/ STATUS' $@ > /tmp/aspersa-mysql-status
+   mysql -ss -e 'SHOW DATABASES' $@ > /tmp/aspersa-mysql-databases 2>/dev/null
+   mysql -ssE -e 'SHOW SLAVE STATUS' $@ > /tmp/aspersa-mysql-slave 2>/dev/null
+   mysql -ssE -e 'SHOW /*!50000 ENGINE*/ INNODB STATUS' $@ > /tmp/aspersa-innodb-status 2>/dev/null
+   mysql -ssE -e 'SHOW FULL PROCESSLIST' $@ > /tmp/aspersa-mysql-processlist 2>/dev/null
+   now="$(mysql -ss -e 'SELECT NOW()' $@)"
    port="$(get_var port)"
 
    # ########################################################################
@@ -723,7 +756,7 @@ main() {
    get_mysql_version
 
    uptime="$(get_stat Uptime)"
-   mysql -ss -e "SELECT LEFT(NOW() - INTERVAL ${uptime} SECOND, 16)" $* \
+   mysql -ss -e "SELECT LEFT(NOW() - INTERVAL ${uptime} SECOND, 16)" $@ \
       > /tmp/aspersa
    name_val Started "$(get_mysql_uptime)"
 
@@ -735,6 +768,9 @@ main() {
    if [ -s /tmp/aspersa-mysql-slave ]; then slave=""; else slave="not "; fi
    slavecount=$($AP_GREP -c 'Binlog Dump' /tmp/aspersa-mysql-processlist)
    name_val Replication "Is ${slave}a slave, has ${slavecount} slaves connected"
+   pid_file="$(get_var pid_file)"
+   [ -e "${pid_file}" ] && PID_EXISTS="(exists)"
+   name_val Pidfile "${pid_file} ${PID_EXISTS:-(does not exist)}"
 
    # ########################################################################
    # Processlist, sliced several different ways
@@ -747,7 +783,7 @@ main() {
    # ########################################################################
    section "Status_Counters_(Wait_10_Seconds)"
    sleep 10
-   mysql -ss -e 'SHOW /*!50000 GLOBAL*/ STATUS' $* \
+   mysql -ss -e 'SHOW /*!50000 GLOBAL*/ STATUS' $@ \
       | join /tmp/aspersa-mysql-status - > /tmp/aspersa 
    # Make a file with a list of things we want to omit because they aren't
    # counters, they are gauges (in RRDTool terminology).  Gauges are shown
@@ -788,6 +824,23 @@ main() {
    name_val Size "${table_cache}"
    open_tables=$(get_stat Open_tables)
    name_val Usage  "$(fuzzy_pct ${open_tables} ${table_cache})"
+
+   # ########################################################################
+   # Percona Server features
+   # ########################################################################
+   section Key_Percona_Server_features
+   name_val "Table & Index Stats"  "$(feat_on userstat_running)"
+   name_val "Multiple I/O Threads" "$(feat_on innodb_read_io_threads gt 1)"
+   name_val "Corruption Resilient" "$(feat_on innodb_pass_corrupt_table)"
+   name_val "Import InnoDB Tables" "$(feat_on innodb_expand_import)"
+   name_val "Fast Server Restarts" "$(feat_on innodb_auto_lru_dump)"
+   name_val "Enhanced Logging"     "$(feat_on log_slow_verbosity ne microtime)"
+   name_val "Replica Perf Logging" "$(feat_on log_slow_slave_statements)"
+   name_val "Response Time Hist."  "$(feat_on enable_query_response_time_stats)"
+   name_val "Smooth Flushing"      "$(feat_on innodb_adaptive_checkpoint ne none)"
+   name_val "HandlerSocket NoSQL"  "$(feat_on handlersocket_port)"
+   mysql $@ -e 'SELECT FNV_64("a")' >/dev/null 2>&1 && FNV_64="Enabled";
+   name_val "Fast Maatkit Hashes"  "${FNV_64:-Unknown}"
 
    # ########################################################################
    # Query cache
@@ -833,7 +886,7 @@ main() {
       mysqldump --all-databases --no-data --skip-comments \
          --skip-add-locks --skip-add-drop-table --compact \
          --skip-lock-all-tables --skip-lock-tables --skip-set-charset \
-         ${trg_arg} $* > /tmp/aspersa-mysqldump
+         ${trg_arg} $@ > /tmp/aspersa-mysqldump
       # Test the result by checking the file, not by the exit status, because we
       # might get partway through and then die, and the info is worth analyzing
       # anyway.
@@ -931,7 +984,7 @@ main() {
       lg_size="$(get_var innodb_log_file_size)"
       lg_fils="$(get_var innodb_log_files_in_group)"
       lg_totl="$((${lg_size} * ${lg_fils}))"
-      name_val "Log File Size" "${lg_fils} * $(shorten ${lg_size}) = $(shorten ${lg_totl})"
+      name_val "Log File Size" "${lg_fils} * $(shorten ${lg_size}) = $(shorten ${lg_totl} 1)"
       name_val "Log Buffer Size"     $(shorten $(get_var innodb_log_buffer_size))
       name_val "Flush Method"        $(get_var innodb_flush_method)
       name_val "Flush Log At Commit" $(get_var innodb_flush_log_at_trx_commit)
@@ -944,6 +997,8 @@ main() {
       name_val "Concurrency Tickets" $(get_var innodb_concurrency_tickets)
       name_val "Commit Concurrency"  $(get_var innodb_commit_concurrency)
       name_val "Txn Isolation Level" $(get_var tx_isolation)
+      name_val "Adaptive Flushing"   $(get_var innodb_adaptive_flushing)
+      name_val "Adaptive Checkpoint" $(get_var innodb_adaptive_checkpoint)
 
       if [ -s /tmp/aspersa-innodb-status ]; then
          format_innodb_status
@@ -970,7 +1025,7 @@ main() {
    # ########################################################################
    section Security
    users="$(mysql -ss \
-      -e 'SELECT COUNT(*), SUM(user=""), SUM(password=""), SUM(password NOT LIKE "*%") FROM mysql.user' $* 2>/dev/null \
+      -e 'SELECT COUNT(*), SUM(user=""), SUM(password=""), SUM(password NOT LIKE "*%") FROM mysql.user' $@ 2>/dev/null \
       | $AP_AWK '{printf "%d users, %d anon, %d w/o pw, %d old pw\n", $1, $2, $3, $4}')"
    name_val Users "${users}"
    name_val "Old Passwords" $(get_var old_passwords)
@@ -981,14 +1036,14 @@ main() {
    section Binary_Logging
    binlog=$(get_var log_bin)
    if [ "${binlog}" ]; then
-      mysql -ss -e 'SHOW MASTER LOGS' $* > /tmp/aspersa 2>/dev/null
+      mysql -ss -e 'SHOW MASTER LOGS' $@ > /tmp/aspersa 2>/dev/null
       summarize_binlogs
       format="$(get_var binlog_format)"
       name_val binlog_format "${format:-STATEMENT}"
       name_val expire_logs_days $(get_var expire_logs_days)
       name_val sync_binlog $(get_var sync_binlog)
       name_val server_id $(get_var server_id)
-      mysql -ss -e 'SHOW MASTER STATUS' $* > /tmp/aspersa 2>/dev/null
+      mysql -ss -e 'SHOW MASTER STATUS' $@ > /tmp/aspersa 2>/dev/null
       format_binlog_filters
    fi
 
@@ -1047,4 +1102,4 @@ main() {
 
 # Execute the program if it was not included from another file.  This makes it
 # possible to include without executing, and thus test.
-if [ $(basename "$0") = "mysql-summary" ]; then main $*; fi
+if [ $(basename "$0") = "mysql-summary" ]; then main $@; fi
