@@ -115,7 +115,7 @@ shorten() {
 # Function to take a file and collapse it into an aggregated list.  This
 # function works on $1, which it expects to be created with 'sort |
 # uniq -c'.  Leading whitespace is deleted.  The result will look like
-# "4xabc, 1xdef"
+# "4xabc, 1xdef"  Copy any changes to 'mysql-summary' too.
 # ##############################################################################
 group_concat () {
    sed -e '{H; $!d}' -e 'x' -e 's/\n[[:space:]]*\([[:digit:]]*\)[[:space:]]*/, \1x/g' -e 's/[[:space:]][[:space:]]*/ /g' -e 's/, //' ${1}
@@ -953,15 +953,15 @@ main () {
          notfound="your package repository or the manufacturer's website"
       fi
    elif [ "${controller}" = "LSI Logic MegaRAID SAS" ]; then
-      if MegaCli64 -AdpAllInfo -aALL > /tmp/aspersa 2>/dev/null; then
+      if MegaCli64 -AdpAllInfo -aALL -NoLog > /tmp/aspersa 2>/dev/null; then
          parse_lsi_megaraid_adapter_info
       elif ! which MegaCli64 >/dev/null 2>&1; then
          notfound="your package repository or the manufacturer's website"
       fi
-      if MegaCli64 -AdpBbuCmd -GetBbuStatus -aALL > /tmp/aspersa 2>/dev/null; then
+      if MegaCli64 -AdpBbuCmd -GetBbuStatus -aALL -NoLog > /tmp/aspersa 2>/dev/null; then
          parse_lsi_megaraid_bbu_status
       fi
-      if MegaCli64 -LdPdInfo -aALL > /tmp/aspersa 2>/dev/null; then
+      if MegaCli64 -LdPdInfo -aALL -NoLog > /tmp/aspersa 2>/dev/null; then
          parse_lsi_megaraid_virtual_devices
          parse_lsi_megaraid_devices
       fi
