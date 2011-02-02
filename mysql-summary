@@ -852,6 +852,8 @@ main() {
       name_val Size "$(shorten ${query_cache_size} 1)"
       used=$(( ${query_cache_size} - $(get_stat Qcache_free_memory) ))
       name_val Usage "$(fuzzy_pct ${used} ${query_cache_size})"
+      hrat=$(fuzzy_pct $(get_stat Qcache_hits) $(get_stat Qcache_inserts))
+      name_val HitToInsertRatio "${hrat}"
    fi
 
    # ########################################################################
