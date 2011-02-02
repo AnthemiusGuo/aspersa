@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This program is part of Aspersa (http://code.google.com/p/aspersa/)
 
 # ########################################################################
@@ -23,8 +23,8 @@ Usage: $0 OPTIONS [MYSQL-OPTIONS]
 Options:
    -d DESTINATION Where to store the resulting data.
    -i INTERVAL    How many seconds to collect data.
-   -g             Collect GDB stack traces.
-   -o             Collect oprofile data.
+   -g <yes/no>    Collect GDB stack traces.
+   -o <yes/no>    Collect oprofile data.
 	USAGE
    exit 1
 }
@@ -42,18 +42,18 @@ for o; do
          shift; DEST="${1}"; shift;
          ;;
       -i)
-         shift; INTERVAL="${1}"; shift;
+         shift; LEN="${1}"; shift;
          ;;
       -o)
-         shift; OPC=yes;
+         shift; OPC="${1}"; shift;
          ;;
       -g)
-         shift; GDB=yes;
+         shift; GDB="${1}"; shift;
          ;;
    esac
 done
 
-if [ -z "${DEST}" -o -z "${INTERVAL}" -o -z "${OPC}" -o -z "${GDB}" ]; then
+if [ -z "${DEST}" -o -z "${LEN}" -o -z "${OPC}" -o -z "${GDB}" ]; then
    OPT_ERR="Missing command-line option."
    usage
 fi

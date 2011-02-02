@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This program is part of Aspersa (http://code.google.com/p/aspersa/)
 
 # ########################################################################
@@ -39,8 +39,6 @@ OPC="yes"
 SLEEP=600
 # Send mail to this list of addresses when the script triggers.
 EMAIL=""
-# Optional from-address for notification emails.
-MAILFROM=""
 # Bail out if the disk is more than this %full.
 PCT_THRESHOLD=95
 # Bail out if the disk has less than this many MB free.
@@ -64,10 +62,7 @@ die() {
 # ########################################################################
 log() {
    if [ "${EMAIL}" ]; then
-      if [ "${MAILFROM}" ]; then
-         FROMADDR="-r ${FROMADDR}"
-      fi
-      echo "${1} on $(hostname)" | mail ${FROMADDR} -s "${2} on $(hostname)" ${EMAIL}
+      echo "${1} on $(hostname)" | mail -s "${2} on $(hostname)" ${EMAIL}
    fi
    echo "${1}" >&2
 }
