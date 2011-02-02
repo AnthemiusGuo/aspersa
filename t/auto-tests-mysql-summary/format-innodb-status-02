@@ -26,6 +26,10 @@ Semaphore Waits
       7 trx/trx0trx.c line 738
       1 lock/lock0lock.c line 3770
       1 ./include/log0log.ic line 322
+Mutexes/Locks Waited For
+     33 Mutex at 0x2abf68b76a18 '&rseg->mutex'
+     16 Mutex at 0x48ace40 '&kernel_mutex'
+      1 Mutex at 0x2abf68b6c0d0 '&log_sys->mutex'
 EOF
 
 cp samples/innodb-status.002.txt /tmp/aspersa-innodb-status

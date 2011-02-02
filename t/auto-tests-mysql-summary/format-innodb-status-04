@@ -21,6 +21,9 @@ Semaphore Waits
 Semaphore Holders
       7 thread id 1220999488
       1 thread id 1229429056
+Mutexes/Locks Waited For
+      7 lock on RW-latch at 0x2aaab42120b8 created in file btr/btr0sea.c line 139
+      1 lock on RW-latch at 0x2ab2c679a550 created in file buf/buf0buf.c line 550
 EOF
 
 cp samples/innodb-status.004.txt /tmp/aspersa-innodb-status

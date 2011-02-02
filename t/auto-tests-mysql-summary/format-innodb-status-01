@@ -36,6 +36,17 @@ Semaphore Holders
       1 thread id 139961215367504
       1 thread id 139960969292112
       1 thread id 139960676096336
+Mutexes/Locks Waited For
+     65 lock on RW-latch at 0x905d33d0 '&new_index->lock'
+     45 lock on RW-latch at 0x7f4bedbf8810 '&block->lock'
+     30 Mutex at 0xf89ab0 '&kernel_mutex'
+     15 lock on RW-latch at 0x90075530 '&btr_search_latch'
+      4 lock on RW-latch at 0x90a42ca0 '&new_index->lock'
+      1 lock on RW-latch at 0x90fe1c80 '&new_index->lock'
+      1 lock on RW-latch at 0x90078f10 '&space->latch'
+      1 lock on RW-latch at 0x7f4c0d3abba8 '&block->lock'
+      1 lock on RW-latch at 0x7f4bfc558040 '&block->lock'
+      1 lock on RW-latch at 0x7f4bd0a8c8d0 '&block->lock'
 EOF
 
 cp samples/innodb-status.001.txt /tmp/aspersa-innodb-status

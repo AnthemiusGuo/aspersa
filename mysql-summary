@@ -554,6 +554,11 @@ format_innodb_status () {
          print substr($0, 1 + index($0, "("), index($0, ")") - index($0, "(") - 1);
       }' "${1}" | sort | uniq -c | sort -rn
    fi
+   if $AP_GREP -e 'Mutex at' -e 'lock on' "${1}" >/dev/null 2>&1; then
+      echo "Mutexes/Locks Waited For"
+      $AP_GREP -e 'Mutex at' -e 'lock on' "${1}" | $AP_SED -e 's/^[XS]-//' -e 's/,.*$//' \
+         | sort | uniq -c | sort -rn
+   fi
 }
 
 # Summarizes per-database statistics for a bunch of different things: count of
