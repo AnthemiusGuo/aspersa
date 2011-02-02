@@ -44,6 +44,9 @@ fi
    # Get pidof mysqld; pidof doesn't exist on some systems.  We try our best...
    p=$(pidof -s mysqld 2>/dev/null);
    if [ -z "${p}" ]; then
+      p=$(pgrep -o -x mysqld 2>/dev/null)
+   fi
+   if [ -z "${p}" ]; then
       p=$(ps -eaf | grep 'mysql[d]' | grep -v mysqld_safe | awk '{print $2}' | head -n1);
    fi
 
