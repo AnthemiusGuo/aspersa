@@ -31,6 +31,9 @@ MAYBE_EMPTY="no"
 COLLECT="${HOME}/bin/collect";
 # How long to sleep after collecting?
 SLEEP=600
+# Send mail to this list of addresses when the script triggers.
+EMAIL=""
+MAILFROM="" # Optional from-address
 
 if [ "$(id -u)" != "0" ]; then
    echo 'Not running with root privileges!';
@@ -54,8 +57,15 @@ while true; do
 
    # XXX Stop customizing here; everything above should be what you need.
    if [ "${execute:-no}" = "yes" ]; then 
-      echo "Executing collection script; ${VARIABLE} = ${detected}"
+      NOTE="Executing collection script; ${VARIABLE} = ${detected}"
+      echo "${NOTE}"
       ${COLLECT}
+      if [ "${EMAIL}" ]; then
+         if [ "${MAILFROM}" ]; then
+            FROMADDR="-r ${FROMADDR}"
+         fi
+         echo "${NOTE}" | mail ${FROMADDR} -s "$0 triggered on $(hostname)" ${EMAIL}
+      fi
       echo "sleeping ${SLEEP} seconds to avoid DOS attack"
       sleep ${SLEEP}
    else
