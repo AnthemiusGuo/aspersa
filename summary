@@ -92,23 +92,26 @@ name_val() {
    printf "%12s | %s\n" "$1" "$2"
 }
 
-# Converts a value to units of power of 2. Stores the result into a variable
-# with the name you specify.  Usage: shorten $value 'variable_name'
+# Converts a value to units of power of 2.
 shorten() {
-   unit=k
-   size=1024
-   if [ $1 -ge 1099511627776 ] ; then
-      size=1099511627776
-      unit=T
-   elif [ $1 -ge 1073741824 ] ; then
-      size=1073741824
-      unit=G
-   elif [ $1 -ge 1048576 ] ; then
-      size=1048576
-      unit=M
-   fi
-   result=$(echo "$1 $size" | awk '{printf "%.2f", $1 / $2}')
-   export "$2"="$result$unit"
+   echo $@ | awk '{
+      unit = "k";
+      size = 1024;
+      val  = $1;
+      if ( val >= 1099511627776 ) {
+         size = 1099511627776;
+         unit = "T";
+      }
+      else if ( val >= 1073741824 ) {
+         size = 1073741824;
+         unit = "G";
+      }
+      else if ( val >= 1048576 ) {
+         size = 1048576;
+         unit = "M";
+      }
+      printf "%.2f%s", val / size, unit;
+   }'
 }
 
 # ##############################################################################
@@ -177,33 +180,19 @@ parse_proc_cpuinfo () {
 }
 
 # ##############################################################################
-# Parse the output of 'free -b', which should be stored in /tmp/aspersa.
+# Parse the output of 'free -b' plus the contents of /proc/meminfo
 # ##############################################################################
 parse_free_minus_b () {
-   shorten "$(awk '/Mem/{print $2}' /tmp/aspersa)" total
-   name_val Total ${total}
+   physical=$(awk '/Mem:/{print $3}' "${1}")
+   swap=$(awk '/Swap:/{print $3}' "${1}")
+   virtual=$(shorten $(($physical + $swap)))
 
-   physical=$(awk '/Mem/{print $3}' /tmp/aspersa);
-   swap=$(awk '/Swap/{print $3}' /tmp/aspersa);
-   virtual=$(($physical + $swap))
-
-   free=$(awk '/Mem/{print $4}' /tmp/aspersa);
-   shorten ${free} free
-   name_val Free ${free}
-
-   shorten ${physical} physical
-   shorten ${swap} swap
-   shorten ${virtual} virtual
-   name_val Used "physical = ${physical}, swap = ${swap}, virtual = ${virtual}"
-
-   buffers=$(awk '/Mem/{print $6}' /tmp/aspersa);
-   shorten ${buffers} buffers
-   name_val Buffers ${buffers}
-
-   cached=$(awk '/Mem/{print $7}' /tmp/aspersa);
-   shorten ${cached} cached
-   name_val Caches ${cached}
-   name_val Dirty "$(awk '/Dirty/ {print $2, $3}' /proc/meminfo)"
+   name_val Total   $(shorten $(awk '/Mem:/{print $2}' "${1}"))
+   name_val Free    $(shorten $(awk '/Mem:/{print $4}' "${1}"))
+   name_val Used    "physical = $(shorten ${physical}), swap = $(shorten ${swap}), virtual = ${virtual}"
+   name_val Buffers $(shorten $(awk '/Mem:/{print $6}' "${1}"))
+   name_val Caches  $(shorten $(awk '/Mem:/{print $7}' "${1}"))
+   name_val Dirty  "$(awk '/Dirty:/ {print $2, $3}' "${1}")"
 }
 
 # ##############################################################################
@@ -236,27 +225,30 @@ parse_dmidecode_mem_devices () {
 }
 
 # ##############################################################################
-# Parse the output of 'netstat -antp' which should be in /tmp/aspersa.
+# Parse the output of 'netstat -antp'
 # ##############################################################################
 parse_ip_s_link () {
    echo "  interface  rx_bytes rx_packets  rx_errors   tx_bytes tx_packets  tx_errors"
    echo "  ========= ========= ========== ========== ========== ========== =========="
 
-   awk '/^[1-9][0-9]*:/ {
-      save["iface"] = substr($2, 0, index($2, ":") - 1);
+   awk "/^[1-9][0-9]*:/ {
+      save[\"iface\"] = substr(\$2, 0, index(\$2, \":\") - 1);
       new = 1;
    }
-   $0 !~ /[^0-9 ]/ {
+   \$0 !~ /[^0-9 ]/ {
       if ( new == 1 ) {
          new = 0;
-         save["bytes"] = $1;
-         save["packs"] = $2;
-         save["errs"]  = $3;
+         fuzzy_var = \$1; ${fuzzy_formula} save[\"bytes\"] = fuzzy_var;
+         fuzzy_var = \$2; ${fuzzy_formula} save[\"packs\"] = fuzzy_var;
+         fuzzy_var = \$3; ${fuzzy_formula} save[\"errs\"]  = fuzzy_var;
       }
       else {
-         printf "  %-8s %10d %10d %10d %10d %10d %10d\n", save["iface"], save["bytes"], save["packs"], save["errs"], $1, $2, $3;
+         fuzzy_var = \$1; ${fuzzy_formula} tx_bytes   = fuzzy_var;
+         fuzzy_var = \$2; ${fuzzy_formula} tx_packets = fuzzy_var;
+         fuzzy_var = \$3; ${fuzzy_formula} tx_errors  = fuzzy_var;
+         printf \"  %-8s %10d %10d %10d %10d %10d %10d\\n\", save[\"iface\"], save[\"bytes\"], save[\"packs\"], save[\"errs\"], tx_bytes, tx_packets, tx_errors;
       }
-   }' /tmp/aspersa
+   }" $@
 }
 
 # ##############################################################################
@@ -858,7 +850,8 @@ main () {
 
    section Memory
    free -b > /tmp/aspersa
-   parse_free_minus_b
+   cat /proc/meminfo >> /tmp/aspersa
+   parse_free_minus_b /tmp/aspersa
 
    rss=$(ps -eo rss | awk '/[0-9]/{total += $1 * 1024} END {print total}')
    shorten ${rss} rss
@@ -989,10 +982,9 @@ main () {
       # /proc/sys/net/netfilter/nf_conntrack_max or /proc/sys/net/nf_conntrack_max
       # in new kernels like Fedora 12?
 
-      # TODO: use fuzzy-rounding
       section Interface_Statistics
       if ip -s link > /tmp/aspersa 2>/dev/null; then
-         parse_ip_s_link
+         parse_ip_s_link /tmp/aspersa
       fi
 
       section Network_Connections
