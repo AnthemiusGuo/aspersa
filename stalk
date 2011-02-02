@@ -29,12 +29,55 @@ VARIABLE=${3:-Threads_connected}
 MAYBE_EMPTY="no"
 # This is the location of the 'collect' script.
 COLLECT="${HOME}/bin/collect";
+# This is where to store the collected data.
+DEST="${HOME}/collected/"
+# Collect GDB stacktraces?
+GDB="no"
+# Collect oprofile data?
+OPC="yes"
 # How long to sleep after collecting?
 SLEEP=600
 # Send mail to this list of addresses when the script triggers.
 EMAIL=""
-MAILFROM="" # Optional from-address
+# Optional from-address for notification emails.
+MAILFROM=""
+# Bail out if the disk is more than this %full.
+PCT_THRESHOLD=95
+# Bail out if the disk has less than this many MB free.
+MB_THRESHOLD=100
+# Any options to pass to mysql/mysqladmin, such as -u, -p, etc
+MYSQLOPTIONS=""
+# ########################################################################
+# End configuration
+# ########################################################################
 
+# ########################################################################
+# Echo to STDERR and exit false.
+# ########################################################################
+die() {
+   echo "${1}" >&2
+   exit 1
+}
+
+# ########################################################################
+# Echo to STDERR and possibly email.
+# ########################################################################
+log() {
+   if [ "${EMAIL}" ]; then
+      if [ "${MAILFROM}" ]; then
+         FROMADDR="-r ${FROMADDR}"
+      fi
+      echo "${1} on $(hostname)" | mail ${FROMADDR} -s "${2} on $(hostname)" ${EMAIL}
+   fi
+   echo "${1}" >&2
+}
+
+# Make the collection location
+mkdir -p "${DEST}" || die "Can't make the destination directory"
+test -d "${DEST}"  || die "${DEST} isn't a directory"
+test -w "${DEST}"  || die "${DEST} isn't writable"
+
+# Test if we have root; warn if not, but it isn't critical.
 if [ "$(id -u)" != "0" ]; then
    echo 'Not running with root privileges!';
 fi
@@ -56,16 +99,20 @@ while true; do
    fi
 
    # XXX Stop customizing here; everything above should be what you need.
+
+   # Make sure the disk isn't getting too full.
+   avail=$(df -m -P "${DEST}" | awk '/^\//{print $4}');
+   full=$(df -m -P "${DEST}" | awk '/^\//{print $5}' | sed -e 's/%//g');
+   if [ "${avail}" -le "${MB_THRESHOLD}" -o "${full}" -ge "${PCT_THRESHOLD}" ]; then
+      NOTE="Exiting, not enough free space (${full}%, ${avail}MB free)"
+      log "${NOTE}" "Disk too full"
+      exit 1
+   fi
+
    if [ "${execute:-no}" = "yes" ]; then 
       NOTE="Executing collection script; ${VARIABLE} = ${detected}"
-      echo "${NOTE}"
-      ${COLLECT}
-      if [ "${EMAIL}" ]; then
-         if [ "${MAILFROM}" ]; then
-            FROMADDR="-r ${FROMADDR}"
-         fi
-         echo "${NOTE}" | mail ${FROMADDR} -s "$0 triggered on $(hostname)" ${EMAIL}
-      fi
+      log "${NOTE}" "${COLLECT} triggered"
+      ${COLLECT} -d "${DEST}" -i "${INTERVAL}" -g "${GDB}" -o "${OPC}" ${MYSQLOPTIONS}
       echo "sleeping ${SLEEP} seconds to avoid DOS attack"
       sleep ${SLEEP}
    else

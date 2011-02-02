@@ -9,30 +9,53 @@
 # Author: Baron Schwartz
 # ########################################################################
 
-# ########################################################################
-# Define configuration information: where do you want to put the data, and for
-# how long?
-# ########################################################################
-# Where to store the data
-DEST="${HOME}/collected"
-# How long to work for, in seconds
-LEN=30
-# Get GDB stack traces?
-GDB="no"
-# Use opcontrol profiling?
-OPC="yes"
-# Bail out if the disk is more than this %full.
-PCT_THRESHOLD=95
-# Bail out if the disk has less than this many MB free.
-MB_THRESHOLD=100
-
-# Make sure the disk isn't getting too full.
-mkdir -p $DEST
-avail=$(df -m -P "${DEST}" | awk '/^\//{print $4}');
-full=$(df -m -P "${DEST}" | awk '/^\//{print $5}' | sed -e 's/%//g');
-if [ "${avail}" -le "${MB_THRESHOLD}" -o "${full}" -ge "${PCT_THRESHOLD}" ]; then
-   echo "Exiting, not enough free space (${full}%, ${avail}MB free)">&2
+# Print a usage message and exit.
+usage() {
+   if [ "${OPT_ERR}" ]; then
+      echo "${OPT_ERR}"
+   fi
+   cat <<-USAGE
+Usage: $0 OPTIONS [MYSQL-OPTIONS]
+   Collects diagnostic data on a MySQL server and stores it into files.
+   The MYSQL-OPTIONS are standard options to connect to MySQL: -uhPpS. Any
+   options or arguments that follow this tool's -diog options will be treated as
+   options to pass directly to mysql and mysqladmin.
+Options:
+   -d DESTINATION Where to store the resulting data.
+   -i INTERVAL    How many seconds to collect data.
+   -g             Collect GDB stack traces.
+   -o             Collect oprofile data.
+	USAGE
    exit 1
+}
+
+
+for o; do
+   case "${o}" in
+      --)
+         shift; break;
+         ;;
+      --help)
+         usage;
+         ;;
+      -d)
+         shift; DEST="${1}"; shift;
+         ;;
+      -i)
+         shift; INTERVAL="${1}"; shift;
+         ;;
+      -o)
+         shift; OPC=yes;
+         ;;
+      -g)
+         shift; GDB=yes;
+         ;;
+   esac
+done
+
+if [ -z "${DEST}" -o -z "${INTERVAL}" -o -z "${OPC}" -o -z "${GDB}" ]; then
+   OPT_ERR="Missing command-line option."
+   usage
 fi
 
 # Make sure there's only one of me.
@@ -51,7 +74,7 @@ fi
    fi
 
    # Getting a GDB stacktrace can be an intensive operation, so do this only if
-   # necessary.  If you want to, then just change the config above.
+   # necessary.
    if [ "${GDB}" = "yes" -a "${p}" ]; then
       gdb -ex "set pagination 0" -ex "thread apply all bt" --batch -p $p >> $DEST/$d-stacktrace
    else
@@ -62,9 +85,9 @@ fi
    # we can get these without interaction with the other commands we're about to
    # run.
    INNOSTAT="SHOW /*!40100 ENGINE*/ INNODB STATUS\G"
-   mysql -e 'SHOW GLOBAL VARIABLES'   >> $DEST/$d-variables 2>&1 &
-   mysql -e "${INNOSTAT}"             >> $DEST/$d-innodbstatus1 2>&1 &
-   mysql -e 'SHOW FULL PROCESSLIST\G' >> $DEST/$d-processlist1  2>&1 &
+   mysql $@ -e 'SHOW GLOBAL VARIABLES'   >> $DEST/$d-variables 2>&1 &
+   mysql $@ -e "${INNOSTAT}"             >> $DEST/$d-innodbstatus1 2>&1 &
+   mysql $@ -e 'SHOW FULL PROCESSLIST\G' >> $DEST/$d-processlist1  2>&1 &
 
    # Next, start oprofile gathering data during the whole rest of this process.
    # The --init should be a no-op if it has already been init-ed.
@@ -78,16 +101,16 @@ fi
 
    # Grab a few general things first.  Background all of these so we can start
    # them all up as quickly as possible.
-   ps -eaf                    >> $DEST/$d-ps 2>&1 &
-   top -bn1                   >> $DEST/$d-top 2>&1 &
-   vmstat 1 $LEN              >> $DEST/$d-vmstat 2>&1 &
-   vmstat $LEN 2              >> $DEST/$d-vmstat-overall 2>&1 &
-   iostat -dxn 1 $LEN         >> $DEST/$d-iostat 2>&1 &
-   iostat -dxn $LEN 2         >> $DEST/$d-iostat-overall 2>&1 &
-   mpstat -P ALL 1 $LEN       >> $DEST/$d-mpstat 2>&1 &
-   mpstat -P ALL $LEN 1       >> $DEST/$d-mpstat-overall 2>&1 &
-   lsof -nP -p $p -bw         >> $DEST/$d-lsof 2>&1 &
-   mysqladmin ext -i1 -c$LEN  >> $DEST/$d-mysqladmin 2>&1 &
+   ps -eaf                       >> $DEST/$d-ps 2>&1 &
+   top -bn1                      >> $DEST/$d-top 2>&1 &
+   vmstat 1 $LEN                 >> $DEST/$d-vmstat 2>&1 &
+   vmstat $LEN 2                 >> $DEST/$d-vmstat-overall 2>&1 &
+   iostat -dxn 1 $LEN            >> $DEST/$d-iostat 2>&1 &
+   iostat -dxn $LEN 2            >> $DEST/$d-iostat-overall 2>&1 &
+   mpstat -P ALL 1 $LEN          >> $DEST/$d-mpstat 2>&1 &
+   mpstat -P ALL $LEN 1          >> $DEST/$d-mpstat-overall 2>&1 &
+   lsof -nP -p $p -bw            >> $DEST/$d-lsof 2>&1 &
+   mysqladmin $@ ext -i1 -c$LEN  >> $DEST/$d-mysqladmin 2>&1 &
    mysqladmin_pid=$!
 
    # This loop is a bit redundant to the rest of the stuff, but in some cases we
@@ -121,8 +144,8 @@ fi
       echo "opreport --demangle=smart --symbols --merge tgid session:$d <bin>"
    fi
 
-   mysql -e "${INNOSTAT}"             >> $DEST/$d-innodbstatus2 2>&1 &
-   mysql -e 'SHOW FULL PROCESSLIST\G' >> $DEST/$d-processlist2  2>&1 &
+   mysql $@ -e "${INNOSTAT}"             >> $DEST/$d-innodbstatus2 2>&1 &
+   mysql $@ -e 'SHOW FULL PROCESSLIST\G' >> $DEST/$d-processlist2  2>&1 &
 
    # mysqladmin in 5.1 has a bunch of obnoxious bugs.  Among them, -c does not
    # work, so it will continue forever unless we kill it.
