@@ -64,7 +64,7 @@ fuzzy_formula='
 # function with "rm" or "touch" as an argument.
 temp_files() {
    for file in /tmp/aspersa{,-mysql-variables,-mysql-status,-innodb-status} \
-         /tmp/aspersa{,-mysql-databases,-mysql-processlist,-noncounters} \
+         /tmp/aspersa{2,-mysql-databases,-mysql-processlist,-noncounters} \
          /tmp/aspersa-mysql{dump,-slave};
    do
       case "$1" in
@@ -111,6 +111,14 @@ shorten() {
    fi
    result=$(echo "$1 $size ${2:-0}" | $AP_AWK '{printf "%." $3 "f", $1 / $2}')
    echo "${result}${unit}"
+}
+
+# Collapse a file into an aggregated list; file must be created with 'sort |
+# uniq -c'.  This function is copy-pasted from 'summary' so see there for full
+# docs and tests.
+# ##############################################################################
+group_concat () {
+   sed -e '{H; $!d}' -e 'x' -e 's/\n[[:space:]]*\([[:digit:]]*\)[[:space:]]*/, \1x/g' -e 's/[[:space:]][[:space:]]*/ /g' -e 's/, //' ${1}
 }
 
 # Accepts a number of seconds, and outputs a d+h:m:s formatted string
@@ -399,6 +407,103 @@ pretty_print_cnf_file () {
    }' /tmp/aspersa
 }
 
+find_checkpoint_age() {
+   $AP_AWK '
+   /Log sequence number/{
+      if ( $5 ) {
+         lsn = $5 + ($4 * 4294967296);
+      }
+      else {
+         lsn = $4;
+      }
+   }
+   /Last checkpoint at/{
+      if ( $5 ) {
+         print lsn - ($5 + ($4 * 4294967296));
+      }
+      else {
+         print lsn - $4;
+      }
+   }
+   ' $@
+}
+
+find_pending_io_reads() {
+   $AP_AWK '
+   /Pending normal aio reads/ {
+      normal_aio_reads  = substr($5, 1, index($5, ","));
+   }
+   /ibuf aio reads/ {
+      ibuf_aio_reads = substr($4, 1, index($4, ","));
+   }
+   /pending preads/ {
+      preads = $1;
+   }
+   /Pending reads/ {
+      reads = $3;
+   }
+   END {
+      printf "%d buf pool reads, %d normal AIO", reads, normal_aio_reads;
+      printf ", %d ibuf AIO, %d preads", ibuf_aio_reads, preads;
+   }
+   ' "${1}"
+}
+
+find_pending_io_writes() {
+   $AP_AWK '
+   /aio writes/ {
+      aio_writes = substr($NF, 1, index($NF, ","));
+   }
+   /ibuf aio reads/ {
+      log_ios = substr($7, 1, index($7, ","));
+      sync_ios = substr($10, 1, index($10, ","));
+   }
+   /pending log writes/ {
+      log_writes = $1;
+      chkp_writes = $5;
+   }
+   /pending pwrites/ {
+      pwrites = $4;
+   }
+   /Pending writes:/ {
+      lru = substr($4, 1, index($4, ","));
+      flush_list = substr($7, 1, index($7, ","));
+      single_page = $NF;
+   }
+   END {
+      printf "%d buf pool (%d LRU, %d flush list, %d page); %d AIO, %d sync, %d log IO (%d log, %d chkp); %d pwrites", lru + flush_list + single_page, lru, flush_list, single_page, aio_writes, sync_ios, log_ios, log_writes, chkp_writes, pwrites;
+   }
+   ' "${1}"
+}
+
+find_pending_io_flushes() {
+   $AP_AWK '
+   /Pending flushes/ {
+      log_flushes = substr($5, 1, index($5, ";"));
+      buf_pool = $NF;
+   }
+   END {
+      printf "%d buf pool, %d log", buf_pool, log_flushes;
+   }
+   ' "${1}"
+}
+
+summarize_undo_log_entries() {
+   $AP_GREP 'undo log entries' "$1" \
+      | $AP_SED -e 's/^.*undo log entries \([0-9]*\)/\1/' \
+      | $AP_AWK '
+      {
+         count++;
+         sum += $1;
+         if ( $1 > max ) {
+            max = $1;
+         }
+      }
+      END {
+         printf "%d transactions, %d total undo, %d max undo\n", count, sum, max;
+      }'
+}
+
 find_max_trx_time() {
    $AP_AWK '
    BEGIN {
@@ -420,23 +525,35 @@ find_max_trx_time() {
 }
 
 # Summarizes various things about InnoDB status that are not easy to see by eye.
-# Input file is /tmp/aspersa-innodb-status.
 format_innodb_status () {
-   oldest=$(find_max_trx_time /tmp/aspersa-innodb-status);
-   echo "Oldest Transaction ${oldest} Seconds"
-   echo "Transaction States"
-   $AP_AWK -F, '/^---TRANSACTION/{print $2}' /tmp/aspersa-innodb-status \
-      | $AP_SED -e 's/ [0-9]* sec.*//' | sort | uniq -c | sort -rn
-   echo "Tables Locked"
-   $AP_AWK '/^TABLE LOCK table/{print $4}' /tmp/aspersa-innodb-status \
-      | sort | uniq -c | sort -rn
-   echo "Semaphore Waits"
-   $AP_GREP 'has waited at' /tmp/aspersa-innodb-status | cut -d' ' -f6-8 | sort \
-      | uniq -c | sort -rn
-   echo "Semaphore Holders"
-   $AP_AWK '/has reserved it in mode/{
-      print substr($0, 1 + index($0, "("), index($0, ")") - index($0, "(") - 1);
-   }' /tmp/aspersa-innodb-status | sort | uniq -c | sort -rn
+   name_val "Checkpoint Age"       $(shorten $(find_checkpoint_age "${1}"))
+   name_val "InnoDB Queue"        "$(awk '/queries inside/{print}' "${1}")"
+   name_val "Oldest Transaction"  "$(find_max_trx_time "${1}") Seconds";
+   name_val "History List Len"     $(awk '/History list length/{print $4}' "$1")
+   name_val "Read Views"           $(awk '/read views open inside/{print $1}' "${1}")
+   name_val "Undo Log Entries"    "$(summarize_undo_log_entries "${1}")"
+   name_val "Pending I/O Reads"   "$(find_pending_io_reads "${1}")"
+   name_val "Pending I/O Writes"  "$(find_pending_io_writes "${1}")"
+   name_val "Pending I/O Flushes" "$(find_pending_io_flushes "${1}")"
+   $AP_AWK -F, '/^---TRANSACTION/{print $2}' "${1}" \
+      | $AP_SED -e 's/ [0-9]* sec.*//' | sort | uniq -c > /tmp/aspersa2
+   name_val "Transaction States" "$(group_concat /tmp/aspersa2)"
+   if $AP_GREP 'TABLE LOCK table' "${1}" >/dev/null ; then
+      echo "Tables Locked"
+      $AP_AWK '/^TABLE LOCK table/{print $4}' "${1}" \
+         | sort | uniq -c | sort -rn
+   fi
+   if $AP_GREP 'has waited at' "${1}" > /dev/null ; then
+      echo "Semaphore Waits"
+      $AP_GREP 'has waited at' "${1}" | cut -d' ' -f6-8 \
+         | sort | uniq -c | sort -rn
+   fi
+   if $AP_GREP 'reserved it in mode' "${1}" > /dev/null; then
+      echo "Semaphore Holders"
+      $AP_AWK '/has reserved it in mode/{
+         print substr($0, 1 + index($0, "("), index($0, ")") - index($0, "(") - 1);
+      }' "${1}" | sort | uniq -c | sort -rn
+   fi
 }
 
 # Summarizes per-database statistics for a bunch of different things: count of
@@ -1003,7 +1120,7 @@ main() {
       name_val "Adaptive Checkpoint" $(get_var innodb_adaptive_checkpoint)
 
       if [ -s /tmp/aspersa-innodb-status ]; then
-         format_innodb_status
+         format_innodb_status /tmp/aspersa-innodb-status
       fi
    fi
 
