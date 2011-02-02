@@ -43,7 +43,7 @@ fi
 
 # Split the output on empty lines and put each into a different file; eliminate
 # lines that don't have "real" content.
-$* | grep -v '+' | grep -v Variable_name | sed 's/|//g' \
+$@ | grep -v '+' | grep -v Variable_name | sed 's/|//g' \
    | while read line; do
    if [ "$line" = "" ]; then
       NUM=`expr $NUM + 1`;

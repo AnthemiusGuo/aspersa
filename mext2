@@ -46,7 +46,7 @@ export_arguments() {
 	# if mysqladmin is defined, that means it should run with special arguments
 	# ma argument cannot be exported that easy because of the space and other special characters
 	# this is why this part needed
-	IS_DEF=`echo $* | grep -ic mysqladmin`	
+	IS_DEF=`echo $@ | grep -ic mysqladmin`	
 	ALL_ARG=$#
 	# if there is mysqladmin in the command line, stop exporting arguments before the last element
 	if [[ IS_DEF -ge 1 ]] || [ "$4" == "" ];then 
@@ -57,7 +57,7 @@ export_arguments() {
 
 	# This while exports each argument
 	CNT=0
-	ARG_ARR=( $* )
+	ARG_ARR=( $@ )
 	while [[ $CNT -lt $STOP_ARG_PARS ]];do
 		export "${ARG_ARR[$CNT]}"	
 		let CNT=CNT+1
