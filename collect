@@ -68,10 +68,12 @@ fi
 
    # Next, start oprofile gathering data during the whole rest of this process.
    # The --init should be a no-op if it has already been init-ed.
-   if opcontrol --init >/dev/null 2>&1; then
-      opcontrol --start --no-vmlinux
-   else
-      OPC="no"
+   if [ "${OPC}" = "yes" ]; then
+      if opcontrol --init >/dev/null 2>&1; then
+         opcontrol --start --no-vmlinux
+      else
+         OPC="no"
+      fi
    fi
 
    # Grab a few general things first.  Background all of these so we can start
