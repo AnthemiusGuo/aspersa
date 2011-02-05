@@ -890,6 +890,9 @@ main() {
    if [ -s /tmp/aspersa-mysql-slave ]; then slave=""; else slave="not "; fi
    slavecount=$($AP_GREP -c 'Binlog Dump' /tmp/aspersa-mysql-processlist)
    name_val Replication "Is ${slave}a slave, has ${slavecount} slaves connected"
+
+   # TODO move this into a section with other files: error log, slow log and
+   # show the sizes
    pid_file="$(get_var pid_file)"
    [ -e "${pid_file}" ] && PID_EXISTS="(exists)"
    name_val Pidfile "${pid_file} ${PID_EXISTS:-(does not exist)}"
@@ -954,6 +957,7 @@ main() {
    name_val "Table & Index Stats"  "$(feat_on userstat_running)"
    name_val "Multiple I/O Threads" "$(feat_on innodb_read_io_threads gt 1)"
    name_val "Corruption Resilient" "$(feat_on innodb_pass_corrupt_table)"
+   name_val "Durable Replication"  "$(feat_on innodb_overwrite_relay_log_info)"
    name_val "Import InnoDB Tables" "$(feat_on innodb_expand_import)"
    name_val "Fast Server Restarts" "$(feat_on innodb_auto_lru_dump)"
    name_val "Enhanced Logging"     "$(feat_on log_slow_verbosity ne microtime)"
