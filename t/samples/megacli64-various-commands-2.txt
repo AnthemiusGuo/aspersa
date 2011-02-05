@@ -1,0 +1,999 @@
+# MegaCli64 -AdpAllInfo -aALL
+                                     
+Adapter #0
+
+==============================================================================
+                    Versions
+                ================
+Product Name    : PERC 6/i Integrated
+Serial No       : 1122334455667788
+FW Package Build: 6.2.0-0013
+
+                    Mfg. Data
+                ================
+Mfg. Date       : 06/24/08
+Rework Date	: 06/24/08
+Revision No     : 
+
+                Image Versions In Flash:
+                ================
+FW Version         : 1.22.02-0612
+BIOS Version       : 2.04.00
+WebBIOS Version    : 1.1-46-e_15-Rel
+Ctrl-R Version     : 1.02-015B
+Boot Block Version : 1.00.00.01-0011
+
+                Pending Images In Flash
+                ================
+None
+
+                PCI Info
+                ================
+Vendor Id       : 1000
+Device Id       : 0060
+SubVendorId     : 1028
+SubDeviceId     : 1f0c
+
+Host Interface  : PCIE
+
+Number of Frontend Port: 0 
+Device Interface  : PCIE
+
+Number of Backend Port: 8 
+Port  :  Address
+0        5000c5000c02c555 
+1        5000c5000c020e85 
+2        1221000002000000 
+3        1221000003000000 
+4        1221000004000000 
+5        1221000005000000 
+6        0000000000000000 
+7        0000000000000000 
+
+                HW Configuration
+                ================
+SAS Address     : 50024e806a0c8000
+BBU             : Present
+Alarm           : Absent
+NVRAM           : Present
+Serial Debugger : Present
+Memory          : Present
+Flash           : Present
+
+                Settings
+                ================
+Current Time                     : 21:10:9 8/3, 2010
+Predictive Fail Poll Interval    : 300sec
+Interrupt Throttle Active Count  : 16
+Interrupt Throttle Completion    : 50us
+Rebuild Rate                     : 30%
+PR Rate                          : 30%
+Resynch Rate                     : 30%
+Check Consistency Rate           : 30%
+Reconstruction Rate              : 30%
+Cache flush interval             : 4s
+Max drives to spinup at one time : 2
+Delay among spinup groups        : 12s
+Physical drive coercion mode     : 128MB
+Cluster mode                     : Disabled
+Alarm                            : Disabled
+Auto Rebuild                     : Enabled
+Battery Warning                  : Enabled
+
+Ecc Bucket Size                  : 15
+Ecc Bucket Leak Rate             : 1440 Minutes
+Restore HotSpare On Insertion    : Disabled
+Expose Enclosure Devices         : Disabled
+Maintain PD Fail History         : Disabled
+Host Request Reordering          : Enabled
+
+                Capabilities
+                ================
+RAID Level Supported             : RAID0, RAID1, RAID5, RAID6, RAID10, RAID50, RAID60
+Supported Drives                 : SAS, SATA
+
+Allowed Mixing:
+Mix In Enclosure Allowed
+
+                Status
+                ================
+ECC Bucket Count                 : 0
+
+                Limitations
+                ================
+Max Arms Per VD         : 32 
+Max Spans Per VD        : 8 
+Max Arrays              : 128 
+Max Number of VDs       : 64 
+Max Parallel Commands   : 1008 
+Max SGE Count           : 80 
+Max Data Transfer Size  : 8192 sectors 
+Max Strips PerIO        : 42 
+Min Stripe Size         : 8kB
+Max Stripe Size         : 1024kB
+
+                Device Present
+                ================
+Virtual Drives    : 2 
+  Degraded        : 0 
+  Offline         : 0 
+Physical Devices  : 7 
+  Disks           : 6 
+  Critical Disks  : 0 
+  Failed Disks    : 0 
+
+                Supported Adapter Operations
+                ================
+Rebuild Rate                    : Yes
+CC Rate                         : Yes
+BGI Rate                        : Yes
+Reconstruct Rate                : Yes
+Patrol Read Rate                : Yes
+Alarm Control                   : Yes
+Cluster Support                 : No
+BBU                             : Yes
+Spanning                        : Yes
+Dedicated Hot Spare             : Yes
+Revertible Hot Spares           : Yes
+Foreign Config Import           : Yes
+Self Diagnostic                 : Yes
+Allow Mixed Redundancy On Array : No
+Global Hot Spares               : Yes
+Deny SCSI Passthrough           : No
+Deny SMP Passthrough            : No
+Deny STP Passthrough            : No
+
+                Supported VD Operations
+                ================
+Read Policy          : Yes
+Write Policy         : Yes
+IO Policy            : Yes
+Access Policy        : Yes
+Disk Cache Policy    : Yes
+Reconstruction       : Yes
+Deny Locate          : No
+Deny CC              : No
+
+                Supported PD Operations
+                ================
+Force Online              : Yes
+Force Offline             : Yes
+Force Rebuild             : Yes
+Deny Force Failed         : No
+Deny Force Good/Bad       : No
+Deny Missing Replace      : No
+Deny Clear                : No
+Deny Locate               : No
+
+                Error Counters
+                ================
+Memory Correctable Errors   : 0 
+Memory Uncorrectable Errors : 0 
+
+                Cluster Information
+                ================
+Cluster Permitted     : No
+Cluster Active        : No
+
+                Default Settings
+                ================
+Phy Polarity                   : 0 
+Phy PolaritySplit              : 0 
+Backgroud Rate                 : 30 
+Stripe Size                    : 64kB
+Flush Time                     : 4 seconds
+Write Policy                   : WB
+Read Policy                    : None
+Cache When BBU Bad             : Disabled
+Cached IO                      : No
+SMART Mode                     : Mode 6
+Alarm Disable                  : No
+Coercion Mode                  : 128MB
+ZCR Config                     : Unkown
+Dirty LED Shows Drive Activity : No
+BIOS Continue On Error         : No
+Spin Down Mode                 : None
+Allowed Device Type            : SAS/SATA Mix
+Allow Mix In Enclosure         : Yes
+Allow Mix In VD                : No
+Allow SATA In Cluster          : No
+Max Chained Enclosures         : 1 
+Disable Ctrl-R                 : No
+Enable Web BIOS                : No
+Direct PD Mapping              : Yes
+BIOS Enumerate VDs             : Yes
+Restore Hot Spare On Insertion : No
+Expose Enclosure Devices       : No
+Maintain PD Fail History       : No
+Disable Puncturing             : No
+Zero Based Enclosure Enumeration: Yes
+PreBoot CLI Enabled            : No
+LED Show Drive Activity        : No
+Cluster Disable                : Yes
+SAS Disable                    : No
+Adapter #1
+
+==============================================================================
+                    Versions
+                ================
+Product Name    : PERC 6/E Adapter
+Serial No       : 1122334455667788
+FW Package Build: 6.2.0-0013
+
+                    Mfg. Data
+                ================
+Mfg. Date       : 06/24/08
+Rework Date	: 06/24/08
+Revision No     : 
+
+                Image Versions In Flash:
+                ================
+FW Version         : 1.22.02-0612
+BIOS Version       : 2.04.00
+WebBIOS Version    : 1.1-46-e_15-Rel
+Ctrl-R Version     : 1.02-015B
+Boot Block Version : 1.00.00.01-0011
+
+                Pending Images In Flash
+                ================
+None
+
+                PCI Info
+                ================
+Vendor Id       : 1000
+Device Id       : 0060
+SubVendorId     : 1028
+SubDeviceId     : 1f0a
+
+Host Interface  : PCIE
+
+Number of Frontend Port: 0 
+Device Interface  : PCIE
+
+Number of Backend Port: 8 
+Port  :  Address
+0        500c04f220c608bf 
+1        0000000000000000 
+2        0000000000000000 
+3        0000000000000000 
+4        500c04f220c6083f 
+5        0000000000000000 
+6        0000000000000000 
+7        0000000000000000 
+
+                HW Configuration
+                ================
+SAS Address     : 50024e805bf95800
+BBU             : Present
+Alarm           : Absent
+NVRAM           : Present
+Serial Debugger : Present
+Memory          : Present
+Flash           : Present
+
+                Settings
+                ================
+Current Time                     : 21:10:17 8/3, 2010
+Predictive Fail Poll Interval    : 300sec
+Interrupt Throttle Active Count  : 16
+Interrupt Throttle Completion    : 50us
+Rebuild Rate                     : 30%
+PR Rate                          : 30%
+Resynch Rate                     : 30%
+Check Consistency Rate           : 30%
+Reconstruction Rate              : 30%
+Cache flush interval             : 4s
+Max drives to spinup at one time : 2
+Delay among spinup groups        : 12s
+Physical drive coercion mode     : 128MB
+Cluster mode                     : Disabled
+Alarm                            : Disabled
+Auto Rebuild                     : Enabled
+Battery Warning                  : Enabled
+
+Ecc Bucket Size                  : 15
+Ecc Bucket Leak Rate             : 1440 Minutes
+Restore HotSpare On Insertion    : Disabled
+Expose Enclosure Devices         : Disabled
+Maintain PD Fail History         : Disabled
+Host Request Reordering          : Enabled
+
+                Capabilities
+                ================
+RAID Level Supported             : RAID0, RAID1, RAID5, RAID6, RAID10, RAID50, RAID60
+Supported Drives                 : SAS, SATA
+
+Allowed Mixing:
+Mix In Enclosure Allowed
+
+                Status
+                ================
+ECC Bucket Count                 : 0
+
+                Limitations
+                ================
+Max Arms Per VD         : 32 
+Max Spans Per VD        : 8 
+Max Arrays              : 128 
+Max Number of VDs       : 64 
+Max Parallel Commands   : 1008 
+Max SGE Count           : 80 
+Max Data Transfer Size  : 8192 sectors 
+Max Strips PerIO        : 42 
+Min Stripe Size         : 8kB
+Max Stripe Size         : 1024kB
+
+                Device Present
+                ================
+Virtual Drives    : 1 
+  Degraded        : 0 
+  Offline         : 0 
+Physical Devices  : 23 
+  Disks           : 22 
+  Critical Disks  : 0 
+  Failed Disks    : 0 
+
+                Supported Adapter Operations
+                ================
+Rebuild Rate                    : Yes
+CC Rate                         : Yes
+BGI Rate                        : Yes
+Reconstruct Rate                : Yes
+Patrol Read Rate                : Yes
+Alarm Control                   : Yes
+Cluster Support                 : No
+BBU                             : Yes
+Spanning                        : Yes
+Dedicated Hot Spare             : Yes
+Revertible Hot Spares           : Yes
+Foreign Config Import           : Yes
+Self Diagnostic                 : Yes
+Allow Mixed Redundancy On Array : No
+Global Hot Spares               : Yes
+Deny SCSI Passthrough           : No
+Deny SMP Passthrough            : No
+Deny STP Passthrough            : No
+
+                Supported VD Operations
+                ================
+Read Policy          : Yes
+Write Policy         : Yes
+IO Policy            : Yes
+Access Policy        : Yes
+Disk Cache Policy    : Yes
+Reconstruction       : Yes
+Deny Locate          : No
+Deny CC              : No
+
+                Supported PD Operations
+                ================
+Force Online              : Yes
+Force Offline             : Yes
+Force Rebuild             : Yes
+Deny Force Failed         : No
+Deny Force Good/Bad       : No
+Deny Missing Replace      : No
+Deny Clear                : No
+Deny Locate               : No
+
+                Error Counters
+                ================
+Memory Correctable Errors   : 0 
+Memory Uncorrectable Errors : 0 
+
+                Cluster Information
+                ================
+Cluster Permitted     : No
+Cluster Active        : No
+
+                Default Settings
+                ================
+Phy Polarity                   : 0 
+Phy PolaritySplit              : 0 
+Backgroud Rate                 : 30 
+Stripe Size                    : 64kB
+Flush Time                     : 4 seconds
+Write Policy                   : WB
+Read Policy                    : None
+Cache When BBU Bad             : Disabled
+Cached IO                      : No
+SMART Mode                     : Mode 6
+Alarm Disable                  : No
+Coercion Mode                  : 128MB
+ZCR Config                     : Unkown
+Dirty LED Shows Drive Activity : No
+BIOS Continue On Error         : No
+Spin Down Mode                 : None
+Allowed Device Type            : SAS/SATA Mix
+Allow Mix In Enclosure         : Yes
+Allow Mix In VD                : No
+Allow SATA In Cluster          : No
+Max Chained Enclosures         : 3 
+Disable Ctrl-R                 : No
+Enable Web BIOS                : No
+Direct PD Mapping              : No
+BIOS Enumerate VDs             : Yes
+Restore Hot Spare On Insertion : No
+Expose Enclosure Devices       : No
+Maintain PD Fail History       : No
+Disable Puncturing             : No
+Zero Based Enclosure Enumeration: Yes
+PreBoot CLI Enabled            : No
+LED Show Drive Activity        : No
+Cluster Disable                : Yes
+SAS Disable                    : No
+# MegaCli64 -AdpBbuCmd -GetBbuStatus -aALL
+                                     
+BBU status for Adapter: 0
+
+BatteryType: BBU
+Voltage: 3991 mV
+Current: 0 mA
+Temperature: 19 C
+Firmware Status: 00000000
+
+Battery state: 
+
+GasGuageStatus:
+  Fully Discharged        : No
+  Fully Charged           : No
+  Discharging             : Yes
+  Initialized             : Yes
+  Remaining Time Alarm    : No
+  Remaining Capacity Alarm: No
+  Discharge Terminated    : No
+  Over Temperature        : No
+  Charging Terminated     : No
+  Over Charged            : No
+
+Relative State of Charge: 95 %
+Charger Status: Complete
+Remaining Capacity: 1242 mAh
+Full Charge Capacity: 1305 mAh
+isSOHGood: Yes
+BBU status for Adapter: 1
+
+BatteryType: BBU
+Voltage: 4052 mV
+Current: 0 mA
+Temperature: 32 C
+Firmware Status: 00000000
+
+Battery state: 
+
+GasGuageStatus:
+  Fully Discharged        : No
+  Fully Charged           : Yes
+  Discharging             : Yes
+  Initialized             : Yes
+  Remaining Time Alarm    : No
+  Remaining Capacity Alarm: No
+  Discharge Terminated    : No
+  Over Temperature        : No
+  Charging Terminated     : Yes
+  Over Charged            : No
+
+Relative State of Charge: 99 %
+Charger Status: Complete
+Remaining Capacity: 975 mAh
+Full Charge Capacity: 986 mAh
+isSOHGood: Yes
+# MegaCli64 -LdPdInfo -aALL
+                                     
+Adapter #0
+
+Number of Virtual Disks: 2
+Virtual Disk: 0 (target id: 0)
+Name:Virtual Disk 0
+RAID Level: Primary-1, Secondary-0, RAID Level Qualifier-0
+Size:139392MB
+State: Optimal
+Stripe Size: 64kB
+Number Of Drives:2
+Span Depth:1
+Default Cache Policy: WriteBack, ReadAheadNone, Direct, No Write Cache if Bad BBU
+Current Cache Policy: WriteBack, ReadAheadNone, Direct, No Write Cache if Bad BBU
+Access Policy: Read/Write
+Disk Cache Policy: Disk's Default
+Number of Spans: 1
+Span: 0 - Number of PDs: 2
+PD: 0 Information
+Enclosure Device ID: 32
+Slot Number: 0
+Device Id: 0
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 140014MB [0x11177328 Sectors]
+Non Coerced Size: 139502MB [0x11077328 Sectors]
+Coerced Size: 139392MB [0x11040000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c5000c02c555
+SAS Address(1): 0x0
+Connected Port Number: 0(path0) 
+Inquiry Data: SEAGATE ST9146852SS     HT033TB08XBX
+
+PD: 1 Information
+Enclosure Device ID: 32
+Slot Number: 1
+Device Id: 1
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 140014MB [0x11177328 Sectors]
+Non Coerced Size: 139502MB [0x11077328 Sectors]
+Coerced Size: 139392MB [0x11040000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c5000c020e85
+SAS Address(1): 0x0
+Connected Port Number: 1(path0) 
+Inquiry Data: SEAGATE ST9146852SS     HT033TB08P77
+
+Virtual Disk: 1 (target id: 1)
+Name:SSD
+RAID Level: Primary-1, Secondary-3, RAID Level Qualifier-0
+Size:59904MB
+State: Optimal
+Stripe Size: 64kB
+Number Of Drives:2
+Span Depth:2
+Default Cache Policy: WriteBack, ReadAdaptive, Direct, Write Cache OK if Bad BBU
+Current Cache Policy: WriteBack, ReadAdaptive, Direct, Write Cache OK if Bad BBU
+Access Policy: Read/Write
+Disk Cache Policy: Disabled
+Number of Spans: 2
+Span: 0 - Number of PDs: 2
+PD: 0 Information
+Enclosure Device ID: 32
+Slot Number: 2
+Device Id: 2
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 6
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 30517MB [0x3b9aca0 Sectors]
+Non Coerced Size: 30005MB [0x3a9aca0 Sectors]
+Coerced Size: 29952MB [0x3a80000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x1221000002000000
+Connected Port Number: 2(path0) 
+Inquiry Data: ATA     SSDSA2SH032G1GN 8860CVEM951600KB032HGN  
+
+PD: 1 Information
+Enclosure Device ID: 32
+Slot Number: 3
+Device Id: 3
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 6
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 30517MB [0x3b9aca0 Sectors]
+Non Coerced Size: 30005MB [0x3a9aca0 Sectors]
+Coerced Size: 29952MB [0x3a80000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x1221000003000000
+Connected Port Number: 3(path0) 
+Inquiry Data: ATA     SSDSA2SH032G1GN 8860CVEM951600P6032HGN  
+
+Span: 1 - Number of PDs: 2
+PD: 0 Information
+Enclosure Device ID: 32
+Slot Number: 4
+Device Id: 4
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 6
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 30517MB [0x3b9aca0 Sectors]
+Non Coerced Size: 30005MB [0x3a9aca0 Sectors]
+Coerced Size: 29952MB [0x3a80000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x1221000004000000
+Connected Port Number: 4(path0) 
+Inquiry Data: ATA     SSDSA2SH032G1GN 8860CVEM952600JR032HGN  
+
+PD: 1 Information
+Enclosure Device ID: 32
+Slot Number: 5
+Device Id: 5
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 6
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 30517MB [0x3b9aca0 Sectors]
+Non Coerced Size: 30005MB [0x3a9aca0 Sectors]
+Coerced Size: 29952MB [0x3a80000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x1221000005000000
+Connected Port Number: 5(path0) 
+Inquiry Data: ATA     SSDSA2SH032G1GN 8860CVEM952600LH032HGN  
+
+Adapter #1
+
+Number of Virtual Disks: 1
+Virtual Disk: 0 (target id: 0)
+Name:DATA
+RAID Level: Primary-17, Secondary-3, RAID Level Qualifier-0
+Size:57244MB
+State: Optimal
+Stripe Size: 128kB
+Number Of Drives:4
+Span Depth:5
+Default Cache Policy: WriteBack, ReadAdaptive, Direct, Write Cache OK if Bad BBU
+Current Cache Policy: WriteBack, ReadAdaptive, Direct, Write Cache OK if Bad BBU
+Access Policy: Read/Write
+Disk Cache Policy: Disabled
+Number of Spans: 5
+Span: 0 - Number of PDs: 4
+PD: 0 Information
+Enclosure Device ID: 0
+Slot Number: 0
+Device Id: 1
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 1
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012f9905e
+SAS Address(1): 0x5000c50012f9905d
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0JJPX
+
+PD: 1 Information
+Enclosure Device ID: 0
+Slot Number: 4
+Device Id: 5
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 1
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012f9b90a
+SAS Address(1): 0x5000c50012f9b909
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0KF1L
+
+PD: 2 Information
+Enclosure Device ID: 0
+Slot Number: 8
+Device Id: 16
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012f9c1be
+SAS Address(1): 0x5000c50012f9c1bd
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0KFB2
+
+PD: 3 Information
+Enclosure Device ID: 0
+Slot Number: 12
+Device Id: 10
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012f9bab2
+SAS Address(1): 0x5000c50012f9bab1
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0KF6C
+
+Span: 1 - Number of PDs: 4
+PD: 0 Information
+Enclosure Device ID: 0
+Slot Number: 16
+Device Id: 17
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 1
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c500131badf6
+SAS Address(1): 0x5000c500131badf5
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0LS2S
+
+PD: 1 Information
+Enclosure Device ID: 0
+Slot Number: 17
+Device Id: 25
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50017008ac2
+SAS Address(1): 0x5000c50017008ac1
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE12M89
+
+PD: 2 Information
+Enclosure Device ID: 0
+Slot Number: 13
+Device Id: 9
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 1
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012f928ae
+SAS Address(1): 0x5000c50012f928ad
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0K7X4
+
+PD: 3 Information
+Enclosure Device ID: 0
+Slot Number: 9
+Device Id: 14
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012f99b12
+SAS Address(1): 0x5000c50012f99b11
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0KEMM
+
+Span: 2 - Number of PDs: 4
+PD: 0 Information
+Enclosure Device ID: 0
+Slot Number: 5
+Device Id: 6
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012fa5736
+SAS Address(1): 0x5000c50012fa5735
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0J1PZ
+
+PD: 1 Information
+Enclosure Device ID: 0
+Slot Number: 1
+Device Id: 2
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012f9ab82
+SAS Address(1): 0x5000c50012f9ab81
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0KEYB
+
+PD: 2 Information
+Enclosure Device ID: 0
+Slot Number: 2
+Device Id: 3
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 1
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012f9c23e
+SAS Address(1): 0x5000c50012f9c23d
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0KF7A
+
+PD: 3 Information
+Enclosure Device ID: 0
+Slot Number: 6
+Device Id: 13
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 1
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012f9ad12
+SAS Address(1): 0x5000c50012f9ad11
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0KEZ1
+
+Span: 3 - Number of PDs: 4
+PD: 0 Information
+Enclosure Device ID: 0
+Slot Number: 10
+Device Id: 12
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012f9a906
+SAS Address(1): 0x5000c50012f9a905
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0KEVE
+
+PD: 1 Information
+Enclosure Device ID: 0
+Slot Number: 14
+Device Id: 8
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012ff2e7a
+SAS Address(1): 0x5000c50012ff2e79
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0K86Z
+
+PD: 2 Information
+Enclosure Device ID: 0
+Slot Number: 18
+Device Id: 19
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c500131bc5b2
+SAS Address(1): 0x5000c500131bc5b1
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0KWNV
+
+PD: 3 Information
+Enclosure Device ID: 0
+Slot Number: 19
+Device Id: 23
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c500131bc29a
+SAS Address(1): 0x5000c500131bc299
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0KWF5
+
+Span: 4 - Number of PDs: 4
+PD: 0 Information
+Enclosure Device ID: 0
+Slot Number: 15
+Device Id: 7
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 1
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012f9922a
+SAS Address(1): 0x5000c50012f99229
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0K8JN
+
+PD: 1 Information
+Enclosure Device ID: 0
+Slot Number: 11
+Device Id: 11
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 1
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012f9a70e
+SAS Address(1): 0x5000c50012f9a70d
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0KERB
+
+PD: 2 Information
+Enclosure Device ID: 0
+Slot Number: 7
+Device Id: 15
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 1
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012f92186
+SAS Address(1): 0x5000c50012f92185
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0K6WL
+
+PD: 3 Information
+Enclosure Device ID: 0
+Slot Number: 3
+Device Id: 4
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+Raw Size: 286102MB [0x22ecb25c Sectors]
+Non Coerced Size: 285590MB [0x22dcb25c Sectors]
+Coerced Size: 285568MB [0x22dc0000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x5000c50012f925be
+SAS Address(1): 0x5000c50012f925bd
+Connected Port Number: 0(path0) 4(path1) 
+Inquiry Data: SEAGATE ST9300603SS     FS033SE0HQEW
+
