@@ -113,8 +113,8 @@ fi
    top -bn1                      >> $OPT_d/$d-top 2>&1 &
    vmstat 1 $OPT_i               >> $OPT_d/$d-vmstat 2>&1 &
    vmstat $OPT_i 2               >> $OPT_d/$d-vmstat-overall 2>&1 &
-   iostat -dxn 1 $OPT_i          >> $OPT_d/$d-iostat 2>&1 &
-   iostat -dxn $OPT_i 2          >> $OPT_d/$d-iostat-overall 2>&1 &
+   iostat -dx  1 $OPT_i          >> $OPT_d/$d-iostat 2>&1 &
+   iostat -dx  $OPT_i 2          >> $OPT_d/$d-iostat-overall 2>&1 &
    mpstat -P ALL 1 $OPT_i        >> $OPT_d/$d-mpstat 2>&1 &
    mpstat -P ALL $OPT_i 1        >> $OPT_d/$d-mpstat-overall 2>&1 &
    lsof -nP -p $p -bw            >> $OPT_d/$d-lsof 2>&1 &
