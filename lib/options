@@ -8,10 +8,12 @@
 # lines that contain a close-paren are allowed values.  Default values can be
 # given on the same line as the option name, enclosed by the text "(default X)".
 # Options are stored into exported variables named OPT_$o, where $o is the name
-# of the option.
+# of the option.  If the Options: line in the usage text ends with (required:
+# -WORD), then every letter in WORD is a required option.
 generate_parse_options() { # This function is copy/pasted from lib/options.  
    awk '
    BEGIN {
+      required_opts="";
       print "   for o; do";
       print "      case \"${o}\" in";
       print "         --)";
@@ -61,6 +63,9 @@ generate_parse_options() { # This function is copy/pasted from lib/options.
          print "                  ;;";
       }
    }
+   /^Options: \(required: -/ {
+      required_opts=substr($NF, 2, length($NF) - 2);
+   }
    END {
       print "         -*)";
       print "            OPT_ERR=\"Unknown option ${o}.\"";
@@ -70,6 +75,12 @@ generate_parse_options() { # This function is copy/pasted from lib/options.
       print "   done";
       for ( o in defaults ) {
          print "   export OPT_" o "=\"${OPT_" o ":-" defaults[o] "}\";";
+      }
+      i = 0;
+      while ( i < length(required_opts) ) {
+         o = substr(required_opts, i, 1);
+         printf "   [ -z \"${OPT_%s}\" ] && OPT_ERR=\"Missing command-line option -%s\" usage\n", o, o;
+         i++;
       }
    }' "${1:-$0}" # The file to read will usually be passed as $0 by caller
 }
