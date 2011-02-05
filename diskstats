@@ -12,31 +12,8 @@
 # ... et cetera
 # TS <timestamp>  <-- must end with a TS line.
 #
-# It has three modes:
-# 1) show summary stats over the entire interval for each disk (default).
-# 2) show summary stats for each sample in the interval, for all disks.
-# 3) show differential stats for specified disks for each sample.
-#
-# TODO: make it by default show only reads+writes in MB/sec
-# TODO: make it aggregate by number of lines or by time intervals.
-#
 # Author: Baron Schwartz
 # ########################################################################
-
-# ########################################################################
-# Variables that are set by command-line options and/or the interactive
-# functionality, and are used in the various snippets below
-# ########################################################################
-# -m
-MODE="disk";
-# -d
-DISK="";
-# -c
-COLS="";
-# -a
-AGGR="";
-# Any error with the above options
-OPT_ERR="";
 
 # ########################################################################
 # A bunch of snippets of awk code, to be reused in the functions below.
@@ -73,7 +50,7 @@ awk_parse_line="
 
 # NOTE: this one is necessary in order to get the device listing.  NOTE: the
 # 'devs' variable is initialized to 0, but it is pre-incremented, so a) it will
-# reflect the accurate number of devices found (after filtering); be iteration
+# reflect the accurate number of devices found (after filtering); b) iteration
 # must be from 1 to devs, not from 0 to devs-1.
 awk_get_first_sample="
       # Keep track of the natural order of the devices, so we can print them out
@@ -118,6 +95,10 @@ awk_save_curr_as_prev="
          for (i in curr) {
             prev[i] = curr[i];
          }
+         for ( i = 1; i <= devs; i++ ) {
+            dev = devsort[i];
+            prev[dev \"_sum_ios_in_progress\"] += curr[dev \"_ios_in_progress\"];
+         }
       }
       ts = \$2;
 "
@@ -135,6 +116,7 @@ awk_find_max_device_name_length="
 awk_get_overall_increments="
          # Get incremental numbers.
          elapsed           = curr[\"ts\"]                     - first[\"ts\"];
+         if ( elapsed == 0 ) { exit } # Prevent divide-by-zero errors
          reads             = curr[dev \"_reads\"]             - first[dev \"_reads\"];
          reads_merged      = curr[dev \"_reads_merged\"]      - first[dev \"_reads_merged\"];
          read_sectors      = curr[dev \"_read_sectors\"]      - first[dev \"_read_sectors\"];
@@ -146,6 +128,7 @@ awk_get_overall_increments="
          ms_spent_doing_io = curr[dev \"_ms_spent_doing_io\"] - first[dev \"_ms_spent_doing_io\"];
          ms_weighted       = curr[dev \"_ms_weighted\"]       - first[dev \"_ms_weighted\"];
          in_progress       = curr[dev \"_ios_in_progress\"];
+         tot_in_progress   = prev[dev \"_sum_ios_in_progress\"];
 "
 
 awk_get_current_increments="
@@ -162,6 +145,7 @@ awk_get_current_increments="
          ms_spent_doing_io = curr[dev \"_ms_spent_doing_io\"] - prev[dev \"_ms_spent_doing_io\"];
          ms_weighted       = curr[dev \"_ms_weighted\"]       - prev[dev \"_ms_weighted\"];
          in_progress       = curr[dev \"_ios_in_progress\"];
+         tot_in_progress   = curr[dev \"_sum_ios_in_progress\"];
 "
 
 awk_reset_variables="
@@ -189,7 +173,7 @@ awk_compute_sums_group_by_disk="
          t_ms_spent_writing  = ms_spent_writing;
          t_ms_spent_doing_io = ms_spent_doing_io;
          t_ms_weighted       = ms_weighted;
-         t_in_progress       = in_progress;
+         t_in_progress       = (tot_in_progress / (iterations - 1));
 "
 
 awk_compute_sums_group_by_sample="
@@ -251,7 +235,13 @@ awk_compute_read_write_stats="
          active = 100 * t_ms_spent_doing_io / (1000 * elapsed * devs);
 "
 
-# Based on which columns match $COLS, designs a header and line printf format,
+# Returns true if the column should be displayed.
+col_ok() {
+   result=$(echo $1 | awk "/${OPT_c:-.}/{print 0}")
+   return ${result:-1}
+}
+
+# Based on which columns match $OPT_c, designs a header and line printf format,
 # and a printf statement to print the lines.
 design_print_formats() {
    # For each device, print out the following: The timestamp offset and
@@ -262,22 +252,22 @@ design_print_formats() {
    vars="";
    # The per-second reads, read size (kB), per-second MB read, read merged pct, read
    # concurrency, and average response time for each read.
-   if [[ "rd_s"    == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr}    rd_s";  vars="${vars}, reads_sec"; fi
-   if [[ "rd_avkb" == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr} rd_avkb";  vars="${vars}, avg_read_sz"; fi
-   if [[ "rd_mb_s" == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr} rd_mb_s";  vars="${vars}, mbytes_read_sec"; fi
-   if [[ "rd_mrg"  == *"${COLS}"* ]]; then fmt="${fmt} %5.0f%%"; hdr="${hdr} rd_mrg";   vars="${vars}, read_merge_pct"; fi
-   if [[ "rd_cnc"  == *"${COLS}"* ]]; then fmt="${fmt} %6.1f";   hdr="${hdr} rd_cnc";   vars="${vars}, read_conc"; fi
-   if [[ "rd_rt"   == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr}   rd_rt";  vars="${vars}, read_rtime"; fi
+   if col_ok rd_s    ; then fmt="${fmt} %7.1f";   hdr="${hdr}    rd_s";  vars="${vars}, reads_sec"; fi
+   if col_ok rd_avkb ; then fmt="${fmt} %7.1f";   hdr="${hdr} rd_avkb";  vars="${vars}, avg_read_sz"; fi
+   if col_ok rd_mb_s ; then fmt="${fmt} %7.1f";   hdr="${hdr} rd_mb_s";  vars="${vars}, mbytes_read_sec"; fi
+   if col_ok rd_mrg  ; then fmt="${fmt} %5.0f%%"; hdr="${hdr} rd_mrg";   vars="${vars}, read_merge_pct"; fi
+   if col_ok rd_cnc  ; then fmt="${fmt} %6.1f";   hdr="${hdr} rd_cnc";   vars="${vars}, read_conc"; fi
+   if col_ok rd_rt   ; then fmt="${fmt} %7.1f";   hdr="${hdr}   rd_rt";  vars="${vars}, read_rtime"; fi
    # The same for writes.
-   if [[ "wr_s"    == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr}    wr_s";  vars="${vars}, writes_sec"; fi
-   if [[ "wr_avkb" == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr} wr_avkb";  vars="${vars}, avg_write_sz"; fi
-   if [[ "wr_mb_s" == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr} wr_mb_s";  vars="${vars}, mbytes_written_sec"; fi
-   if [[ "wr_mrg"  == *"${COLS}"* ]]; then fmt="${fmt} %5.0f%%"; hdr="${hdr} wr_mrg";   vars="${vars}, write_merge_pct"; fi
-   if [[ "wr_cnc"  == *"${COLS}"* ]]; then fmt="${fmt} %6.1f";   hdr="${hdr} wr_cnc";   vars="${vars}, write_conc"; fi
-   if [[ "wr_rt"   == *"${COLS}"* ]]; then fmt="${fmt} %7.1f";   hdr="${hdr}   wr_rt";  vars="${vars}, write_rtime"; fi
+   if col_ok wr_s    ; then fmt="${fmt} %7.1f";   hdr="${hdr}    wr_s";  vars="${vars}, writes_sec"; fi
+   if col_ok wr_avkb ; then fmt="${fmt} %7.1f";   hdr="${hdr} wr_avkb";  vars="${vars}, avg_write_sz"; fi
+   if col_ok wr_mb_s ; then fmt="${fmt} %7.1f";   hdr="${hdr} wr_mb_s";  vars="${vars}, mbytes_written_sec"; fi
+   if col_ok wr_mrg  ; then fmt="${fmt} %5.0f%%"; hdr="${hdr} wr_mrg";   vars="${vars}, write_merge_pct"; fi
+   if col_ok wr_cnc  ; then fmt="${fmt} %6.1f";   hdr="${hdr} wr_cnc";   vars="${vars}, write_conc"; fi
+   if col_ok wr_rt   ; then fmt="${fmt} %7.1f";   hdr="${hdr}   wr_rt";  vars="${vars}, write_rtime"; fi
    # Then active%, in-progress, and line-ending.
-   if [[ "act"     == *"${COLS}"* ]]; then fmt="${fmt} %3.0f%%"; hdr="${hdr}  act";     vars="${vars}, active"; fi
-   if [[ "in_prg"  == *"${COLS}"* ]]; then fmt="${fmt} %6d";     hdr="${hdr} in_prg";   vars="${vars}, t_in_progress"; fi
+   if col_ok busy    ; then fmt="${fmt} %3.0f%%"; hdr="${hdr} busy";     vars="${vars}, active"; fi
+   if col_ok in_prg  ; then fmt="${fmt} %6d";     hdr="${hdr} in_prg";   vars="${vars}, t_in_progress"; fi
    fmt="${fmt}\n\"";
    hdr="${hdr}\n\"";
    awk_print_header="printf(${hdr}, \"#ts\", \"device\");";
@@ -287,12 +277,13 @@ design_print_formats() {
 # Prints out one line for each disk, summing over the interval from first to
 # last sample.  Arguments: $1 = filename to read.
 group_by_disk () {
-   cat > /tmp/aspersa <<EOF
+   [ -z "${awk_print_line}" ] && design_print_formats
+   cat > /tmp/aspersa.awk <<EOF
    BEGIN {
       devs    = 0;
-      devname = "${DISK}";
+      devname = "${OPT_d}";
    }
-   \$1 !~ /^TS / && \$3 ~ devname {
+   \$1 !~ /^TS/ && \$3 ~ devname {
       ${awk_parse_line}
       ${awk_get_first_sample}
       ${awk_get_curr_sample}
@@ -310,21 +301,22 @@ group_by_disk () {
          ${awk_get_overall_increments}
          ${awk_compute_sums_group_by_disk}
          ${awk_compute_read_write_stats}
-         line_ts="<" iterations ">";
+         line_ts="<" (iterations - 2) ">";
          ${awk_print_line}
       }
    }
 EOF
-   awk -f /tmp/aspersa "$1"
+   awk -f /tmp/aspersa.awk $@
 }
 
 # Prints out one line for each sample, summing up all disks together.
 # Arguments: $1 = filename to read.
 group_by_sample() {
-   cat > /tmp/aspersa <<EOF
+   [ -z "${awk_print_line}" ] && design_print_formats
+   cat > /tmp/aspersa.awk <<EOF
    BEGIN {
       devs    = 0;
-      devname = "${DISK}";
+      devname = "${OPT_d}";
    }
    \$1 !~ /^TS/ && \$3 ~ devname {
       ${awk_parse_line}
@@ -332,12 +324,14 @@ group_by_sample() {
       ${awk_get_curr_sample}
    }
    \$1 ~ /^TS/ {
+      interval_met = (\$2 - prev_sample_ts > ${OPT_i:-0});
       if ( iterations == 1 ) {
          mdev    = 6;
          ${awk_find_max_device_name_length}
          ${awk_print_header}
+         prev_sample_ts = \$2;
       }
-      if ( iterations > 1 ) {
+      if ( iterations > 1 && interval_met ) {
          ${awk_reset_variables}
          for ( i = 1; i <= devs; i++ ) {
             dev               = devsort[i];
@@ -353,20 +347,25 @@ group_by_sample() {
             dev     = devsort[1];
          }
          ${awk_print_line}
+         prev_sample_ts = \$2;
       }
-      ${awk_save_curr_as_prev}
+      if ( iterations == 0 || interval_met ) {
+         ${awk_save_curr_as_prev}
+      }
+      interval_met = 0;
       iterations++;
    }
 EOF
-   awk -f /tmp/aspersa "$1"
+   awk -f /tmp/aspersa.awk $@
 }
 
 # Prints out one line for each sample, for each disk that matches the pattern.
 group_by_all () {
-   cat > /tmp/aspersa <<EOF
+   [ -z "${awk_print_line}" ] && design_print_formats
+   cat > /tmp/aspersa.awk <<EOF
    BEGIN {
       devs    = 0;
-      devname = "${DISK}";
+      devname = "${OPT_d}";
    }
    \$1 !~ /^TS / && \$3 ~ devname {
       ${awk_parse_line}
@@ -387,6 +386,7 @@ group_by_all () {
             dev               = devsort[i];
             ${awk_get_current_increments}
             ${awk_compute_sums_group_by_disk}
+            t_in_progress     = curr[dev "_ios_in_progress"];
             ${awk_compute_read_write_stats}
             ${awk_print_line}
          }
@@ -395,131 +395,233 @@ group_by_all () {
       iterations++;
    }
 EOF
-   awk -f /tmp/aspersa "$1"
+   awk -f /tmp/aspersa.awk $@
 }
 
-# Check the options set at the command-line or interactively.
-validate_opts() {
-   case "${MODE}" in
-      disk|sample|all)
-         ;;
-      *)
-         OPT_ERR="Unknown mode '${MODE}'."
-         ;;
-   esac
+# Show current help and settings
+print_help() {
+   cat <<-HELP
+   You can control this program by key presses:
+   ------------------- Key ------------------- ---- Current Setting ----
+   A, D, S) Set the group-by mode              ${OPT_g:-<none>}
+   c) Enter an awk regex to match column names ${OPT_c:-<none>}
+   d) Enter an awk regex to match disk names   ${OPT_d:-<none>}
+   i) Set the sample size in seconds           ${OPT_i:-<none>}
+   s) Set the redisplay interval in seconds    ${OPT_s:-<none>}
+   q) Quit the program
+   ------------------- Press any key to continue -----------------------
+	HELP
 }
 
-# Print a usage message.  If $1 is set, then print command-line usage and exit;
-# otherwise print interactive help.
 usage() {
    if [ "${OPT_ERR}" ]; then
       echo "${OPT_ERR}"
    fi
-   if [ "$1" ]; then
-      echo "Usage: $0 -m <mode> -d <disk> -c <cols> -a <aggr> [FILE]"
-      echo "   mode: one of <disk|sample|all>"
-      echo "   disk: an awk regex to match disk names"
-      echo "   cols: a Bash pattern to match column names"
-      echo "   aggr: aggregation interval in seconds"
-      echo "   FILE: a file containing saved diskstats"
-      exit 1
-   else
-      echo "   mode: one of <disk|sample|all>           | currently ${MODE}"
-      echo "   disk: an awk regex to match disk names   | currently ${DISK}"
-      echo "   cols: an awk regex to match column names | currently ${COLS}"
-      echo "   aggr: aggregation interval in seconds    | currently ${AGGR}"
-   fi
-   OPT_ERR=""
+   cat <<-USAGE
+Usage: $0 [OPTIONS] [FILE]
+   $0 does two things: 1) get /proc/diskstats periodically 2) aggregate the result.
+   If you specify a FILE, or send input to STDIN, then step 1) is not performed.
+Options:
+   -c COLS     Awk regex of which columns to include (default cnc|rt|mb|busy|prg).
+   -d DEVICES  Awk regex of which devices to include.
+   -g GROUPBY  Group-by mode (default disk); specify one of the following:
+      disk)    # Each line of output shows one disk device.
+      sample)  # Each line of output shows one sample of statistics.
+      all)     # Each line of output shows one sample and one disk device.
+   -i INTERVAL In -g sample mode, include INTERVAL seconds per sample.
+   -k KEEPFILE File to save diskstats samples in (default /tmp/aspersa).
+               If a non-default filename is used, it will be saved for later
+               analysis.
+   -s INTERVAL Sample /proc/diskstats every N seconds (default 1).
+	USAGE
+   exit 1
+}
+
+generate_parse_options() { # This function is copy/pasted from lib/options.  
+   awk '
+   BEGIN {
+      required_opts="";
+      print "   for o; do";
+      print "      case \"${o}\" in";
+      print "         --)";
+      print "            shift; break;";
+      print "            ;;";
+      print "         --help)";
+      print "            usage;";
+      print "            ;;";
+   }
+   /^   cat <<-USAGE/,/^.USAGE/{
+      if ( $1 ~ /^-/ ) {
+         if ( in_case == 1 ) {
+            print "               *)";
+            print "                  OPT_ERR=\"Bad option value\";";
+            print "                  usage";
+            print "                  ;;";
+            print "            esac";
+            print "            ;;";
+            in_case = 0;
+         }
+         o = substr($1, 2);
+         if ( $0 ~ /\(default .*\)/ ) {
+            d = substr($0, index($0, "(default") + 9);
+            d = substr(d, 1, index(d, ")") - 1);
+            defaults[o] = d;
+         }
+         else {
+            defaults[o] = "";
+         }
+         print "         " $1 ")";
+         if ( $2 ~ /^[[:upper:]]*$/ ) {
+            print "            shift; OPT_" o "=\"${1}\"; shift;";
+         }
+         else {
+            print "            shift; OPT_" o "=1;";
+         }
+         if ( $0 ~ /one of the following:/ ) {
+            in_case = 1;
+            print "            case \"${OPT_" o "}\" in";
+         }
+         else {
+            print "            ;;";
+         }
+      }
+      else if ( in_case == 1 && $0 ~ /\)/ ) {
+         print "               " $1;
+         print "                  ;;";
+      }
+   }
+   /^Options: \(required: -/ {
+      required_opts=substr($NF, 2, length($NF) - 2);
+   }
+   END {
+      print "         -*)";
+      print "            OPT_ERR=\"Unknown option ${o}.\"";
+      print "            usage";
+      print "            ;;";
+      print "      esac";
+      print "   done";
+      for ( o in defaults ) {
+         print "   export OPT_" o "=\"${OPT_" o ":-" defaults[o] "}\";";
+      }
+      i = 0;
+      while ( i < length(required_opts) ) {
+         o = substr(required_opts, i, 1);
+         printf "   [ -z \"${OPT_%s}\" ] && OPT_ERR=\"Missing command-line option -%s\" usage\n", o, o;
+         i++;
+      }
+   }' "${1:-$0}" # The file to read will usually be passed as $0 by caller
 }
 
 # The main code that runs by default.  Arguments are the command-line options.
-# - If no argument is given, then it starts a loop, reading /proc/diskstats
-#   once per second and displaying the output in "group_by_sample" mode.
-# - If a filename/mode/pattern is given, and it is run interactively, then it
-#   starts a loop and lets you control it until you exit with <Return>.
-# - If not interactive, then it just runs once in the specified mode.
-#
-# Within the interactive loop, it runs and then reads a line.  A line can be one
-# of the following:
-# - empty line                quits the program
-# - mode  <disk|sample|all>   sets the mode to group_by_${mode}
-# - disk  <pattern>           filters on device name; pattern is an awk regexp
+# TODO: make it aggregate by number of lines or by time intervals.
+# TODO: make it have an -n option
 main() {
 
    # Get command-line options.
-   for o; do
-      case "${o}" in
-         --)
-            break;
-            ;;
-         -m)
-            shift; MODE="${1}"; shift;
-            ;;
-         -d)
-            shift; DISK="${1}"; shift;
-            ;;
-         -c)
-            shift; COLS="${1}"; shift;
-            ;;
-         -a)
-            shift; AGGR="${1}"; shift;
-            ;;
-         -*)
-            OPT_ERR="Unknown option '${o}'."
-               usage 1
-            ;;
-      esac
-   done
-   validate_opts
-   if [ "${OPT_ERR}" ]; then
-      usage 1
+   . <(generate_parse_options)
+
+   # We need to "do the right thing."  The user might invoke any of several
+   # ways; we get samples every now and then unless there is data on STDIN or a
+   # file to read.
+   if [ $# -gt 0 -o -p 1 ]; then
+      READ_FILE=1
    fi
 
-   # Execute the actual functionality
-   design_print_formats
-   group_by_${MODE} $@
+   # If we are interactive and there's no file, we gather stats to play with.
+   if [ -z "${READ_FILE}" ]; then
+      PARENT=$$
+      date +"TS %s.%N" > "${OPT_k}"
+      while true; do
+         cat /proc/diskstats >> "${OPT_k}"
+         date +"TS %s.%N" >> "${OPT_k}"
+         if ! ps -p ${PARENT} >/dev/null 2>&1 ; then
+            # The parent process doesn't exist anymore -- quit.
+            if [ "${OPT_k}" = "/tmp/aspersa" ]; then
+               rm -f /tmp/aspersa
+            fi
+            break;
+         fi
+         sleep ${OPT_s}
+      done &
+   fi
+
+   if [ -z "${READ_FILE}" ]; then
+      group_by_${OPT_g} "${OPT_k}"
+   else
+      group_by_${OPT_g} $@
+   fi
 
    # Don't be "interactive" unless the user actually has control.
    if [ ! -t 0 -o ! -t 1 ]; then
       exit;
    fi
 
-   while read cmd arg junk; do
+   # We use these in iterative-loop mode
+   if [ -z "${READ_FILE}" ]; then
+      TIMEOUT="-t ${OPT_s}"
+      TAIL_LINES=$(cat /proc/diskstats | wc -l)
+   fi
 
-      [ -z "${cmd}" ] && exit;
+   while true; do
+
+      read $TIMEOUT -n 1 -s cmd junk
       case "${cmd}" in
-         mode)
-            MODE="${arg}"
+         A)
+            OPT_g="all"
+            FIRST_LOOP="1"
             ;;
-         disk)
-            DISK="${arg}"
+         d)
+            read -p "Enter a disk/device pattern: " OPT_d
+            FIRST_LOOP="1"
             ;;
-         cols)
-            COLS="${arg}"
+         D)
+            OPT_g="disk"
+            FIRST_LOOP="1"
             ;;
-         aggr)
-            AGGR="${arg}"
+         c)
+            read -p "Enter a column pattern: " OPT_c
+            FIRST_LOOP="1"
+            awk_print_line="" # Make it re-compute the column headers
             ;;
-         q*)
-            exit
+         i)
+            read -p "Enter a sample size: " OPT_i
+            FIRST_LOOP="1"
             ;;
-         .)
+         q)
+            break
             ;;
-         *)
-            OPT_ERR="Unknown command '${cmd}'"
+         s)
+            read -p "Enter a redisplay interval: " OPT_s
+            FIRST_LOOP="1"
+            ;;
+         S)
+            OPT_g="sample"
+            FIRST_LOOP="1"
+            ;;
+         '?')
+            print_help; read -n1
             ;;
       esac
 
-      validate_opts
-      if [ "${OPT_ERR}" ]; then
-         usage
+      if [ -z "${READ_FILE}" ]; then
+         if [ -z "${FIRST_LOOP}" ]; then
+            # We only print out what's new since last printout
+            N=$(($TAIL_LINES * 2 + 3)) # Extra is for TS lines
+            tail -n $N "${OPT_k}" | group_by_${OPT_g} | tail -n +2
+         else
+            group_by_${OPT_g} "${OPT_k}"
+         fi
+         FIRST_LOOP=""
       else
-         # Execute the actual functionality
-         design_print_formats
-         group_by_${MODE} $@
+         group_by_${OPT_g} $@
       fi
 
    done
+
+   if [ "${OPT_k}" = "/tmp/aspersa" ]; then
+      rm -f "/tmp/aspersa"
+   fi
+   rm -f /tmp/aspersa.awk
 }
 
 # Execute the program if it was not included from another file.  This makes it
