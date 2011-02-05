@@ -1,0 +1,738 @@
+[root@mslvltdp01n bin]# ./omreport storage controller controller=1
+ Controller  PERC H800 Adapter (Slot 3)
+
+Controllers
+ID                                            : 1
+Status                                        : Ok
+Name                                          : PERC H800 Adapter
+Slot ID                                       : PCI Slot 3
+State                                         : Ready
+Firmware Version                              : 12.3.0-0032
+Minimum Required Firmware Version             : Not Applicable
+Driver Version                                : 00.00.04.17-RH1
+
+Minimum Required Driver Version               : Not Applicable
+Storport Driver Version                       : Not Applicable
+Minimum Required Storport Driver Version      : Not Applicable
+Number of Connectors                          : 2
+Rebuild Rate                                  : 30%
+BGI Rate                                      : 30%
+Check Consistency Rate                        : 30%
+Reconstruct Rate                              : 30%
+Alarm State                                   : Not Applicable
+Cluster Mode                                  : Not Applicable
+SCSI Initiator ID                             : Not Applicable
+Cache Memory Size                             : 512 MB
+Patrol Read Mode                              : Auto
+Patrol Read State                             : Stopped
+Patrol Read Rate                              : 30%
+Patrol Read Iterations                        : 1
+Abort Check Consistency on Error              : Disabled
+Allow Revertible Hot Spare and Replace Member : Enabled
+Load Balance                                  : Auto
+Auto Replace Member on Predictive Failure     : Disabled
+Redundant Path view                           : Detected
+Persistent Hot Spare                          : Disabled
+Security Capable                              : Yes
+Security Key Present                          : No
+Spin Down Unconfigured Drives                 : Disabled
+Spin Down Hot Spares                          : Disabled
+
+Connectors
+ID             : 0
+Status         : Ok
+Name           : Logical Connector 
+State          : Ready
+Connector Type : SAS Port RAID Mode
+Termination    : Not Applicable
+SCSI Rate      : Not Applicable
+
+Virtual Disks
+ID                        : 0
+Status                    : Ok
+Name                      : DATA
+State                     : Ready
+Hot Spare Policy violated : Not Assigned
+Virtual Disk Bad Blocks   : No
+Secured                   : No
+Progress                  : Not Applicable
+Layout                    : RAID-10
+Size                      : 5,583.75 GB (5995505909760 bytes)
+Device Name               : /dev/sdb
+Bus Protocol              : SAS
+Media                     : HDD
+Read Policy               : No Read Ahead
+Write Policy              : Write Back
+Cache Policy              : Not Applicable
+Stripe Element Size       : 128 KB
+Disk Cache Policy         : Disabled
+
+Physical Disks
+ID                        : 0:0:0
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:0
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 0
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A3A2            
+Part Number               : SG07T0DW1253107H00N4A00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 02
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DA23E2
+
+ID                        : 0:0:1
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:1
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 1
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A62W            
+Part Number               : SG07T0DW1253107I006DA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 03
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DB9F5A
+
+ID                        : 0:0:2
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:2
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 0
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A5G0            
+Part Number               : SG07T0DW1253107I004LA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 03
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DB63AE
+
+ID                        : 0:0:3
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:3
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 1
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A5MF            
+Part Number               : SG07T0DW1253107I003RA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 03
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DB40FE
+
+ID                        : 0:0:4
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:4
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 0
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A2QJ            
+Part Number               : SG07T0DW1253107H01FAA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 02
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DA9502
+
+ID                        : 0:0:5
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:5
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 0
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A2BR            
+Part Number               : SG07T0DW1253107H0134A00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 02
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DA702A
+
+ID                        : 0:0:6
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:6
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 1
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A2SG            
+Part Number               : SG07T0DW1253107H01GWA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 02
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DAAAEE
+
+ID                        : 0:0:7
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:7
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 0
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A3X7            
+Part Number               : SG07T0DW1253107H00VVA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 02
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DA3ECE
+
+ID                        : 0:0:8
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:8
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 1
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A2V8            
+Part Number               : SG07T0DW1253107H01JDA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 02
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DAAFBA
+
+ID                        : 0:0:9
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:9
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 0
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A2HX            
+Part Number               : SG07T0DW1253107H017QA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 02
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DA7B2E
+
+ID                        : 0:0:10
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:10
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 1
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A2GW            
+Part Number               : SG07T0DW1253107H016QA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 02
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DA78BE
+
+ID                        : 0:0:11
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:11
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 0
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A2RF            
+Part Number               : SG07T0DW1253107H01G5A00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 02
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DAA96E
+
+ID                        : 0:0:12
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:12
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 1
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A3XF            
+Part Number               : SG07T0DW1253107H00VXA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 02
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DA3EE6
+
+ID                        : 0:0:13
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:13
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 0
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A26R            
+Part Number               : SG07T0DW1253107H00ZCA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 02
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DA4306
+
+ID                        : 0:0:14
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:14
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 1
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A2DS            
+Part Number               : SG07T0DW1253107H015JA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 02
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DA75BA
+
+ID                        : 0:0:15
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:15
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 1
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A25N            
+Part Number               : SG07T0DW1253107H00XUA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 02
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DA4156
+
+ID                        : 0:0:16
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:16
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 0
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN09RGZ            
+Part Number               : SG07T0DW1253107H01AGA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 02
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DA82C2
+
+ID                        : 0:0:17
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:17
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 1
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN09P4Y            
+Part Number               : SG07T0DW1253107I0023A00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 03
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DB3D3E
+
+ID                        : 0:0:18
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:18
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 0
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A3VA            
+Part Number               : SG07T0DW1253107I001FA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 03
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DB3B02
+
+ID                        : 0:0:19
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:19
+State                     : Online
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : 1
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : No
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A330            
+Part Number               : SG07T0DW1253107H00D4A00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 02
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023D92B12
+
+ID                        : 0:0:20
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:20
+State                     : Ready
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : Not Applicable
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : Dedicated
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN0A29Q            
+Part Number               : SG07T0DW1253107I002VA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 03
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DB3F2E
+
+ID                        : 0:0:21
+Status                    : Ok
+Power Status              : Spun Up
+Name                      : Physical Disk 0:0:21
+State                     : Ready
+Failure Predicted         : No
+Certified                 : Yes
+Encryption Capable        : No
+Secured                   : Not Applicable
+Progress                  : Not Applicable
+Bus Protocol              : SAS
+Media                     : HDD
+Mirror Set ID             : Not Applicable
+Capacity                  : 558.38 GB (599550590976 bytes)
+Used RAID Disk Space      : 558.38 GB (599550590976 bytes)
+Available RAID Disk Space : 0.00 GB (0 bytes)
+Hot Spare                 : Dedicated
+Vendor ID                 : DELL(tm)
+Product ID                : ST9600204SS     
+Revision                  : FM07
+Serial No.                : 3WN09RNV            
+Part Number               : SG07T0DW1253107I004NA00 
+Negotiated Speed          : 6.00 Gbps
+Capable Speed             : 6.00 Gbps
+Manufacture Day           : 03
+Manufacture Week          : 29
+Manufacture Year          : 2010
+SAS Address               : 5000C50023DB63D2
+
+Battery
+ID                        : 0
+Status                    : Ok
+Name                      : Battery 0
+State                     : Ready
+Recharge Count            : Not Applicable
+Max Recharge Count        : Not Applicable
+Predicted Capacity Status : Ready
+Learn State               : Idle
+Next Learn Time           : 35 days 6 hours
+Maximum Learn Delay       : 7 days 0 hours
+Learn Mode                : Auto
+
+Enclosure(s)
+ID                    : 0:0
+Status                : Ok
+Name                  : MD1220
+State                 : Ready
+Connector             : 0
+Target ID             : Not Applicable
+Configuration         : Unified
+Firmware Version      : 1.01
+Service Tag           : 6L9VJN1   
+Asset Tag             : 
+Asset Name            : MD1220
+Backplane Part Number : 0R736KA00
+Split Bus Part Number : Not Applicable
+Enclosure Part Number : Not Applicable
+SAS Address           : 500C04F2193CEFBD
+Enclosure Alarm       : Disabled
