@@ -35,6 +35,8 @@ DEST="${HOME}/collected/"
 GDB="no"
 # Collect oprofile data?
 OPC="yes"
+# Collect strace data?
+STRACE="no"
 # How long to sleep after collecting?
 SLEEP=600
 # Send mail to this list of addresses when the script triggers.
@@ -107,7 +109,7 @@ while true; do
    if [ "${execute:-no}" = "yes" ]; then 
       NOTE="Executing collection script; ${VARIABLE} = ${detected}"
       log "${NOTE}" "${COLLECT} triggered"
-      ${COLLECT} -d "${DEST}" -i "${INTERVAL}" -g "${GDB}" -o "${OPC}" ${MYSQLOPTIONS}
+      ${COLLECT} -d "${DEST}" -i "${INTERVAL}" -g "${GDB}" -o "${OPC}" -s "${STRACE}" ${MYSQLOPTIONS}
       echo "sleeping ${SLEEP} seconds to avoid DOS attack"
       sleep ${SLEEP}
    else
