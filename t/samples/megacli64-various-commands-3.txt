@@ -1,0 +1,453 @@
+[root@tbbpslvdb1 percona]# MegaCli64 -AdpBbuCmd -GetBbuStatus -aALL; echo; MegaCli64 -LdPdInfo -aALL
+
+BBU status for Adapter: 0
+
+BatteryType: BBU
+Voltage: 4029 mV
+Current: 0 mA
+Temperature: 24 C
+Firmware Status: 00000000
+
+Battery state: 
+
+GasGuageStatus:
+  Fully Discharged        : No
+  Fully Charged           : No
+  Discharging             : Yes
+  Initialized             : Yes
+  Remaining Time Alarm    : No
+  Remaining Capacity Alarm: No
+  Discharge Terminated    : No
+  Over Temperature        : No
+  Charging Terminated     : No
+  Over Charged            : No
+
+Relative State of Charge: 97 %
+Charger Status: Complete
+Remaining Capacity: 1064 mAh
+Full Charge Capacity: 1094 mAh
+isSOHGood: Yes
+
+Exit Code: 0x00
+
+                                     
+Adapter #0
+
+Number of Virtual Disks: 1
+Virtual Disk: 0 (Target Id: 0)
+Name:Virtual Disk 0
+RAID Level: Primary-1, Secondary-3, RAID Level Qualifier-0
+Size:277504MB
+State: Optimal
+Stripe Size: 64kB
+Number Of Drives:2
+Span Depth:4
+Default Cache Policy: WriteBack, ReadAheadNone, Direct, No Write Cache if Bad BBU
+Current Cache Policy: WriteBack, ReadAheadNone, Direct, No Write Cache if Bad BBU
+Access Policy: Read/Write
+Disk Cache Policy: Disk's Default
+Number of Spans: 4
+Span: 0 - Number of PDs: 2
+PD: 0 Information
+Enclosure Device ID: 32
+Slot Number: 0
+Device Id: 0
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+PD Type: SAS
+Raw Size: 70007MB [0x88bb93a Sectors]
+Non Coerced Size: 69495MB [0x87bb93a Sectors]
+Coerced Size: 69376MB [0x8780000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x500000e01dfce212
+SAS Address(1): 0x0
+Connected Port Number: 0(path0) 
+Inquiry Data: FUJITSU MBC2073RC       D506BV03P8B0481R        
+Foreign State: None 
+Media Type: Hard Disk Device
+
+PD: 1 Information
+Enclosure Device ID: 32
+Slot Number: 1
+Device Id: 1
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+PD Type: SAS
+Raw Size: 70007MB [0x88bb93a Sectors]
+Non Coerced Size: 69495MB [0x87bb93a Sectors]
+Coerced Size: 69376MB [0x8780000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x500000e01dc41a32
+SAS Address(1): 0x0
+Connected Port Number: 1(path0) 
+Inquiry Data: FUJITSU MBC2073RC       D506BV03P8A040K3        
+Foreign State: None 
+Media Type: Hard Disk Device
+
+Span: 1 - Number of PDs: 2
+PD: 0 Information
+Enclosure Device ID: 32
+Slot Number: 2
+Device Id: 2
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+PD Type: SAS
+Raw Size: 70007MB [0x88bb93a Sectors]
+Non Coerced Size: 69495MB [0x87bb93a Sectors]
+Coerced Size: 69376MB [0x8780000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x500000e01dfcf3b2
+SAS Address(1): 0x0
+Connected Port Number: 2(path0) 
+Inquiry Data: FUJITSU MBC2073RC       D506BV03P8B0482C        
+Foreign State: None 
+Media Type: Hard Disk Device
+
+PD: 1 Information
+Enclosure Device ID: 32
+Slot Number: 3
+Device Id: 3
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+PD Type: SAS
+Raw Size: 70007MB [0x88bb93a Sectors]
+Non Coerced Size: 69495MB [0x87bb93a Sectors]
+Coerced Size: 69376MB [0x8780000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x500000e01dfdb4d2
+SAS Address(1): 0x0
+Connected Port Number: 3(path0) 
+Inquiry Data: FUJITSU MBC2073RC       D506BV03P8B0483N        
+Foreign State: None 
+Media Type: Hard Disk Device
+
+Span: 2 - Number of PDs: 2
+PD: 0 Information
+Enclosure Device ID: 32
+Slot Number: 4
+Device Id: 4
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+PD Type: SAS
+Raw Size: 70007MB [0x88bb93a Sectors]
+Non Coerced Size: 69495MB [0x87bb93a Sectors]
+Coerced Size: 69376MB [0x8780000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x500000e01dfd9b92
+SAS Address(1): 0x0
+Connected Port Number: 4(path0) 
+Inquiry Data: FUJITSU MBC2073RC       D506BV03P8B04839        
+Foreign State: None 
+Media Type: Hard Disk Device
+
+PD: 1 Information
+Enclosure Device ID: 32
+Slot Number: 5
+Device Id: 5
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+PD Type: SAS
+Raw Size: 70007MB [0x88bb93a Sectors]
+Non Coerced Size: 69495MB [0x87bb93a Sectors]
+Coerced Size: 69376MB [0x8780000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x500000e01dfdb5e2
+SAS Address(1): 0x0
+Connected Port Number: 5(path0) 
+Inquiry Data: FUJITSU MBC2073RC       D506BV03P8B0483R        
+Foreign State: None 
+Media Type: Hard Disk Device
+
+Span: 3 - Number of PDs: 2
+PD: 0 Information
+Enclosure Device ID: 32
+Slot Number: 6
+Device Id: 6
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+PD Type: SAS
+Raw Size: 70007MB [0x88bb93a Sectors]
+Non Coerced Size: 69495MB [0x87bb93a Sectors]
+Coerced Size: 69376MB [0x8780000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x500000e114f3d602
+SAS Address(1): 0x0
+Connected Port Number: 6(path0) 
+Inquiry Data: FUJITSU MBE2073RC       D903D5A4PA500BVR        
+Foreign State: None 
+Media Type: Hard Disk Device
+
+PD: 1 Information
+Enclosure Device ID: 32
+Slot Number: 7
+Device Id: 7
+Sequence Number: 2
+Media Error Count: 0
+Other Error Count: 0
+Predictive Failure Count: 0
+Last Predictive Failure Event Seq Number: 0
+PD Type: SAS
+Raw Size: 70007MB [0x88bb93a Sectors]
+Non Coerced Size: 69495MB [0x87bb93a Sectors]
+Coerced Size: 69376MB [0x8780000 Sectors]
+Firmware state: Online
+SAS Address(0): 0x500000e01dfda062
+SAS Address(1): 0x0
+Connected Port Number: 7(path0) 
+Inquiry Data: FUJITSU MBC2073RC       D506BV03P8B0483B        
+Foreign State: None 
+Media Type: Hard Disk Device
+
+
+Exit Code: 0x00
+[root@tbbpslvdb1 percona]# MegaCli64 -AdpAllInfo -aAL; echo; MegaCli64 -AdpBbuCmd -GetBbuStatus -aALL; echo; MegaCli64 -LdPdInfo -aALL
+[root@tbbpslvdb1 percona]# MegaCli64 -AdpAllInfo -aALL
+                                     
+Adapter #0
+
+==============================================================================
+                    Versions
+                ================
+Product Name    : PERC 6/i Integrated
+Serial No       : 1122334455667788
+FW Package Build: 6.1.1-0047
+
+                    Mfg. Data
+                ================
+Mfg. Date       : 06/24/08
+Rework Date     : 06/24/08
+Revision No     : 
+Battery FRU     : N/A
+
+                Image Versions In Flash:
+                ================
+FW Version         : 1.21.02-0528
+BIOS Version       : 2.01.00
+WebBIOS Version    : 1.1-46-e_15-Rel
+Ctrl-R Version     : 1.02-014B
+Preboot CLI Version: 01.00-020:#%00004
+Boot Block Version : 1.00.00.01-0011
+
+                Pending Images In Flash
+                ================
+None
+
+                PCI Info
+                ================
+Vendor Id       : 1000
+Device Id       : 0060
+SubVendorId     : 1028
+SubDeviceId     : 1f0c
+
+Host Interface  : PCIE
+
+Number of Frontend Port: 0 
+Device Interface  : PCIE
+
+Number of Backend Port: 8 
+Port  :  Address
+0        500000e01dfce212 
+1        500000e01dc41a32 
+2        500000e01dfcf3b2 
+3        500000e01dfdb4d2 
+4        500000e01dfd9b92 
+5        500000e01dfdb5e2 
+6        500000e114f3d602 
+7        500000e01dfda062 
+
+                HW Configuration
+                ================
+SAS Address     : 50022190ad9b9400
+BBU             : Present
+Alarm           : Absent
+NVRAM           : Present
+Serial Debugger : Present
+Memory          : Present
+Flash           : Present
+Memory Size     : 256MB
+
+                Settings
+                ================
+Current Time                     : 10:12:41 9/10, 2010
+Predictive Fail Poll Interval    : 300sec
+Interrupt Throttle Active Count  : 16
+Interrupt Throttle Completion    : 50us
+Rebuild Rate                     : 30%
+PR Rate                          : 30%
+Resynch Rate                     : 30%
+Check Consistency Rate           : 30%
+Reconstruction Rate              : 30%
+Cache Flush Interval             : 4s
+Max Drives to Spinup at One Time : 2
+Delay Among Spinup Groups        : 12s
+Physical Drive Coercion Mode     : 128MB
+Cluster Mode                     : Disabled
+Alarm                            : Disabled
+Auto Rebuild                     : Enabled
+Battery Warning                  : Enabled
+Ecc Bucket Size                  : 15
+Ecc Bucket Leak Rate             : 1440 Minutes
+Restore HotSpare on Insertion    : Disabled
+Expose Enclosure Devices         : Disabled
+Maintain PD Fail History         : Disabled
+Host Request Reordering          : Enabled
+Auto Detect BackPlane Enabled    : SGPIO/i2c SEP
+Load Balance Mode                : Auto
+Any Offline VD Cache Preserved   : No
+
+                Capabilities
+                ================
+RAID Level Supported             : RAID0, RAID1, RAID5, RAID6, RAID10, RAID50, RAID60
+Supported Drives                 : SAS, SATA
+
+Allowed Mixing:
+
+Mix In Enclosure Allowed
+
+                Status
+                ================
+ECC Bucket Count                 : 0
+
+                Limitations
+                ================
+Max Arms Per VD         : 32 
+Max Spans Per VD        : 8 
+Max Arrays              : 128 
+Max Number of VDs       : 64 
+Max Parallel Commands   : 1008 
+Max SGE Count           : 80 
+Max Data Transfer Size  : 8192 sectors 
+Max Strips PerIO        : 42 
+Min Stripe Size         : 8kB
+Max Stripe Size         : 1024kB
+
+                Device Present
+                ================
+Virtual Drives    : 1 
+  Degraded        : 0 
+  Offline         : 0 
+Physical Devices  : 9 
+  Disks           : 8 
+  Critical Disks  : 0 
+  Failed Disks    : 0 
+
+                Supported Adapter Operations
+                ================
+Rebuild Rate                    : Yes
+CC Rate                         : Yes
+BGI Rate                        : Yes
+Reconstruct Rate                : Yes
+Patrol Read Rate                : Yes
+Alarm Control                   : Yes
+Cluster Support                 : No
+BBU                             : Yes
+Spanning                        : Yes
+Dedicated Hot Spare             : Yes
+Revertible Hot Spares           : Yes
+Foreign Config Import           : Yes
+Self Diagnostic                 : Yes
+Allow Mixed Redundancy on Array : No
+Global Hot Spares               : Yes
+Deny SCSI Passthrough           : No
+Deny SMP Passthrough            : No
+Deny STP Passthrough            : No
+
+                Supported VD Operations
+                ================
+Read Policy          : Yes
+Write Policy         : Yes
+IO Policy            : Yes
+Access Policy        : Yes
+Disk Cache Policy    : Yes
+Reconstruction       : Yes
+Deny Locate          : No
+Deny CC              : No
+
+                Supported PD Operations
+                ================
+Force Online                            : Yes
+Force Offline                           : Yes
+Force Rebuild                           : Yes
+Deny Force Failed                       : No
+Deny Force Good/Bad                     : No
+Deny Missing Replace                    : No
+Deny Clear                              : No
+Deny Locate                             : No
+Disable Copyback                        : No
+Enable Copyback on SMART                : No
+Enable Copyback to SSD on SMART error   : No
+
+                Error Counters
+                ================
+Memory Correctable Errors   : 0 
+Memory Uncorrectable Errors : 0 
+
+                Cluster Information
+                ================
+Cluster Permitted     : No
+Cluster Active        : No
+
+                Default Settings
+                ================
+Phy Polarity                     : 0 
+Phy PolaritySplit                : 0 
+Background Rate                  : 30 
+Stripe Size                      : 64kB
+Flush Time                       : 4 seconds
+Write Policy                     : WB
+Read Policy                      : None
+Cache When BBU Bad               : Disabled
+Cached IO                        : No
+SMART Mode                       : Mode 6
+Alarm Disable                    : No
+Coercion Mode                    : 128MB
+ZCR Config                       : Unknown
+Dirty LED Shows Drive Activity   : No
+BIOS Continue on Error           : No
+Spin Down Mode                   : None
+Allowed Device Type              : SAS/SATA Mix
+Allow Mix In Enclosure           : Yes
+Allow HDD SAS/SATA Mix In VD     : No
+Allow SSD SAS/SATA Mix In VD     : No
+Allow HDD/SAS Mix In VD          : No
+Allow SATA In Cluster            : No
+Max Chained Enclosures           : 1 
+Disable Ctrl-R                   : No
+Enable Web BIOS                  : No
+Direct PD Mapping                : Yes
+BIOS Enumerate VDs               : Yes
+Restore Hot Spare on Insertion   : No
+Expose Enclosure Devices         : No
+Maintain PD Fail History         : No
+Disable Puncturing               : No
+Zero Based Enclosure Enumeration : Yes
+PreBoot CLI Enabled              : No
+LED Show Drive Activity          : No
+Cluster Disable                  : Yes
+SAS Disable                      : No
+Auto Detect BackPlane Enable     : SGPIO/i2c SEP
+Delay during POST                : 0 
+
+Exit Code: 0x00
+
