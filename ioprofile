@@ -25,18 +25,20 @@ Usage: $0 [OPTIONS] [FILE]
    If you specify a FILE, then step 1) is not performed.
 Options:
    -a FUNCTION The aggregate function (default sum); one of the following:
-      sum)
-      avg)
+      sum)     # Each cell will contain the sum of the values in it.
+      avg)     # Each cell will contain the average of the values in it.
    -b BINARY   The process name to profile (default mysqld).
    -c CELL     The cell contents (default times); one of the following:
-      count)
-      sizes)
-      times)
+      count)   # The cells contain the count of I/O operations.
+      sizes)   # The cells contain the sizes of I/O operations.
+      times)   # The cells contain the I/O operation timing.
    -g GROUPBY  The group-by item (default filename); one of the following:
-      all)
-      filename)
-      pid)
-   -k KEEPFILE A file to save the raw strace data for further analysis.
+      all)     # Summarize into a single line of output.
+      filename)# One line of output per filename.
+      pid)     # One line of output per process ID.
+   -k KEEPFILE A file to hold the raw strace data (defalt: /tmp/aspersa)
+               The default value prevents the file from being saved; any other
+               value will result in the file being saved for further analysis.
    -p PID      The process ID to profile; overrides -b.
    -s TIME     The number of seconds to profile (default 30).
 	USAGE
@@ -106,31 +108,6 @@ generate_parse_options() { # This function is copy/pasted from lib/options.
          print "   export OPT_" o "=\"${OPT_" o ":-" defaults[o] "}\";";
       }
    }' "${1:-$0}" # The file to read will usually be passed as $0 by caller
-}
-
-# Check the options set at the command-line or interactively.
-validate_opts() {
-   case "${CELL}" in
-      count|sizes|times)
-         ;;
-      *)
-         OPT_ERR="Unknown cell item '${CELL}'; use count|sizes|times."
-         ;;
-   esac
-   case "${FUNC}" in
-      sum|avg)
-         ;;
-      *)
-         OPT_ERR="Unknown function '${FUNC}'; use sum|avg."
-         ;;
-   esac
-   case "${GROUPBY}" in
-      all|filename|pid)
-         ;;
-      *)
-         OPT_ERR="Unknown group-by item '${GROUPBY}'; use all|filename|pid."
-         ;;
-   esac
 }
 
 # Read the 'lsof' and 'strace' from the file, and convert it into lines:
@@ -390,44 +367,32 @@ main() {
    . /tmp/aspersa
    rm -f /tmp/aspersa
 
-   BINARY="${OPT_b}"
-   STIME="${OPT_s}"
-   FUNC="${OPT_a}"
-   CELL="${OPT_c}"
-   GROUPBY="${OPT_g}"
-   KEEPFILE="${OPT_k:-/tmp/aspersa}"
-   validate_opts
-   if [ "${OPT_ERR}" ]; then
-      usage
-   fi
-
    if [ $# -eq 0 ]; then
       # There's no file to analyze, so we'll make one.
       if which strace >/dev/null; then
-         BINARY=${BINARY}
-         if [ -z "${PID}" ]; then
-            PID=$(pidof -s "${BINARY}" 2>/dev/null);
-            if [ -z "${PID}" ]; then
-               PID=$(pgrep -o -x "${BINARY}" 2>/dev/null)
+         if [ -z "${OPT_p}" ]; then
+            OPT_p=$(pidof -s "${OPT_b}" 2>/dev/null);
+            if [ -z "${OPT_p}" ]; then
+               OPT_p=$(pgrep -o -x "${OPT_b}" 2>/dev/null)
             fi
-            if [ -z "${PID}" ]; then
-               PID=$(ps -eaf | grep "${BINARY}" | grep -v grep | awk '{print $2}' | head -n1);
+            if [ -z "${OPT_p}" ]; then
+               OPT_p=$(ps -eaf | grep "${OPT_b}" | grep -v grep | awk '{print $2}' | head -n1);
             fi
          fi
          date;
-         if [ "${PID}" ]; then
-            echo "Tracing process ID ${PID}"
-            lsof -n -P -s -p "${PID}" > "${KEEPFILE}"
-            strace -T -s 0 -f -p ${PID} >> "${KEEPFILE}" 2>&1 &
+         if [ "${OPT_p}" ]; then
+            echo "Tracing process ID ${OPT_p}"
+            lsof -n -P -s -p "${OPT_p}" > "${OPT_k}"
+            strace -T -s 0 -f -p ${OPT_p} >> "${OPT_k}" 2>&1 &
             tokill=$!
-            sleep ${STIME}
+            sleep ${OPT_s}
             kill -s 2 ${tokill}
             sleep 1
             kill -s 15 ${tokill} 2>/dev/null
             # Sometimes strace leaves threads/processes in T status.
-            kill -s 18 ${PID}
+            kill -s 18 ${OPT_p}
             # Summarize the output we just generated.
-            tabulate_strace "${KEEPFILE}" > /tmp/aspersa2
+            tabulate_strace "${OPT_k}" > /tmp/aspersa2
          else
             echo "No such process"
             exit 1
@@ -441,7 +406,7 @@ main() {
    # Assuming all the inputs are filenames that have been processed above, now
    # we ignore $@ and re-send the pre-processed command-line options to the
    # summarize_strace function.
-   summarize_strace -a ${FUNC} -c ${CELL} -g ${GROUPBY} /tmp/aspersa2
+   summarize_strace -a ${OPT_a} -c ${OPT_c} -g ${OPT_g} /tmp/aspersa2
    rm -f /tmp/aspersa{,.awk,2,3}
 }
 
