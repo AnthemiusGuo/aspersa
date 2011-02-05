@@ -363,9 +363,7 @@ main() {
    rm -f /tmp/aspersa{,.awk,2,3}
 
    # Get command-line options.
-   generate_parse_options > /tmp/aspersa
-   . /tmp/aspersa
-   rm -f /tmp/aspersa
+   . <(generate_parse_options)
 
    if [ $# -eq 0 ]; then
       # There's no file to analyze, so we'll make one.

@@ -186,9 +186,7 @@ main() {
    rm -f /tmp/aspersa
 
    # Get command-line options
-   generate_parse_options > /tmp/aspersa
-   . /tmp/aspersa
-   rm -f /tmp/aspersa
+   . <(generate_parse_options)
 
    if [ -z "${1}" ]; then
       # There's no file to analyze, so we'll make one.
