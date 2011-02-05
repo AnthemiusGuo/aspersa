@@ -432,6 +432,7 @@ Options:
    -k KEEPFILE File to save diskstats samples in (default /tmp/aspersa).
                If a non-default filename is used, it will be saved for later
                analysis.
+   -n SAMPLES  When in interactive mode, stop after N samples.
    -s INTERVAL Sample /proc/diskstats every N seconds (default 1).
 	USAGE
    exit 1
@@ -513,8 +514,6 @@ generate_parse_options() { # This function is copy/pasted from lib/options.
 }
 
 # The main code that runs by default.  Arguments are the command-line options.
-# TODO: make it aggregate by number of lines or by time intervals.
-# TODO: make it have an -n option
 main() {
 
    # Get command-line options.
@@ -562,7 +561,8 @@ main() {
       TAIL_LINES=$(cat /proc/diskstats | wc -l)
    fi
 
-   while true; do
+   while [ -z "${OPT_n}" -o "${i:-0}" -le "${OPT_n:-0}" ]; do
+      i=$(( ${i:0} + 1 ))
 
       read $TIMEOUT -n 1 -s cmd junk
       case "${cmd}" in
