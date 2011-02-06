@@ -364,7 +364,7 @@ parse_fdisk () {
             start = $2;
             end   = $3;
          }
-         printf(format, $1, "Part", start, end, (end - start) * units);
+         printf(format, $1, "Part", start, end, sprintf("%.0f", (end - start) * units));
       }
    ' /tmp/aspersa
 }
