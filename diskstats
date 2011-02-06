@@ -301,7 +301,7 @@ group_by_disk () {
          ${awk_get_overall_increments}
          ${awk_compute_sums_group_by_disk}
          ${awk_compute_read_write_stats}
-         line_ts="<" (iterations - 2) ">";
+         line_ts="{" (iterations - 2) "}";
          ${awk_print_line}
       }
    }
@@ -341,7 +341,7 @@ group_by_sample() {
          ${awk_compute_read_write_stats}
          line_ts = sprintf("%5.1f", ts - first["ts"]);
          if ( devs > 1 ) {
-            dev     = "<" devs ">";
+            dev     = "{" devs "}";
          }
          else {
             dev     = devsort[1];
@@ -403,11 +403,11 @@ print_help() {
    cat <<-HELP
    You can control this program by key presses:
    ------------------- Key ------------------- ---- Current Setting ----
-   A, D, S) Set the group-by mode              ${OPT_g:-<none>}
-   c) Enter an awk regex to match column names ${OPT_c:-<none>}
-   d) Enter an awk regex to match disk names   ${OPT_d:-<none>}
-   i) Set the sample size in seconds           ${OPT_i:-<none>}
-   s) Set the redisplay interval in seconds    ${OPT_s:-<none>}
+   A, D, S) Set the group-by mode              ${OPT_g:-(none)}
+   c) Enter an awk regex to match column names ${OPT_c:-(none)}
+   d) Enter an awk regex to match disk names   ${OPT_d:-(none)}
+   i) Set the sample size in seconds           ${OPT_i:-(none)}
+   s) Set the redisplay interval in seconds    ${OPT_s:-(none)}
    q) Quit the program
    ------------------- Press any key to continue -----------------------
 	HELP
@@ -555,15 +555,18 @@ main() {
       exit;
    fi
 
-   # We use these in iterative-loop mode
+   # We use this in iterative-loop mode
    if [ -z "${READ_FILE}" ]; then
-      TIMEOUT="-t ${OPT_s}"
       TAIL_LINES=$(cat /proc/diskstats | wc -l)
    fi
 
    while [ -z "${OPT_n}" -o "${i:-0}" -le "${OPT_n:-0}" ]; do
       i=$(( ${i:0} + 1 ))
 
+      # Re-decide the timeout every loop
+      if [ -z "${READ_FILE}" ]; then
+         TIMEOUT="-t ${OPT_s}"
+      fi
       read $TIMEOUT -n 1 -s cmd junk
       case "${cmd}" in
          A)
@@ -599,7 +602,7 @@ main() {
             FIRST_LOOP="1"
             ;;
          '?')
-            print_help; read -n1
+            print_help; read -n1 -s
             ;;
       esac
 
