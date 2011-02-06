@@ -29,71 +29,6 @@ Options:
    exit 1
 }
 
-generate_parse_options() { # This function is copy/pasted from lib/options.  
-   awk '
-   BEGIN {
-      print "   for o; do";
-      print "      case \"${o}\" in";
-      print "         --)";
-      print "            shift; break;";
-      print "            ;;";
-      print "         --help)";
-      print "            usage;";
-      print "            ;;";
-   }
-   /^   cat <<-USAGE/,/^.USAGE/{
-      if ( $1 ~ /^-/ ) {
-         if ( in_case == 1 ) {
-            print "               *)";
-            print "                  OPT_ERR=\"Bad option value\";";
-            print "                  usage";
-            print "                  ;;";
-            print "            esac";
-            print "            ;;";
-            in_case = 0;
-         }
-         o = substr($1, 2);
-         if ( $0 ~ /\(default .*\)/ ) {
-            d = substr($0, index($0, "(default") + 9);
-            d = substr(d, 1, index(d, ")") - 1);
-            defaults[o] = d;
-         }
-         else {
-            defaults[o] = "";
-         }
-         print "         " $1 ")";
-         if ( $2 ~ /^[[:upper:]]*$/ ) {
-            print "            shift; OPT_" o "=\"${1}\"; shift;";
-         }
-         else {
-            print "            shift; OPT_" o "=1;";
-         }
-         if ( $0 ~ /one of the following:/ ) {
-            in_case = 1;
-            print "            case \"${OPT_" o "}\" in";
-         }
-         else {
-            print "            ;;";
-         }
-      }
-      else if ( in_case == 1 && $0 ~ /\)/ ) {
-         print "               " $1;
-         print "                  ;;";
-      }
-   }
-   END {
-      print "         -*)";
-      print "            OPT_ERR=\"Unknown option ${o}.\"";
-      print "            usage";
-      print "            ;;";
-      print "      esac";
-      print "   done";
-      for ( o in defaults ) {
-         print "   export OPT_" o "=\"${OPT_" o ":-" defaults[o] "}\";";
-      }
-   }' "${1:-$0}" # The file to read will usually be passed as $0 by caller
-}
-
 # Actually does the aggregation.  The arguments are the max number of functions
 # to aggregate, and the files to read.  If maxlen=0, it means infinity.  We have
 # to pass the maxlen argument into this function to make maxlen testable.
@@ -186,7 +121,44 @@ main() {
    rm -f /tmp/aspersa
 
    # Get command-line options
-   . <(generate_parse_options)
+   for o; do
+      case "${o}" in
+         --)
+            shift; break;
+            ;;
+         --help)
+            usage;
+            ;;
+         -b)
+            shift; OPT_b="${1}"; shift;
+            ;;
+         -i)
+            shift; OPT_i="${1}"; shift;
+            ;;
+         -k)
+            shift; OPT_k="${1}"; shift;
+            ;;
+         -l)
+            shift; OPT_l="${1}"; shift;
+            ;;
+         -p)
+            shift; OPT_p="${1}"; shift;
+            ;;
+         -s)
+            shift; OPT_s="${1}"; shift;
+            ;;
+         -*)
+            OPT_ERR="Unknown option ${o}."
+            usage
+            ;;
+      esac
+   done
+   export OPT_i="${OPT_i:-1}";
+   export OPT_k="${OPT_k:-}";
+   export OPT_l="${OPT_l:-0}";
+   export OPT_b="${OPT_b:-mysqld}";
+   export OPT_p="${OPT_p:-}";
+   export OPT_s="${OPT_s:-0}";
 
    if [ -z "${1}" ]; then
       # There's no file to analyze, so we'll make one.

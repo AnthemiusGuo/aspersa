@@ -45,71 +45,6 @@ Options:
    exit 1
 }
 
-generate_parse_options() { # This function is copy/pasted from lib/options.  
-   awk '
-   BEGIN {
-      print "   for o; do";
-      print "      case \"${o}\" in";
-      print "         --)";
-      print "            shift; break;";
-      print "            ;;";
-      print "         --help)";
-      print "            usage;";
-      print "            ;;";
-   }
-   /^   cat <<-USAGE/,/^.USAGE/{
-      if ( $1 ~ /^-/ ) {
-         if ( in_case == 1 ) {
-            print "               *)";
-            print "                  OPT_ERR=\"Bad option value\";";
-            print "                  usage";
-            print "                  ;;";
-            print "            esac";
-            print "            ;;";
-            in_case = 0;
-         }
-         o = substr($1, 2);
-         if ( $0 ~ /\(default .*\)/ ) {
-            d = substr($0, index($0, "(default") + 9);
-            d = substr(d, 1, index(d, ")") - 1);
-            defaults[o] = d;
-         }
-         else {
-            defaults[o] = "";
-         }
-         print "         " $1 ")";
-         if ( $2 ~ /^[[:upper:]]*$/ ) {
-            print "            shift; OPT_" o "=\"${1}\"; shift;";
-         }
-         else {
-            print "            shift; OPT_" o "=1;";
-         }
-         if ( $0 ~ /one of the following:/ ) {
-            in_case = 1;
-            print "            case \"${OPT_" o "}\" in";
-         }
-         else {
-            print "            ;;";
-         }
-      }
-      else if ( in_case == 1 && $0 ~ /\)/ ) {
-         print "               " $1;
-         print "                  ;;";
-      }
-   }
-   END {
-      print "         -*)";
-      print "            OPT_ERR=\"Unknown option ${o}.\"";
-      print "            usage";
-      print "            ;;";
-      print "      esac";
-      print "   done";
-      for ( o in defaults ) {
-         print "   export OPT_" o "=\"${OPT_" o ":-" defaults[o] "}\";";
-      }
-   }' "${1:-$0}" # The file to read will usually be passed as $0 by caller
-}
-
 # Read the 'lsof' and 'strace' from the file, and convert it into lines:
 # pid function fd_no size timing filename
 # The arguments are the files to summarize.
@@ -363,7 +298,82 @@ main() {
    rm -f /tmp/aspersa{,.awk,2,3}
 
    # Get command-line options.
-   . <(generate_parse_options)
+   for o; do
+      case "${o}" in
+         --)
+            shift; break;
+            ;;
+         --help)
+            usage;
+            ;;
+         -a)
+            shift; OPT_a="${1}"; shift;
+            case "${OPT_a}" in
+               sum)
+                  ;;
+               avg)
+                  ;;
+               *)
+                  OPT_ERR="Bad option value";
+                  usage
+                  ;;
+            esac
+            ;;
+         -b)
+            shift; OPT_b="${1}"; shift;
+            ;;
+         -c)
+            shift; OPT_c="${1}"; shift;
+            case "${OPT_c}" in
+               count)
+                  ;;
+               sizes)
+                  ;;
+               times)
+                  ;;
+               *)
+                  OPT_ERR="Bad option value";
+                  usage
+                  ;;
+            esac
+            ;;
+         -g)
+            shift; OPT_g="${1}"; shift;
+            case "${OPT_g}" in
+               all)
+                  ;;
+               filename)#
+                  ;;
+               pid)
+                  ;;
+               *)
+                  OPT_ERR="Bad option value";
+                  usage
+                  ;;
+            esac
+            ;;
+         -k)
+            shift; OPT_k="${1}"; shift;
+            ;;
+         -p)
+            shift; OPT_p="${1}"; shift;
+            ;;
+         -s)
+            shift; OPT_s="${1}"; shift;
+            ;;
+         -*)
+            OPT_ERR="Unknown option ${o}."
+            usage
+            ;;
+      esac
+   done
+   export OPT_k="${OPT_k:-}";
+   export OPT_a="${OPT_a:-sum}";
+   export OPT_b="${OPT_b:-mysqld}";
+   export OPT_p="${OPT_p:-}";
+   export OPT_c="${OPT_c:-times}";
+   export OPT_s="${OPT_s:-30}";
+   export OPT_g="${OPT_g:-filename}";
 
    if [ $# -eq 0 ]; then
       # There's no file to analyze, so we'll make one.
