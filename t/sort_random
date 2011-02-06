@@ -1,0 +1,5 @@
+#!/bin/sh
+
+while read line; do
+   echo $RANDOM $line
+done | sort -k 1,1 | awk '{print $2}'
