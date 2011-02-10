@@ -69,9 +69,9 @@ fi
    d=$(date +%F-%T | tr :- _);
    echo "Gathering info for $d"
    # Get pidof mysqld; pidof doesn't exist on some systems.  We try our best...
-   p=$(pidof -s mysqld 2>/dev/null);
+   p=$(pidof -s mysqld 2>>$OPT_d/$d-output);
    if [ -z "${p}" ]; then
-      p=$(pgrep -o -x mysqld 2>/dev/null)
+      p=$(pgrep -o -x mysqld 2>>$OPT_d/$d-output)
    fi
    if [ -z "${p}" ]; then
       p=$(ps -eaf | grep 'mysql[d]' | grep -v mysqld_safe | awk '{print $2}' | head -n1);
@@ -96,8 +96,8 @@ fi
    # Next, start oprofile gathering data during the whole rest of this process.
    # The --init should be a no-op if it has already been init-ed.
    if [ "${OPT_o}" = "yes" ]; then
-      if opcontrol --init >/dev/null 2>&1; then
-         opcontrol --start --no-vmlinux
+      if opcontrol --init >>$OPT_d/$d-output 2>&1; then
+         opcontrol --start --no-vmlinux >>$OPT_d/$d-output
       else
          OPT_o="no"
       fi
@@ -143,17 +143,25 @@ fi
    echo "TS $ts" >> $OPT_d/$d-netstat;
 
    if [ "${OPT_o}" = "yes" ]; then
-      opcontrol --stop;
-      opcontrol --dump;
-      kill $(pidof oprofiled 2>/dev/null) 2>/dev/null;
-      opcontrol --save=$d;
-      echo "oprofile data saved to $d; you should now be able to get a  report"
-      echo "by running something like"
-      echo "opreport --demangle=smart --symbols --merge tgid session:$d <bin>"
+      opcontrol --stop >>$OPT_d/$d-output 2>&1;
+      opcontrol --dump >>$OPT_d/$d-output 2>&1;
+      kill $(pidof oprofiled 2>>$OPT_d/$d-output) >>$OPT_d/$d-output 2>&1;
+      opcontrol --save=$d >>$OPT_d/$d-output 2>&1;
+
+      # Attempt to generate a report; if this fails, then just tell the user how
+      # to generate the report.
+      path_to_binary=$(which mysqld 2>>$OPT_d/$d-output);
+      if [ "${path_to_binary}" -a -f "${path_to_binary}" ]; then
+         opreport --demangle=smart --symbols --merge tgid session:$d "${path_to_binary}" > $OPT_d/$d-opreport 2>>$OPT_d/$d-output;
+      else
+         echo "oprofile data saved to $d; you should now be able to get a report" > $OPT_d/$d-opreport
+         echo "by running something like" >> $OPT_d/$d-opreport
+         echo "opreport --demangle=smart --symbols --merge tgid session:$d /path/to/mysqld" >> $OPT_d/$d-opreport
+      fi
    elif [ "${OPT_s}" = "yes" ]; then
       kill -s 2 ${strace_pid}
       sleep 1
-      kill -s 15 ${strace_pid} 2>/dev/null
+      kill -s 15 ${strace_pid} 2>>$OPT_d/$d-output);
       # Sometimes strace leaves threads/processes in T status.
       kill -s 18 $p
    fi
@@ -163,5 +171,5 @@ fi
 
    # mysqladmin in 5.1 has a bunch of obnoxious bugs.  Among them, -c does not
    # work, so it will continue forever unless we kill it.
-   kill $mysqladmin_pid 2>/dev/null;
+   kill $mysqladmin_pid 2>>$OPT_d/$d-output;
 )200>/tmp/aspersa-collect-lockfile
