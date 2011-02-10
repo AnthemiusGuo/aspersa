@@ -23,6 +23,14 @@ THRESHOLD=${1:-100}
 INTERVAL=${2:-30}
 # This is the thing to check for.  You can pass this as the third option.
 VARIABLE=${3:-Threads_connected}
+# How many times must the condition be met before the script will fire?
+CYCLES="1"
+# Collect GDB stacktraces?
+GDB="no"
+# Collect oprofile data?
+OPC="yes"
+# Collect strace data?
+STRACE="no"
 # If the command you're running to detect the condition is allowed to return
 # nothing (e.g. a grep line that might not even exist if there's no problem),
 # then set this to "yes".
@@ -31,14 +39,11 @@ MAYBE_EMPTY="no"
 COLLECT="${HOME}/bin/collect";
 # This is where to store the collected data.
 DEST="${HOME}/collected/"
-# Collect GDB stacktraces?
-GDB="no"
-# Collect oprofile data?
-OPC="yes"
-# Collect strace data?
-STRACE="no"
+# How long to collect statistics data for?  Make sure that this isn't longer
+# than SLEEP.
+DURATION=30
 # How long to sleep after collecting?
-SLEEP=600
+SLEEP=$(($DURATION * 10))
 # Send mail to this list of addresses when the script triggers.
 EMAIL=""
 # Bail out if the disk is more than this %full.
@@ -79,40 +84,52 @@ if [ "$(id -u)" != "0" ]; then
    echo 'Not running with root privileges!';
 fi
 
+# We increment this variable every time that the check is true, and set it to 0
+# if it's false.
+cycles_true=0;
+
 while true; do
-   date 
+   d=$(date +%F-%T | tr :- _);
 
    # XXX This is where we decide whether to execute 'collect'.
    # XXX Customize this if needed.  The idea is to generate a number and store
    # XXX it into $detected, and if $detected > $THRESHOLD, then we'll execute
    # XXX the collection process.
    detected=$(mysqladmin ext | grep ${VARIABLE} | awk '{print $4}');
-   execute="no"
    if [ -z "${detected}" -a ${MAYBE_EMPTY} = "no" ]; then
-      execute="yes" # Oops, couldn't connect, maybe max_connections problem.
-      echo "The detected value is empty; something failed?  Exit status is $?"
+      # Oops, couldn't connect, maybe max_connections problem?
+      echo "$d The detected value is empty; something failed?  Exit status is $?"
+      matched="yes"
+      cycles_true=$(($cycles_true + 1))
    elif [ "${detected:-0}" -gt ${THRESHOLD} ]; then
-      execute="yes"
+      matched="yes"
+      cycles_true=$(($cycles_true + 1))
+   else
+      matched="no"
+      cycles_true=0
    fi
 
    # XXX Stop customizing here; everything above should be what you need.
 
-   # Make sure the disk isn't getting too full.
-   avail=$(df -m -P "${DEST}" | awk '/^\//{print $4}');
-   full=$(df -m -P "${DEST}" | awk '/^\//{print $5}' | sed -e 's/%//g');
-   if [ "${avail}" -le "${MB_THRESHOLD}" -o "${full}" -ge "${PCT_THRESHOLD}" ]; then
-      NOTE="Exiting, not enough free space (${full}%, ${avail}MB free)"
-      log "${NOTE}" "Disk too full"
-      exit 1
-   fi
+   NOTE="$d check results: ${VARIABLE} = ${detected}, matched = ${matched}, cycles_true = ${cycles_true}"
+   # Actually execute the collection script.
+   if [ "${matched:-no}" = "yes" -a ${cycles_true} -ge ${CYCLES} ]; then 
 
-   if [ "${execute:-no}" = "yes" ]; then 
-      NOTE="Executing collection script; ${VARIABLE} = ${detected}"
+      # Make sure the disk isn't getting too full.
+      avail=$(df -m -P "${DEST}" | awk '/^\//{print $4}');
+      full=$(df -m -P "${DEST}" | awk '/^\//{print $5}' | sed -e 's/%//g');
+      if [ "${avail}" -le "${MB_THRESHOLD}" -o "${full}" -ge "${PCT_THRESHOLD}" ]; then
+         NOTE="$d Exiting, not enough free space (${full}%, ${avail}MB free)"
+         log "${NOTE}" "Disk too full"
+         exit 1
+      fi
+
       log "${NOTE}" "${COLLECT} triggered"
-      ${COLLECT} -d "${DEST}" -i "${INTERVAL}" -g "${GDB}" -o "${OPC}" -s "${STRACE}" ${MYSQLOPTIONS}
-      echo "sleeping ${SLEEP} seconds to avoid DOS attack"
+      ${COLLECT} -d "${DEST}" -i "${DURATION}" -g "${GDB}" -o "${OPC}" -s "${STRACE}" ${MYSQLOPTIONS}
+      echo "$d sleeping ${SLEEP} seconds to avoid DOS attack"
       sleep ${SLEEP}
    else
+      echo ${NOTE}
       sleep ${INTERVAL}
    fi
 done
