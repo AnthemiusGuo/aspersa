@@ -854,8 +854,7 @@ main () {
    parse_free_minus_b /tmp/aspersa
 
    rss=$(ps -eo rss | awk '/[0-9]/{total += $1 * 1024} END {print total}')
-   shorten ${rss} rss
-   name_val Used "${rss}"
+   name_val Used "$(shorten ${rss})"
 
    name_val Swappiness "$(sysctl vm.swappiness 2>&1)"
    name_val DirtyPolicy "$(sysctl vm.dirty_ratio 2>&1), $(sysctl vm.dirty_background_ratio 2>&1)"
