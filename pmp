@@ -34,7 +34,6 @@ Options:
 # to pass the maxlen argument into this function to make maxlen testable.
 aggregate_stacktrace() {
    maxlen="$1";
-   shift;
    cat > /tmp/aspersa.awk <<EOF
       BEGIN {
          s = "";
@@ -112,7 +111,7 @@ aggregate_stacktrace() {
          print s
       }
 EOF
-   awk -f /tmp/aspersa.awk $@ | sort | uniq -c | sort -r -n -k 1,1
+   awk -f /tmp/aspersa.awk $2 | sort | uniq -c | sort -r -n -k 1,1
    rm -f /tmp/aspersa
 }
 
