@@ -1,0 +1,4 @@
+Status of virtual processor 0 as of: 02/13/2011 13:53:03
+  on-line since 02/06/2011 10:13:06.
+  The i386 processor operates at 1333 MHz,
+	and has an i387 compatible floating point processor.

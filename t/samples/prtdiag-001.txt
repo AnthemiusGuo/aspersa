@@ -1,0 +1,19 @@
+System Configuration: innotek GmbH VirtualBox
+BIOS Configuration: innotek GmbH VirtualBox 12/01/2006
+
+==== Processor Sockets ====================================
+
+Version                          Location Tag
+-------------------------------- --------------------------
+
+==== Memory Device Sockets ================================
+
+Type        Status Set Device Locator      Bank Locator
+----------- ------ --- ------------------- ----------------
+
+==== On-Board Devices =====================================
+
+==== Upgradeable Slots ====================================
+
+ID  Status    Type             Description
+--- --------- ---------------- ----------------------------

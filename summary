@@ -20,8 +20,10 @@
 # ########################################################################
 
 # ########################################################################
-# Globals, helper functions
+# Globals, settings, helper functions
 # ########################################################################
+POSIXLY_CORRECT=1
+export POSIXLY_CORRECT
 
 # The awk code for fuzzy rounding.  (It's used in a few places, so makes sense
 # not to duplicate).  It fuzzy-rounds the variable named fuzzy_var.  It goes in
@@ -87,7 +89,7 @@ section () {
 
 # Print a "name | value" line.
 name_val() {
-   printf "%12s | %s\n" "$1" "$2"
+   printf "%12s | %s\n" "$1" "$(echo $2)"
 }
 
 # Converts a value to units of power of 2.  Arg 1: the value.  Arg 2: precision (defaults to 2).
@@ -98,7 +100,7 @@ shorten() {
       val  = $1;
       prec = 2;
       if ( $2 ~ /./ ) {
-	 prec = $2;
+         prec = $2;
       }
       if ( val >= 1099511627776 ) {
          size = 1099511627776;
@@ -193,6 +195,19 @@ parse_sysctl_cpu_freebsd() {
 }
 
 # ##############################################################################
+# Parse CPU info from psrinfo -v
+# ##############################################################################
+parse_psrinfo_cpus() {
+   name_val Processors $(grep -c 'Status of .* processor' "$1")
+   awk '/operates at/ {
+      start = index($0, " at ") + 4;
+      end   = length($0) - start - 4
+      print substr($0, start, end);
+   }' "$1" | sort | uniq -c > /tmp/aspersa2
+   name_val "Speeds" "$(group_concat /tmp/aspersa2)"
+}
+
+# ##############################################################################
 # Parse the output of 'free -b' plus the contents of /proc/meminfo
 # ##############################################################################
 parse_free_minus_b () {
@@ -221,9 +236,9 @@ parse_memory_sysctl_freebsd() {
       /vm.stats.vm.v_free_count/     { mem_free     = $2; }
       /hw.pagesize/                  { pagesize     = $2; }
       END {
-	 mem_inactive *= pagesize;
-	 mem_cache    *= pagesize;
-	 mem_free     *= pagesize;
+         mem_inactive *= pagesize;
+         mem_cache    *= pagesize;
+         mem_free     *= pagesize;
          print mem_hw - mem_inactive - mem_cache - mem_free;
       }
    ' "$1");
@@ -443,6 +458,17 @@ parse_virtualization_dmesg () {
       echo "VirtualBox";
    elif grep -qi 'hd.: Virtual .., ATA.*drive' /tmp/aspersa; then
       echo "Microsoft VirtualPC";
+   fi
+}
+
+# ##############################################################################
+# Try to figure out if a system is a guest by looking at prtdiag, smbios, etc.
+# ##############################################################################
+parse_virtualization_generic() {
+   if grep -i -e virtualbox "$1" >/dev/null; then
+      echo VirtualBox
+   elif grep -i -e vmware "$1" >/dev/null; then
+      echo VMWare
    fi
 }
 
@@ -814,10 +840,11 @@ main () {
    # ########################################################################
    # General date, time, load, etc
    # ########################################################################
+   platform="$(uname -s)"
    name_val "Date" "`date -u +'%F %T UTC'` (local TZ: `date +'%Z %z'`)"
-   name_val "Hostname" `uname -n`
-   name_val "Uptime" "`uptime | cut -dp -f2 | cut -c2-`"
-   if which dmidecode > /dev/null; then
+   name_val "Hostname" "$(uname -n)"
+   name_val "Uptime" "$(uptime | awk '{print substr($0, index($0, "up") + 3)}')"
+   if which dmidecode > /dev/null 2>&1; then
       vendor="$(dmidecode -s system-manufacturer 2>/dev/null | sed 's/ *$//g')"
       if [ "${vendor}" ]; then
          product="$(dmidecode -s system-product-name 2>/dev/null | sed 's/ *$//g')"
@@ -829,8 +856,12 @@ main () {
          name_val "Service Tag" "${servicetag:-Not found}";
       fi
    fi
-   platform="$(uname -s)"
    name_val "Platform" "${platform}"
+   if [ "${platform}" = "SunOS" ]; then
+      if which zonename >/dev/null 2>&1 ; then
+         name_val "Zonename" "$(zonename)"
+      fi
+   fi
 
    # Try to find all sorts of different files that say what the release is.
    if [ "${platform}" = "Linux" ]; then
@@ -861,6 +892,12 @@ main () {
    elif [ "${platform}" = "FreeBSD" ]; then
       release="$(uname -r)"
       kernel="$(sysctl -n kern.osrevision)"
+   elif [ "${platform}" = "SunOS" ]; then
+      release="$(head -n1 /etc/release)"
+      if [ -z "${release}" ]; then
+         release="$(uname -r)"
+      fi
+      kernel="$(uname -v)"
    fi
    name_val Release "${release}"
    name_val Kernel "${kernel}"
@@ -874,6 +911,10 @@ main () {
    elif [ "${platform}" = "FreeBSD" ]; then
       if sysctl hw.machine_arch | grep -v 'i[36]86' >/dev/null; then
          CPU_ARCH='64-bit'
+      fi
+   elif [ "${platform}" = "SunOS" ]; then
+      if isainfo -b | grep 64 >/dev/null ; then
+         CPU_ARCH="64-bit"
       fi
    fi
    if file /bin/sh | grep '64-bit' >/dev/null; then
@@ -922,6 +963,12 @@ main () {
       if ps -o stat | grep J ; then
          virt="FreeBSD Jail"
       fi
+   elif [ "${platform}" = "SunOS" ]; then
+      if which prtdiag >/dev/null 2>&1 && prtdiag > /tmp/aspersa.prtdiag 2>/dev/null; then
+         virt="$(parse_virtualization_generic /tmp/aspersa.prtdiag)"
+      elif which smbios >/dev/null 2>&1 && smbios > /tmp/aspersa.smbios 2>/dev/null; then
+         virt="$(parse_virtualization_generic /tmp/aspersa.smbios)"
+      fi
    fi
    name_val Virtualized "${virt:-No virtualization detected}"
 
@@ -934,6 +981,10 @@ main () {
       parse_proc_cpuinfo
    elif [ "${platform}" = "FreeBSD" ]; then
       parse_sysctl_cpu_freebsd /tmp/aspersa.sysctl
+   elif [ "${platform}" = "SunOS" ]; then
+      psrinfo -v > /tmp/aspersa
+      parse_psrinfo_cpus /tmp/aspersa
+      # TODO: prtconf -v actually prints the CPU model name etc.
    fi
 
    section Memory
@@ -943,6 +994,8 @@ main () {
       parse_free_minus_b /tmp/aspersa
    elif [ "${platform}" = "FreeBSD" ]; then
       parse_memory_sysctl_freebsd /tmp/aspersa.sysctl
+   elif [ "${platform}" = "SunOS" ]; then
+      name_val Memory "$(prtconf | awk -F: '/Memory/{print $2}')"
    fi
 
    rss=$(ps -eo rss 2>/dev/null | awk '/[0-9]/{total += $1 * 1024} END {print total}')
@@ -956,7 +1009,7 @@ main () {
       fi
    fi
 
-   if which dmidecode >/dev/null && dmidecode > /tmp/aspersa 2>/dev/null; then
+   if which dmidecode >/dev/null 2>&1 && dmidecode > /tmp/aspersa 2>/dev/null; then
       parse_dmidecode_mem_devices
    fi
 
@@ -966,14 +1019,16 @@ main () {
    # TODO: Add info about software RAID
 
    if echo "${ASPERSA_SKIP}" | grep -v MOUNT >/dev/null; then
-      section "Mounted_Filesystems"
-      cmd="df -h"
-      if [ "${platform}" = "Linux" ]; then
-         cmd="df -h -P"
+      if [ "${platform}" != "SunOS" ]; then
+         section "Mounted_Filesystems"
+         cmd="df -h"
+         if [ "${platform}" = "Linux" ]; then
+            cmd="df -h -P"
+         fi
+         $cmd | sort > /tmp/aspersa2
+         mount | sort | join /tmp/aspersa2 - > /tmp/aspersa
+         parse_filesystems /tmp/aspersa "${platform}"
       fi
-      $cmd | sort > /tmp/aspersa2
-      mount | sort | join /tmp/aspersa2 - > /tmp/aspersa
-      parse_filesystems /tmp/aspersa "${platform}"
    fi
 
    if [ "${platform}" = "Linux" ]; then
@@ -1011,7 +1066,7 @@ main () {
    # often available to non-root users.  It's most reliable to look at
    # /var/log/dmesg if possible.
    # ########################################################################
-   if which lspci >/dev/null && lspci > /tmp/aspersa 2>/dev/null; then
+   if which lspci >/dev/null 2>&1 && lspci > /tmp/aspersa 2>/dev/null; then
       controller="$(parse_raid_controller_lspci)"
    fi
    if [ -z "${controller}" ]; then
@@ -1069,7 +1124,7 @@ main () {
       # #####################################################################
       if [ "${platform}" = "Linux" ]; then
          section Network_Config
-         if which lspci > /dev/null && lspci > /tmp/aspersa 2>/dev/null; then
+         if which lspci > /dev/null 2>&1 && lspci > /tmp/aspersa 2>/dev/null; then
             parse_ethernet_controller_lspci
          fi
          if sysctl net.ipv4.tcp_fin_timeout > /dev/null 2>&1; then
@@ -1082,7 +1137,7 @@ main () {
       # /proc/sys/net/netfilter/nf_conntrack_max or /proc/sys/net/nf_conntrack_max
       # in new kernels like Fedora 12?
 
-      if which ip >/dev/null && ip -s link > /tmp/aspersa 2>/dev/null; then
+      if which ip >/dev/null 2>&1 && ip -s link > /tmp/aspersa 2>/dev/null; then
          section Interface_Statistics
          parse_ip_s_link /tmp/aspersa
       fi
@@ -1095,25 +1150,28 @@ main () {
       fi
    fi
 
+   # ########################################################################
+   # Processes, load, etc
+   # ########################################################################
    if echo "${ASPERSA_SKIP}" | grep -v PROCESS >/dev/null; then
-      # ########################################################################
-      # Processes, load, etc
-      # ########################################################################
-      if which top > /dev/null ; then
-         section Top_Processes
-	 cmd="top -bn 1"
-	 if [ "${platform}" = "FreeBSD" ]; then
-	    cmd="top -b -d 1"
+      section Top_Processes
+      if which prstat > /dev/null 2>&1; then
+         prstat | head
+      elif which top > /dev/null 2>&1 ; then
+         cmd="top -bn 1"
+         if [ "${platform}" = "FreeBSD" ]; then
+            cmd="top -b -d 1"
          fi
          $cmd | sed -e 's# *$##g' -e '/./{H;$!d;}' -e 'x;/PID/!d;' | grep . | head
       fi
-      if which vmstat > /dev/null ; then
+      if which vmstat > /dev/null 2>&1 ; then
          section "Simplified_and_fuzzy_rounded_vmstat_(wait_please)"
          vmstat 1 5 > /tmp/aspersa
-	 if [ "${platform}" = "Linux" ]; then
+         if [ "${platform}" = "Linux" ]; then
             format_vmstat
          else
-	    cat /tmp/aspersa
+            # TODO: simplify/format for other platforms
+            cat /tmp/aspersa
          fi
       fi
    fi
