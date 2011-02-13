@@ -817,15 +817,17 @@ main () {
    name_val "Date" "`date -u +'%F %T UTC'` (local TZ: `date +'%Z %z'`)"
    name_val "Hostname" `uname -n`
    name_val "Uptime" "`uptime | cut -dp -f2 | cut -c2-`"
-   vendor="$(dmidecode -s system-manufacturer 2>/dev/null | sed 's/ *$//g')"
-   if [ "${vendor}" ]; then
-      product="$(dmidecode -s system-product-name 2>/dev/null | sed 's/ *$//g')"
-      version="$(dmidecode -s system-version 2>/dev/null | sed 's/ *$//g')"
-      chassis="$(dmidecode -s chassis-type 2>/dev/null | sed 's/ *$//g')"
-      system="${vendor}; ${product}; v${version} (${chassis})"
-      name_val "System" "${system}";
-      servicetag="$(dmidecode -s system-serial-number 2>/dev/null | sed 's/ *$//g')"
-      name_val "Service Tag" "${servicetag:-Not found}";
+   if which dmidecode > /dev/null; then
+      vendor="$(dmidecode -s system-manufacturer 2>/dev/null | sed 's/ *$//g')"
+      if [ "${vendor}" ]; then
+         product="$(dmidecode -s system-product-name 2>/dev/null | sed 's/ *$//g')"
+         version="$(dmidecode -s system-version 2>/dev/null | sed 's/ *$//g')"
+         chassis="$(dmidecode -s chassis-type 2>/dev/null | sed 's/ *$//g')"
+         system="${vendor}; ${product}; v${version} (${chassis})"
+         name_val "System" "${system}";
+         servicetag="$(dmidecode -s system-serial-number 2>/dev/null | sed 's/ *$//g')"
+         name_val "Service Tag" "${servicetag:-Not found}";
+      fi
    fi
    platform="$(uname -s)"
    name_val "Platform" "${platform}"
@@ -883,7 +885,7 @@ main () {
    if [ "${platform}" = "Linux" ]; then
       name_val Threading "$(getconf GNU_LIBPTHREAD_VERSION)"
    fi
-   if [ -f /lib/libc.so.6 ]; then
+   if [ -x /lib/libc.so.6 ]; then
       name_val "Compiler" "$(/lib/libc.so.6 | grep 'Compiled by' | cut -c13-)"
    fi
 
