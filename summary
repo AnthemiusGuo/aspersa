@@ -1034,7 +1034,7 @@ main () {
    if [ "${platform}" = "Linux" ]; then
       section "Disk_Schedulers_And_Queue_Size"
       echo "" > /tmp/aspersa
-      for disk in $(ls /sys/block/ | grep -v ram | grep -v loop); do
+      for disk in $(ls /sys/block/ | grep -v -e ram -e loop -e 'fd[0-9]'); do
          if [ -e "/sys/block/${disk}/queue/scheduler" ]; then
             name_val "${disk}" "$(cat /sys/block/${disk}/queue/scheduler | grep -o '\[.*\]') $(cat /sys/block/${disk}/queue/nr_requests)"
             fdisk -l "/dev/${disk}" >> /tmp/aspersa 2>/dev/null
