@@ -908,6 +908,7 @@ main() {
    # ########################################################################
    section "Status_Counters_(Wait_10_Seconds)"
    sleep 10
+   # TODO: gather this data in the same format as normal: stats, TS line
    mysql -ss -e 'SHOW /*!50000 GLOBAL*/ STATUS' $@ \
       | join /tmp/aspersa-mysql-status - > /tmp/aspersa 
    # Make a file with a list of things we want to omit because they aren't

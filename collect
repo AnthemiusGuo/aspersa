@@ -124,23 +124,16 @@ fi
    # This loop is a bit redundant to the rest of the stuff, but in some cases we
    # really need this data, like diskstats.  This loop also defines the time of
    # the whole job.  Nanosecond precision isn't possible, but we can surely do
-   # better than 1-second.
+   # better than 1-second timestamps.
    for a in `seq 1 $OPT_i`; do
-      ts=$(date +"%s.%N %F %T");
-      echo "TS $ts" >> $OPT_d/$d-diskstats; cat /proc/diskstats >> $OPT_d/$d-diskstats 2>&1 &
-      echo "TS $ts" >> $OPT_d/$d-procstat;  cat /proc/stat      >> $OPT_d/$d-procstat 2>&1 &
-      echo "TS $ts" >> $OPT_d/$d-df;        df -h               >> $OPT_d/$d-df 2>&1 &
-      echo "TS $ts" >> $OPT_d/$d-netstat;   netstat -antp       >> $OPT_d/$d-netstat 2>&1 &
-      echo "TS $ts" >> $OPT_d/$d-netstat_s; netstat -s          >> $OPT_d/$d-netstat_s 2>&1 &
+      ts=$(date +"TS %s.%N %F %T");
+      (cat /proc/diskstats 2>&1; echo $ts) >> $OPT_d/$d-diskstats &
+      (cat /proc/stat      2>&1; echo $ts) >> $OPT_d/$d-procstat  &
+      (df -h               2>&1; echo $ts) >> $OPT_d/$d-df        &
+      (netstat -antp       2>&1; echo $ts) >> $OPT_d/$d-netstat   &
+      (netstat -s          2>&1; echo $ts) >> $OPT_d/$d-netstat_s &
       sleep 1
    done
-   # Tools to work with the data collected above will rely on <data><timestamp>
-   # formatting.
-   ts=$(date +"%s.%N %F %T");
-   echo "TS $ts" >> $OPT_d/$d-diskstats;
-   echo "TS $ts" >> $OPT_d/$d-procstat;
-   echo "TS $ts" >> $OPT_d/$d-df;
-   echo "TS $ts" >> $OPT_d/$d-netstat;
 
    if [ "${OPT_o}" = "yes" ]; then
       opcontrol --stop >>$OPT_d/$d-output 2>&1;

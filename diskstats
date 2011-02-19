@@ -5,7 +5,6 @@
 # This script reads a file that was generated from /proc/diskstats and
 # summarizes it, kind of like iostat.  The file should look like this:
 #
-# TS <timestamp>
 # <contents of /proc/diskstats>
 # TS <timestamp>
 # <contents of /proc/diskstats>
@@ -507,7 +506,6 @@ main() {
    # If we are interactive and there's no file, we gather stats to play with.
    if [ -z "${READ_FILE}" ]; then
       PARENT=$$
-      date +"TS %s.%N %F %T" > "${OPT_k}"
       loops=1
       while true; do
          cat /proc/diskstats >> "${OPT_k}"
