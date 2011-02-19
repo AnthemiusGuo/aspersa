@@ -161,7 +161,7 @@ fi
    elif [ "${OPT_s}" = "yes" ]; then
       kill -s 2 ${strace_pid}
       sleep 1
-      kill -s 15 ${strace_pid} 2>>$OPT_d/$d-output);
+      kill -s 15 ${strace_pid} 2>>$OPT_d/$d-output;
       # Sometimes strace leaves threads/processes in T status.
       kill -s 18 $p
    fi
