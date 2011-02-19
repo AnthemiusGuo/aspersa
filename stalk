@@ -123,7 +123,7 @@ while true; do
    # XXX Customize this if needed.  The idea is to generate a number and store
    # XXX it into $detected, and if $detected > $THRESHOLD, then we'll execute
    # XXX the collection process.
-   detected=$(mysqladmin ext | grep ${VARIABLE} | awk '{print $4}');
+   detected=$(mysqladmin ext ${MYSQLOPTIONS} | grep ${VARIABLE} | awk '{print $4}');
    if [ -z "${detected}" -a ${MAYBE_EMPTY} = "no" ]; then
       # Oops, couldn't connect, maybe max_connections problem?
       echo "$d The detected value is empty; something failed?  Exit status is $?"
