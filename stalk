@@ -17,53 +17,46 @@
 # Check for the existence of a config file and source it if it exists 
 # ########################################################################
 if [ -f "${0}.conf" ]; then
-    . "${0}.conf"
+   . "${0}.conf"
 fi
 
 # ########################################################################
 # Configuration settings.
 # ########################################################################
-# This is the max number of <whatever> we want to tolerate.  You can pass this
-# in as the first command-line option if you want.
-if [ -z ${THRESHOLD} ]; then
-    THRESHOLD=${$1:-100}
-fi
+# This is the max number of <whatever> we want to tolerate.
+THRESHOLD=${THRESHOLD:-100}
 
-# This is the interval between checks; pass it as the 2nd command-line option.
-if [ -z ${INTERVAL} ]; then
-    INTERVAL=${2:-30}
-fi
+# This is the interval between checks.
+INTERVAL=${INTERVAL:-30}
 
-# This is the thing to check for.  You can pass this as the third option.
-if [ -z ${VARIABLE} ]; then
-    VARIABLE=${3:-Threads_connected}
-fi
+# This is the thing to check for.
+VARIABLE=${VARIABLE:-Threads_connected}
 
 # How many times must the condition be met before the script will fire?
 CYCLES=${CYCLES:-1}
 
 # Collect GDB stacktraces?
-GDB=${GDB:-"no"}
+GDB=${GDB:-no}
 
 # Collect oprofile data?
-OPC={$OPC:-"yes"}
+OPROFILE=${OPROFILE:-yes}
 
 # Collect strace data?
-STRACE={$STRACE:-"no"}
+STRACE=${STRACE:-no}
 
 # If the command you're running to detect the condition is allowed to return
 # nothing (e.g. a grep line that might not even exist if there's no problem),
 # then set this to "yes".
-MAYBE_EMPTY=${MAYBE_EMPTY:-"no"}
+MAYBE_EMPTY=${MAYBE_EMPTY:-no}
 
 # This is the location of the 'collect' script.
-if [ -z ${COLLECT} ]; then
-  COLLECT="${HOME}/bin/collect";
+if [ -z "${COLLECT}" ]; then
+   COLLECT="${HOME}/bin/collect";
 fi
 
 # This is where to store the collected data.
-if [ -z ${DEST} ]; then
-    DEST="${HOME}/collected/"
+if [ -z "${DEST}" ]; then
+   DEST="${HOME}/collected/"
 fi
 
 # How long to collect statistics data for?  Make sure that this isn't longer
@@ -71,20 +64,22 @@ fi
 DURATION=${DURATION:-30}
 
 # How long to sleep after collecting?
-if [ -z ${SLEEP} ]; then
-    SLEEP=$(($DURATION * 10))
+if [ -z "${SLEEP}" ]; then
+   SLEEP=$(($DURATION * 10))
 fi
 
 # Send mail to this list of addresses when the script triggers.
-EMAIL=${EMAIL:-""}
+# EMAIL=
 
 # Bail out if the disk is more than this %full.
 PCT_THRESHOLD=${PCT_THRESHOLD:-95}
+
 # Bail out if the disk has less than this many MB free.
 MB_THRESHOLD=${MB_THRESHOLD:-100}
 
 # Any options to pass to mysql/mysqladmin, such as -u, -p, etc
-MYSQLOPTIONS=${MYSQLOPTIONS:-""}
+# MYSQLOPTIONS=""
+
 # ########################################################################
 # End configuration
 # ########################################################################
@@ -158,7 +153,7 @@ while true; do
       fi
 
       log "${NOTE}" "${COLLECT} triggered"
-      ${COLLECT} -d "${DEST}" -i "${DURATION}" -g "${GDB}" -o "${OPC}" -s "${STRACE}" ${MYSQLOPTIONS}
+      ${COLLECT} -d "${DEST}" -i "${DURATION}" -g "${GDB}" -o "${OPROFILE}" -s "${STRACE}" ${MYSQLOPTIONS}
       echo "$d sleeping ${SLEEP} seconds to avoid DOS attack"
       sleep ${SLEEP}
    else
