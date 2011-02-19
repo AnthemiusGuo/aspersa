@@ -21,10 +21,10 @@ Usage: $0 OPTIONS [MYSQL-OPTIONS]
    options or arguments that follow this tool's -digos options will be treated
    as options to pass directly to mysql and mysqladmin.
 Options: (required: -digos)
-   -d DESTINATION Where to store the resulting data.
+   -d DESTINATION Where to store the resulting data; must already exist.
    -i INTERVAL    How many seconds to collect data.
    -g <yes/no>    Collect GDB stack traces.
-   -o <yes/no>    Collect oprofile data.
+   -o <yes/no>    Collect oprofile data; disables -s.
    -s <yes/no>    Collect strace data.
 	USAGE
    exit 1
