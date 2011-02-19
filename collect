@@ -126,7 +126,7 @@ fi
    # the whole job.  Nanosecond precision isn't possible, but we can surely do
    # better than 1-second.
    for a in `seq 1 $OPT_i`; do
-      ts=$(date +%s.%N);
+      ts=$(date +"%s.%N %F %T");
       echo "TS $ts" >> $OPT_d/$d-diskstats; cat /proc/diskstats >> $OPT_d/$d-diskstats 2>&1 &
       echo "TS $ts" >> $OPT_d/$d-procstat;  cat /proc/stat      >> $OPT_d/$d-procstat 2>&1 &
       echo "TS $ts" >> $OPT_d/$d-df;        df -h               >> $OPT_d/$d-df 2>&1 &
@@ -136,7 +136,7 @@ fi
    done
    # Tools to work with the data collected above will rely on <data><timestamp>
    # formatting.
-   ts=$(date +%s.%N);
+   ts=$(date +"%s.%N %F %T");
    echo "TS $ts" >> $OPT_d/$d-diskstats;
    echo "TS $ts" >> $OPT_d/$d-procstat;
    echo "TS $ts" >> $OPT_d/$d-df;

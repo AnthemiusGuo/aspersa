@@ -507,10 +507,10 @@ main() {
    # If we are interactive and there's no file, we gather stats to play with.
    if [ -z "${READ_FILE}" ]; then
       PARENT=$$
-      date +"TS %s.%N" > "${OPT_k}"
+      date +"TS %s.%N %F %T" > "${OPT_k}"
       while true; do
          cat /proc/diskstats >> "${OPT_k}"
-         date +"TS %s.%N" >> "${OPT_k}"
+         date +"TS %s.%N %F %T" >> "${OPT_k}"
          if ! ps -p ${PARENT} >/dev/null 2>&1 ; then
             # The parent process doesn't exist anymore -- quit.
             if [ "${OPT_k}" = "/tmp/aspersa" ]; then
