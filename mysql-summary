@@ -5,11 +5,11 @@
 
 # ########################################################################
 # A script to summarize MySQL information in a nice way.
-# Goals: work well on Linux; create a compact diff-able report that is
+# Goals: work well on all UNIXes; create a compact diff-able report that is
 # easy to paste into a wiki or email, and easy to scan and compare too.
 # 
 # To use, simply execute it.  Optionally add the same command-line options
-# you would use to connect to MySQL, such as "./summary-mysql --user=foo"
+# you would use to connect to MySQL, such as "./mysql-summary --user=foo"
 #
 # Author: Baron Schwartz
 # ########################################################################
