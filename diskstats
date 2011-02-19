@@ -508,17 +508,26 @@ main() {
    if [ -z "${READ_FILE}" ]; then
       PARENT=$$
       date +"TS %s.%N %F %T" > "${OPT_k}"
+      loops=1
       while true; do
          cat /proc/diskstats >> "${OPT_k}"
          date +"TS %s.%N %F %T" >> "${OPT_k}"
          if ! ps -p ${PARENT} >/dev/null 2>&1 ; then
             # The parent process doesn't exist anymore -- quit.
+            finished="yes"
+         elif [ "${OPT_n}" ]; then
+            if [ "${loops}" -gt "${OPT_n}" ] ; then
+               finished="yes"
+            fi
+         fi
+         if [ "${finished}" ]; then
             if [ "${OPT_k}" = "/tmp/aspersa" ]; then
                rm -f /tmp/aspersa
             fi
             break;
          fi
          sleep ${OPT_s}
+         loops=$(($loops + 1))
       done &
    fi
 
@@ -539,7 +548,7 @@ main() {
    fi
 
    while [ -z "${OPT_n}" -o "${i:-0}" -le "${OPT_n:-0}" ]; do
-      i=$(( ${i:0} + 1 ))
+      i=$(( ${i:-1} + 1 ))
 
       # Re-decide the timeout every loop
       if [ -z "${READ_FILE}" ]; then
@@ -588,7 +597,7 @@ main() {
          if [ -z "${FIRST_LOOP}" ]; then
             # We only print out what's new since last printout
             N=$(($TAIL_LINES * 2 + 3)) # Extra is for TS lines
-            tail -n $N "${OPT_k}" | group_by_${OPT_g} | tail -n +2
+            tail -n $N "${OPT_k}" 2>/dev/null | group_by_${OPT_g} | tail -n +2
          else
             group_by_${OPT_g} "${OPT_k}"
          fi
