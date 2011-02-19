@@ -36,7 +36,7 @@ Options:
       all)     # Summarize into a single line of output.
       filename)# One line of output per filename.
       pid)     # One line of output per process ID.
-   -k KEEPFILE A file to hold the raw strace data (defalt: /tmp/aspersa)
+   -k KEEPFILE A file to hold the raw strace data (default: /tmp/aspersa)
                The default value prevents the file from being saved; any other
                value will result in the file being saved for further analysis.
    -p PID      The process ID to profile; overrides -b.
