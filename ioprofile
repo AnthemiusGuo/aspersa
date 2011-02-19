@@ -390,30 +390,30 @@ main() {
          date;
          if [ "${OPT_p}" ]; then
             echo "Tracing process ID ${OPT_p}"
-            
+
             lsof -n -P -s -p "${OPT_p}" > "${OPT_k}" 2>&1
             if [ "$?" -ne "0" ]; then
-                echo "error: could not execute lsof, error code $?"
-                exit $?
+               echo "Error: could not execute lsof, error code $?"
+               exit 1
             fi
 
             strace -T -s 0 -f -p ${OPT_p} >> "${OPT_k}" 2>&1 &
             if [ "$?" -ne "0" ]; then
-                echo "error: could not execute strace, error code $?"
-                exit $?
+               echo "Error: could not execute strace, error code $?"
+               exit 1
             fi
             tokill=$!
             #sleep one second then check to make sure the strace is actually running
             sleep 1
             ps -p ${tokill} > /dev/null 2>&1
             if [ "$?" -ne "0" ]; then
-               echo "could not find strace process.. possible error message follows"
+               echo "Error: could not find strace process.. possible error message follows"
                tail "${OPT_k}"
                exit 1
             fi 
             #sleep for interval -1, since we did a one second sleep before checking for the
             #PID of strace
- 
+
             if [ $((${OPT_s}-1)) -gt 0 ]; then
                 sleep $((${OPT_s}-1))
             fi
@@ -422,7 +422,7 @@ main() {
 
             sleep 1
             kill -s 15 ${tokill} 2>/dev/null
-            
+
             # Sometimes strace leaves threads/processes in T status.
             kill -s 18 ${OPT_p}
             # Summarize the output we just generated.
@@ -432,7 +432,7 @@ main() {
             exit 1
          fi
       else
-         echo "error: could not find strace in path"
+         echo "Error: could not find strace in path"
          exit 1
       fi
    else
