@@ -367,7 +367,7 @@ main() {
             ;;
       esac
    done
-   export OPT_k="${OPT_k:-}";
+   export OPT_k="${OPT_k:-/tmp/aspersa}";
    export OPT_a="${OPT_a:-sum}";
    export OPT_b="${OPT_b:-mysqld}";
    export OPT_p="${OPT_p:-}";
@@ -377,7 +377,7 @@ main() {
 
    if [ $# -eq 0 ]; then
       # There's no file to analyze, so we'll make one.
-      if which strace >/dev/null; then
+      if which strace > /dev/null 2>&1; then
          if [ -z "${OPT_p}" ]; then
             OPT_p=$(pidof -s "${OPT_b}" 2>/dev/null);
             if [ -z "${OPT_p}" ]; then
@@ -390,13 +390,39 @@ main() {
          date;
          if [ "${OPT_p}" ]; then
             echo "Tracing process ID ${OPT_p}"
-            lsof -n -P -s -p "${OPT_p}" > "${OPT_k}"
+            
+            lsof -n -P -s -p "${OPT_p}" > "${OPT_k}" 2>&1
+            if [ "$?" -ne "0" ]; then
+                echo "error: could not execute lsof, error code $?"
+                exit $?
+            fi
+
             strace -T -s 0 -f -p ${OPT_p} >> "${OPT_k}" 2>&1 &
+            if [ "$?" -ne "0" ]; then
+                echo "error: could not execute strace, error code $?"
+                exit $?
+            fi
             tokill=$!
-            sleep ${OPT_s}
+            #sleep one second then check to make sure the strace is actually running
+            sleep 1
+            ps -p ${tokill} > /dev/null 2>&1
+            if [ "$?" -ne "0" ]; then
+               echo "could not find strace process.. possible error message follows"
+               tail "${OPT_k}"
+               exit 1
+            fi 
+            #sleep for interval -1, since we did a one second sleep before checking for the
+            #PID of strace
+ 
+            if [ $((${OPT_s}-1)) -gt 0 ]; then
+                sleep $((${OPT_s}-1))
+            fi
+
             kill -s 2 ${tokill}
+
             sleep 1
             kill -s 15 ${tokill} 2>/dev/null
+            
             # Sometimes strace leaves threads/processes in T status.
             kill -s 18 ${OPT_p}
             # Summarize the output we just generated.
@@ -405,6 +431,9 @@ main() {
             echo "No such process"
             exit 1
          fi
+      else
+         echo "error: could not find strace in path"
+         exit 1
       fi
    else
       # Summarize the files the user passed in.
