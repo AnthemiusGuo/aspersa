@@ -569,6 +569,7 @@ main() {
       if [ -z "${READ_FILE}" ]; then
          TIMEOUT="-t ${OPT_s}"
       fi
+      cmd="" # Must reset, some bash won't clear it after a read times out.
       read $TIMEOUT -n 1 -s cmd junk
       case "${cmd}" in
          A)
