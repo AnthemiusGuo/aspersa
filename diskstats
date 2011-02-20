@@ -419,6 +419,7 @@ print_help() {
    d) Enter an awk regex to match disk names   ${OPT_d:-(none)}
    i) Set the sample size in seconds           ${OPT_i:-(none)}
    s) Set the redisplay interval in seconds    ${OPT_s:-(none)}
+   p) Pause the program
    q) Quit the program
    ------------------- Press any key to continue -----------------------
 	HELP
@@ -592,6 +593,9 @@ main() {
          i)
             read -p "Enter a sample size: " OPT_i
             FIRST_LOOP="1"
+            ;;
+         p)
+            read -n 1 -p "Paused - press any key to continue"
             ;;
          q)
             break
