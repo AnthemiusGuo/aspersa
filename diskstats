@@ -539,6 +539,11 @@ main() {
          sleep ${OPT_s}
          loops=$(($loops + 1))
       done &
+
+      # Sleep until the loop has gathered 2 samples.
+      while [ "$(grep -c TS "${OPT_k}")" -lt "2" ]; do
+         sleep .5
+      done
    fi
 
    if [ -z "${READ_FILE}" ]; then
