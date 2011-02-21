@@ -37,19 +37,6 @@ Usage: $0 [OPTIONS] [FILE|PREFIX|DIRECTORY]
 # The main code that runs by default.  Arguments are the command-line options.
 main() {
 
-   # If the programs we need don't exist, try to get them.
-   for prog in align diskstats pmp mext; do
-      if which $prog >/dev/null 2>&1 ; then
-         eval "PR_$prog"="$(which $prog)"
-      elif test -f $prog && test -x $prog; then
-         eval "PR_$prog"="./$prog"
-      else
-         echo "Fetching $prog"
-         curl http://aspersa.googlecode.com/svn/trunk/$prog > $prog && chmod +x $prog
-         eval "PR_$prog"="./$prog"
-      fi
-   done
-
    # If there's a command-line arg, figure out if it's a file, directory, or
    # prefix.  The outcome of this block of code should be that BASEDIR is the
    # directory where the files live, without a trailing slash; and PREFIX is
@@ -64,6 +51,21 @@ main() {
       echo "Error: ${ARG} doesn't look like a directory, file, or file prefix"
       exit 1
    fi
+
+   # If the programs we need don't exist, try to get them.
+   for prog in align diskstats pmp mext; do
+      if which $prog >/dev/null 2>&1 ; then
+         eval "PR_$prog"="$(which $prog)"
+      elif [ -f $prog -a -x $prog ]; then
+         eval "PR_$prog"="./$prog"
+      elif [ -f "${BASEDIR}/$prog" -a -x "${BASEDIR}/$prog" ]; then
+         eval "PR_$prog"="${BASEDIR}/$prog"
+      else
+         echo "Fetching $prog"
+         curl http://aspersa.googlecode.com/svn/trunk/$prog > $prog && chmod +x $prog
+         eval "PR_$prog"="./$prog"
+      fi
+   done
 
    # We need to generate a list of timestamps, and ask the user to choose one if
    # there is no PREFIX yet.  NOTE: we rely on the "-df" files here.
@@ -250,6 +252,7 @@ main() {
             ;;
          '?')
             print_help
+            read -n 1 -s -p "Press any key to continue"
             ;;
       esac
    done
@@ -258,6 +261,6 @@ main() {
 
 # Execute the program if it was not included from another file.  This makes it
 # possible to include without executing, and thus test.
-if [ $(basename "$0") = "sift" ] || [ $(basename "$0") = "bash" -a "$_" = "$0" ]; then
+if [ "$(basename "$0")" = "sift" ] || [ "$(basename "$0")" = "bash" -a "$_" = "$0" ]; then
     main $@
 fi
