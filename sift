@@ -13,8 +13,12 @@ print_help() {
    You can control this program with key presses.
                   ---  COMMANDS  ---
       1  Default action: summarize files
-      d  Invoke 'diskstats' on the disk performance data
+      0  Minimal action: list files
       *  View all the files in less
+      d  Invoke 'diskstats' on the disk performance data
+      i  View the first INNODB STATUS sample in 'less'
+      m  Invoke 'mext' to show the SHOW STATUS counters side by side
+      n  Summarize the 'netstat -antp' status data
                   --- NAVIGATION ---
       j  Select the next timestamp
       k  Select the previous timestamp
@@ -196,7 +200,10 @@ main() {
             echo "--stack traces--"
             $PR_pmp -l 5 "${BASEDIR}/${PREFIX}-stacktrace" | head -n 5
             echo "--oprofile--"
-            awk '
+            if [ ! -e "${BASEDIR}/${PREFIX}-opreport" ]; then
+               echo "    No opreport file exists"
+            fi
+            test -e "${BASEDIR}/${PREFIX}-opreport" && awk '
                {
                   if ( $1 == "samples" ) {
                      go = 1;
@@ -210,15 +217,60 @@ main() {
                } ' "${BASEDIR}/${PREFIX}-opreport"
             ;;
 
+         LIST)
+            ls -lh ${BASEDIR}/${PREFIX}-*
+            ;;
+
          VIEW)
             echo "Viewing all files"
-            less ${BASEDIR}/${PREFIX}-*
+            less -i ${BASEDIR}/${PREFIX}-*
             echo "Press a key to continue or choose a different action"
             ;;
 
          DISKSTATS)
             echo "Starting $PR_diskstats"
             $PR_diskstats "${BASEDIR}/${PREFIX}-diskstats"
+            echo "Press a key to continue or choose a different action"
+            ;;
+
+         INNODB)
+            echo "Viewing InnoDB files"
+            less -i "${BASEDIR}/${PREFIX}-innodbstatus1"
+            echo "Press a key to continue or choose a different action"
+            ;;
+
+         MEXT)
+            echo "Displaying the first 4 samples of SHOW STATUS counters"
+            # Grab the first 4 samples by looking for blank lines.  I'll rewrite
+            # mext and this will be simpler in future. TODO: upgrade, if mext is
+            # fixed :)
+            awk '/---/{if(i++>12){exit}}{print}' "${BASEDIR}/${PREFIX}-mysqladmin" | mext -r -- cat - | less -S
+            echo "Press a key to continue or choose a different action"
+            ;;
+
+         NETWORK)
+            echo "Source of connections to port 3306"
+            awk '
+               /:3306/ {
+                  print substr($5, 0, index($5, ":") - 1);
+               }
+               /TS/ {
+                  if ( i++ > 1 ) {
+                     # Stop after the first sample
+                     exit;
+                  }
+               }' "${BASEDIR}/${PREFIX}-netstat" | sort | uniq -c | sort -rn
+            echo "Status of connections to port 3306"
+            awk '
+               /:3306/ {
+                  print $6;
+               }
+               /TS/ {
+                  if ( i++ > 1 ) {
+                     # Stop after the first sample
+                     exit;
+                  }
+               }' "${BASEDIR}/${PREFIX}-netstat" | sort | uniq -c | sort -rn
             echo "Press a key to continue or choose a different action"
             ;;
 
@@ -256,11 +308,23 @@ main() {
          1)
             ACTION="DEFAULT"
             ;;
+         0)
+            ACTION="LIST"
+            ;;
          '*')
             ACTION="VIEW"
             ;;
          d)
             ACTION="DISKSTATS"
+            ;;
+         i)
+            ACTION="INNODB"
+            ;;
+         m)
+            ACTION="MEXT"
+            ;;
+         n)
+            ACTION="NETWORK"
             ;;
          '?')
             print_help
