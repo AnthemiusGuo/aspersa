@@ -72,7 +72,7 @@ awk_save_sample_to_first="
       }
 "
 
-awk_set_iteratations_and_timestamp="
+awk_set_iterations_and_timestamp="
       iterations++;
       curr_ts = \$2;
       if ( iterations == 1 ) {
@@ -280,9 +280,12 @@ group_by_disk () {
       ${awk_save_sample_to_curr}
    }
    \$1 ~ /TS/ && NR > 1 {
-      ${awk_set_iteratations_and_timestamp}
+      ${awk_set_iterations_and_timestamp}
    }
    END {
+      if ( iterations < 2 ) {
+         exit;
+      }
       ${awk_find_max_device_name_length}
       ${awk_print_header}
       elapsed = curr_ts - first["ts"];
@@ -317,7 +320,7 @@ group_by_sample() {
       ${awk_save_sample_to_curr}
    }
    \$1 ~ /TS/ && NR > 1 {
-      ${awk_set_iteratations_and_timestamp}
+      ${awk_set_iterations_and_timestamp}
       printed_a_line = 0;
       if ( iterations == 1 ) {
          # The second time we see a timestamp we are ready to print a header.
@@ -385,7 +388,7 @@ group_by_all () {
       ${awk_save_sample_to_curr}
    }
    \$1 ~ /TS/ && NR > 1 {
-      ${awk_set_iteratations_and_timestamp}
+      ${awk_set_iterations_and_timestamp}
       ${awk_find_max_device_name_length}
       if ( iterations > 1 ) {
          if ( devs > 1 || iterations == 2 ) {
