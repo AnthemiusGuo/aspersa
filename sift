@@ -13,6 +13,7 @@ print_help() {
    You can control this program with key presses.
                   ---  COMMANDS  ---
       1  Default action: summarize files
+      d  Invoke 'diskstats' on the disk performance data
       *  View all the files in less
                   --- NAVIGATION ---
       j  Select the next timestamp
@@ -98,7 +99,7 @@ main() {
    while [ "${KEY}" != "q" ]; do
 
       # Print the current timestamp and action
-      echo "===================== ${PREFIX} ${ACTION} ========================="
+      echo -e "===================== \033[34m${PREFIX} \033[31m${ACTION}\033[0m ========================="
 
       # Take an action based on the current $ACTION
       case "${ACTION}" in
@@ -210,7 +211,15 @@ main() {
             ;;
 
          VIEW)
+            echo "Viewing all files"
             less ${BASEDIR}/${PREFIX}-*
+            echo "Press a key to continue or choose a different action"
+            ;;
+
+         DISKSTATS)
+            echo "Starting $PR_diskstats"
+            $PR_diskstats "${BASEDIR}/${PREFIX}-diskstats"
+            echo "Press a key to continue or choose a different action"
             ;;
 
       esac
@@ -250,9 +259,13 @@ main() {
          '*')
             ACTION="VIEW"
             ;;
+         d)
+            ACTION="DISKSTATS"
+            ;;
          '?')
             print_help
-            read -n 1 -s -p "Press any key to continue"
+            echo "Press any key to continue"
+            read -n 1 -s
             ;;
       esac
    done
