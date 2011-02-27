@@ -77,6 +77,11 @@ fi
       p=$(ps -eaf | grep 'mysql[d]' | grep -v mysqld_safe | awk '{print $2}' | head -n1);
    fi
 
+   # Get memory allocation info before anything else.
+   if [ "${p}" ]; then
+      pmap -x $p > $d-pmap
+   fi
+
    # Getting a GDB stacktrace can be an intensive operation, so do this only if
    # necessary.
    if [ "${OPT_g}" = "yes" -a "${p}" ]; then
@@ -108,8 +113,12 @@ fi
    fi
 
    # Grab a few general things first.  Background all of these so we can start
-   # them all up as quickly as possible.
+   # them all up as quickly as possible.  We use mysqladmin -c even though it is
+   # buggy, because there is a chance that we will get and keep a connection to
+   # the database; in troubled times the database tends to exceed
+   # max_connections, so reconnecting in the loop tends not to work very well.
    ps -eaf                       >> $OPT_d/$d-ps 2>&1 &
+   sysctl -a                     >> $OPT_d/$d-sysctl 2>&1 &
    top -bn1                      >> $OPT_d/$d-top 2>&1 &
    vmstat 1 $OPT_i               >> $OPT_d/$d-vmstat 2>&1 &
    vmstat $OPT_i 2               >> $OPT_d/$d-vmstat-overall 2>&1 &
@@ -123,15 +132,18 @@ fi
 
    # This loop is a bit redundant to the rest of the stuff, but in some cases we
    # really need this data, like diskstats.  This loop also defines the time of
-   # the whole job.  Nanosecond precision isn't possible, but we can surely do
-   # better than 1-second timestamps.
+   # the whole job.
    for a in `seq 1 $OPT_i`; do
       ts="$(date +"TS %s.%N %F %T")"
-      (cat /proc/diskstats 2>&1; echo $ts) >> $OPT_d/$d-diskstats &
-      (cat /proc/stat      2>&1; echo $ts) >> $OPT_d/$d-procstat  &
-      (df -h               2>&1; echo $ts) >> $OPT_d/$d-df        &
-      (netstat -antp       2>&1; echo $ts) >> $OPT_d/$d-netstat   &
-      (netstat -s          2>&1; echo $ts) >> $OPT_d/$d-netstat_s &
+      (cat /proc/diskstats  2>&1; echo $ts) >> $OPT_d/$d-diskstats   &
+      (cat /proc/stat       2>&1; echo $ts) >> $OPT_d/$d-procstat    &
+      (cat /proc/vmstat     2>&1; echo $ts) >> $OPT_d/$d-procvmstat  &
+      (cat /proc/meminfo    2>&1; echo $ts) >> $OPT_d/$d-meminfo     &
+      (cat /proc/slabinfo   2>&1; echo $ts) >> $OPT_d/$d-slabinfo    &
+      (cat /proc/interrupts 2>&1; echo $ts) >> $OPT_d/$d-interrupts  &
+      (df -h                2>&1; echo $ts) >> $OPT_d/$d-df          &
+      (netstat -antp        2>&1; echo $ts) >> $OPT_d/$d-netstat     &
+      (netstat -s           2>&1; echo $ts) >> $OPT_d/$d-netstat_s   &
       sleep 1
    done
 
