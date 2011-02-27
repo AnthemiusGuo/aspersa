@@ -90,7 +90,7 @@ main() {
       # newline if required to end the list of timestamp prefixes.
       awk 'BEGIN { i = 0 } { i++ } END { if ( i % 3 != 0 ) { print "" } }' /tmp/aspersa.sift-prefixes
       echo
-      while [ "$(grep -c "${PREFIX}" /tmp/aspersa.sift-prefixes)" -ne 1 ]; do
+      while [ -z "${PREFIX}" -o "$(grep -c "${PREFIX}" /tmp/aspersa.sift-prefixes)" -ne 1 ]; do
          read -e -i "$(tail -1 /tmp/aspersa.sift-prefixes)" -p "Select a timestamp from the list: " ARG
          if [ "$(grep -c "${ARG}" /tmp/aspersa.sift-prefixes)" -eq 1 ]; then
             PREFIX="$(grep "${ARG}" /tmp/aspersa.sift-prefixes)"
