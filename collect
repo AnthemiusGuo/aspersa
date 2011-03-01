@@ -64,7 +64,7 @@ fi
 
 # Make sure there's only one of me.
 (
-   flock -x -s 200
+   flock 200
 
    d=$(date +%F-%T | tr :- _);
    echo "Gathering info for $d"
