@@ -76,6 +76,12 @@ main() {
    # there is no PREFIX yet.  NOTE: we rely on the "-df" files here.
    ls "${BASEDIR}" | grep -- '-df$' | cut -d- -f1 | sort > /tmp/aspersa.sift-prefixes
    if [ -z "${PREFIX}" ]; then
+      if [ "$(grep -c . /tmp/aspersa.sift-prefixes)" = "1" ]; then
+         # If there is only one sample, we use it as the prefix.
+         PREFIX="$(cat /tmp/aspersa.sift-prefixes)"
+      fi
+   fi
+   if [ -z "${PREFIX}" ]; then
       echo
       i=0
       cat /tmp/aspersa.sift-prefixes | while read line; do
@@ -102,8 +108,10 @@ main() {
    ACTION="DEFAULT"
    while [ "${KEY}" != "q" ]; do
 
-      # Print the current timestamp and action
-      echo -e "===================== \033[34m${PREFIX} \033[31m${ACTION}\033[0m ========================="
+      # Print the current timestamp and action.  Figure out if we're at the
+      # first or last sample, to make it easy to see.
+      PAGE="$(awk "/./{i++} /${PREFIX}/{c=i} END{print c, \"of\", i}" /tmp/aspersa.sift-prefixes)"
+      echo -e "===================== \033[34m${PREFIX} \033[31m${ACTION}\033[0m (${PAGE}) ========================="
 
       # Take an action based on the current $ACTION
       case "${ACTION}" in
@@ -178,8 +186,16 @@ main() {
                      chkp = $4;
                   }
                }
+               /END OF INNODB/ {
+                  complete = 1;
+               }
                END {
-                  print "    " inside;
+                  if ( complete != 1 ) {
+                     print "    (innodb status is incomplete)";
+                  }
+                  if ( inside ) {
+                     print "    " inside;
+                  }
                   printf "    Main thread: %s, pending reads %d, writes %d, flush %d\n", main_state, pending_reads, pending_writes, pending_flushes;
                   printf "    Log: lsn = %d, chkp = %d, chkp age = %d\n", lsn, chkp, lsn - chkp;
                }
