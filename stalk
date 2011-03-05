@@ -26,9 +26,6 @@ fi
 # This is the max number of <whatever> we want to tolerate.
 THRESHOLD=${THRESHOLD:-100}
 
-# This is the interval between checks.
-INTERVAL=${INTERVAL:-30}
-
 # This is the thing to check for.
 VARIABLE=${VARIABLE:-Threads_connected}
 
@@ -43,6 +40,15 @@ OPROFILE=${OPROFILE:-yes}
 
 # Collect strace data?
 STRACE=${STRACE:-no}
+
+# Send mail to this list of addresses when the script triggers.
+# EMAIL=
+
+# Any options to pass to mysql/mysqladmin, such as -u, -p, etc
+# MYSQLOPTIONS=""
+
+# This is the interval between checks.
+INTERVAL=${INTERVAL:-30}
 
 # If the command you're running to detect the condition is allowed to return
 # nothing (e.g. a grep line that might not even exist if there's no problem),
@@ -68,17 +74,14 @@ if [ -z "${SLEEP}" ]; then
    SLEEP=$(($DURATION * 10))
 fi
 
-# Send mail to this list of addresses when the script triggers.
-# EMAIL=
-
 # Bail out if the disk is more than this %full.
 PCT_THRESHOLD=${PCT_THRESHOLD:-95}
 
 # Bail out if the disk has less than this many MB free.
 MB_THRESHOLD=${MB_THRESHOLD:-100}
 
-# Any options to pass to mysql/mysqladmin, such as -u, -p, etc
-# MYSQLOPTIONS=""
+# Remove samples after this many days.
+PURGE=${PURGE:-30}
 
 # ########################################################################
 # End configuration
@@ -153,11 +156,18 @@ while true; do
       fi
 
       log "${NOTE}" "${COLLECT} triggered"
-      ${COLLECT} -d "${DEST}" -i "${DURATION}" -g "${GDB}" -o "${OPROFILE}" -s "${STRACE}" ${MYSQLOPTIONS}
+      PREFIX="$(date +%F-%T | tr :- _)"
+      echo "${NOTE}" > "${DEST}/${PREFIX}-trigger"
+      ${COLLECT} -d "${DEST}" -i "${DURATION}" -g "${GDB}" -o "${OPROFILE}" -p "${PREFIX}" -s "${STRACE}" ${MYSQLOPTIONS}
       echo "$d sleeping ${SLEEP} seconds to avoid DOS attack"
       sleep ${SLEEP}
    else
       echo ${NOTE}
       sleep ${INTERVAL}
    fi
+
+
+   # Delete things more than $PURGE days old
+   find "${DEST}" -type f -mtime +${PURGE} -exec rm -f '{}' \;
+
 done
