@@ -141,7 +141,7 @@ main() {
                   inside = $0;
                }
                /Main thread/ {
-                  main_state = $NF;
+                  main_state = substr($0, index($0, ":") + 2);
                }
                /Pending normal/ {
                   pending_reads += substr($5, 1, length($5) - 1);
