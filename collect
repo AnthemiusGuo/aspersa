@@ -25,6 +25,7 @@ Options: (required: -digos)
    -i INTERVAL    How many seconds to collect data.
    -g <yes/no>    Collect GDB stack traces.
    -o <yes/no>    Collect oprofile data; disables -s.
+   -p PREFIX      Store the data into files with this prefix (optional).
    -s <yes/no>    Collect strace data.
 	USAGE
    exit 1
@@ -51,6 +52,9 @@ for o; do
       -o)
          shift; OPT_o="${1}"; shift;
          ;;
+      -p)
+         shift; OPT_p="${1}"; shift;
+         ;;
       -s)
          shift; OPT_s="${1}"; shift;
          ;;
@@ -62,16 +66,21 @@ if [ -z "${OPT_d}" -o -z "${OPT_i}" -o -z "${OPT_o}" -o -z "${OPT_g}"  -o -z "${
    usage
 fi
 
+if [ "${OPT_p}" ]; then
+   d="${OPT_p}"
+else
+   d=$(date +%F-%T | tr :- _);
+fi
+echo "Gathering info for $d"
+
 # Make sure there's only one of me.
 (
    flock 200
 
-   d=$(date +%F-%T | tr :- _);
-   echo "Gathering info for $d"
    # Get pidof mysqld; pidof doesn't exist on some systems.  We try our best...
-   p=$(pidof -s mysqld 2>>$OPT_d/$d-output);
+   p=$(pidof -s mysqld);
    if [ -z "${p}" ]; then
-      p=$(pgrep -o -x mysqld 2>>$OPT_d/$d-output)
+      p=$(pgrep -o -x mysqld);
    fi
    if [ -z "${p}" ]; then
       p=$(ps -eaf | grep 'mysql[d]' | grep -v mysqld_safe | awk '{print $2}' | head -n1);
@@ -80,34 +89,53 @@ fi
    # Get memory allocation info before anything else.
    if [ "${p}" ]; then
       if pmap --help 2>&1 | grep -- -x >/dev/null 2>&1 ; then
-         pmap -x $p > $OPT_d/$d-pmap 2>>$OPT_d/$d-output
+         pmap -x $p > "$OPT_d/$d-pmap"
       else
          # Some pmap's apparently don't support -x (issue 116).
-         pmap $p > $OPT_d/$d-pmap 2>>$OPT_d/$d-output
+         pmap $p > "$OPT_d/$d-pmap"
       fi
    fi
 
    # Getting a GDB stacktrace can be an intensive operation, so do this only if
    # necessary.
    if [ "${OPT_g}" = "yes" -a "${p}" ]; then
-      gdb -ex "set pagination 0" -ex "thread apply all bt" --batch -p $p >> $OPT_d/$d-stacktrace
+      gdb -ex "set pagination 0" -ex "thread apply all bt" --batch -p $p >> "$OPT_d/$d-stacktrace"
    else
-      echo "GDB (-g) was not enabled" >> $OPT_d/$d-stacktrace
+      echo "GDB (-g) was not enabled" >> "$OPT_d/$d-stacktrace"
+   fi
+
+   # Get MySQL's variables if possible.  Is MySQL logging its errors to a file?
+   # If so, tail that file after sleeping long enough that we probably complete
+   # SHOW VARIABLES if all's well.  (We don't want to run mysql in the
+   # foreground, because it could hang.)
+   mysql "$@" -e 'SHOW GLOBAL VARIABLES' >> "$OPT_d/$d-variables" 2>&1 &
+   sleep .2
+   errfile="$(awk '/log_error/{print $2}' "$OPT_d/$d-variables")"
+   if [ -z "${errfile}" -a "${p}" ]; then
+      # Try getting it from the open filehandle...
+      errfile="$(ls -l /proc/${p}/fd | awk '/ 2 ->/{print $NF}')"
+   fi
+
+   if [ "${errfile}" ]; then
+      echo "The error file seems to be ${errfile}"
+      tail -f "${errfile}" >"$OPT_d/$d-log_error" 2>&1 &
+      error_pid=$!
+   else
+      echo "Could not detect error file; will not tail MySQL's log file"
    fi
 
    # Get a sample of SHOW INNODB STATUS and SHOW FULL PROCESSLIST right away, so
    # we can get these without interaction with the other commands we're about to
    # run.
    INNOSTAT="SHOW /*!40100 ENGINE*/ INNODB STATUS\G"
-   mysql $@ -e 'SHOW GLOBAL VARIABLES'   >> $OPT_d/$d-variables 2>&1 &
-   mysql $@ -e "${INNOSTAT}"             >> $OPT_d/$d-innodbstatus1 2>&1 &
-   mysql $@ -e 'SHOW FULL PROCESSLIST\G' >> $OPT_d/$d-processlist1  2>&1 &
+   mysql "$@" -e "${INNOSTAT}"             >> "$OPT_d/$d-innodbstatus1" 2>&1 &
+   mysql "$@" -e 'SHOW FULL PROCESSLIST\G' >> "$OPT_d/$d-processlist1"  2>&1 &
 
    # Next, start oprofile gathering data during the whole rest of this process.
    # The --init should be a no-op if it has already been init-ed.
    if [ "${OPT_o}" = "yes" ]; then
-      if opcontrol --init >>$OPT_d/$d-output 2>&1; then
-         opcontrol --start --no-vmlinux >>$OPT_d/$d-output
+      if opcontrol --init; then
+         opcontrol --start --no-vmlinux
       else
          OPT_o="no"
       fi
@@ -119,67 +147,70 @@ fi
 
    # Grab a few general things first.  Background all of these so we can start
    # them all up as quickly as possible.  We use mysqladmin -c even though it is
-   # buggy, because there is a chance that we will get and keep a connection to
-   # the database; in troubled times the database tends to exceed
-   # max_connections, so reconnecting in the loop tends not to work very well.
-   ps -eaf                       >> $OPT_d/$d-ps 2>&1 &
-   sysctl -a                     >> $OPT_d/$d-sysctl 2>&1 &
-   top -bn1                      >> $OPT_d/$d-top 2>&1 &
-   vmstat 1 $OPT_i               >> $OPT_d/$d-vmstat 2>&1 &
-   vmstat $OPT_i 2               >> $OPT_d/$d-vmstat-overall 2>&1 &
-   iostat -dx  1 $OPT_i          >> $OPT_d/$d-iostat 2>&1 &
-   iostat -dx  $OPT_i 2          >> $OPT_d/$d-iostat-overall 2>&1 &
-   mpstat -P ALL 1 $OPT_i        >> $OPT_d/$d-mpstat 2>&1 &
-   mpstat -P ALL $OPT_i 1        >> $OPT_d/$d-mpstat-overall 2>&1 &
-   lsof -nP -p $p -bw            >> $OPT_d/$d-lsof 2>&1 &
-   mysqladmin $@ ext -i1 -c$OPT_i  >> $OPT_d/$d-mysqladmin 2>&1 &
+   # buggy and won't stop on its own in 5.1 and newer, because there is a chance
+   # that we will get and keep a connection to the database; in troubled times
+   # the database tends to exceed max_connections, so reconnecting in the loop
+   # tends not to work very well.
+   ps -eaf                       >> "$OPT_d/$d-ps" 2>&1 &
+   sysctl -a                     >> "$OPT_d/$d-sysctl" 2>&1 &
+   top -bn1                      >> "$OPT_d/$d-top" 2>&1 &
+   vmstat 1 $OPT_i               >> "$OPT_d/$d-vmstat" 2>&1 &
+   vmstat $OPT_i 2               >> "$OPT_d/$d-vmstat-overall" 2>&1 &
+   iostat -dx  1 $OPT_i          >> "$OPT_d/$d-iostat" 2>&1 &
+   iostat -dx  $OPT_i 2          >> "$OPT_d/$d-iostat-overall" 2>&1 &
+   mpstat -P ALL 1 $OPT_i        >> "$OPT_d/$d-mpstat" 2>&1 &
+   mpstat -P ALL $OPT_i 1        >> "$OPT_d/$d-mpstat-overall" 2>&1 &
+   lsof -nP -p $p -bw            >> "$OPT_d/$d-lsof" 2>&1 &
+   mysqladmin "$@" ext -i1 -c$OPT_i  >> "$OPT_d/$d-mysqladmin" 2>&1 &
    mysqladmin_pid=$!
 
-   # This loop is a bit redundant to the rest of the stuff, but in some cases we
-   # really need this data, like diskstats.  This loop also defines the time of
+   # This loop gathers data for the rest of the duration, and defines the time of
    # the whole job.
    for a in `seq 1 $OPT_i`; do
       ts="$(date +"TS %s.%N %F %T")"
-      (cat /proc/diskstats  2>&1; echo $ts) >> $OPT_d/$d-diskstats   &
-      (cat /proc/stat       2>&1; echo $ts) >> $OPT_d/$d-procstat    &
-      (cat /proc/vmstat     2>&1; echo $ts) >> $OPT_d/$d-procvmstat  &
-      (cat /proc/meminfo    2>&1; echo $ts) >> $OPT_d/$d-meminfo     &
-      (cat /proc/slabinfo   2>&1; echo $ts) >> $OPT_d/$d-slabinfo    &
-      (cat /proc/interrupts 2>&1; echo $ts) >> $OPT_d/$d-interrupts  &
-      (df -h                2>&1; echo $ts) >> $OPT_d/$d-df          &
-      (netstat -antp        2>&1; echo $ts) >> $OPT_d/$d-netstat     &
-      (netstat -s           2>&1; echo $ts) >> $OPT_d/$d-netstat_s   &
+      (cat /proc/diskstats  2>&1; echo $ts) >> "$OPT_d/$d-diskstats"   &
+      (cat /proc/stat       2>&1; echo $ts) >> "$OPT_d/$d-procstat"    &
+      (cat /proc/vmstat     2>&1; echo $ts) >> "$OPT_d/$d-procvmstat"  &
+      (cat /proc/meminfo    2>&1; echo $ts) >> "$OPT_d/$d-meminfo"     &
+      (cat /proc/slabinfo   2>&1; echo $ts) >> "$OPT_d/$d-slabinfo"    &
+      (cat /proc/interrupts 2>&1; echo $ts) >> "$OPT_d/$d-interrupts"  &
+      (df -h                2>&1; echo $ts) >> "$OPT_d/$d-df"          &
+      (netstat -antp        2>&1; echo $ts) >> "$OPT_d/$d-netstat"     &
+      (netstat -s           2>&1; echo $ts) >> "$OPT_d/$d-netstat_s"   &
       sleep 1
    done
 
    if [ "${OPT_o}" = "yes" ]; then
-      opcontrol --stop >>$OPT_d/$d-output 2>&1;
-      opcontrol --dump >>$OPT_d/$d-output 2>&1;
-      kill $(pidof oprofiled 2>>$OPT_d/$d-output) >>$OPT_d/$d-output 2>&1;
-      opcontrol --save=$d >>$OPT_d/$d-output 2>&1;
+      opcontrol --stop
+      opcontrol --dump
+      kill $(pidof oprofiled);
+      opcontrol --save=$d
 
       # Attempt to generate a report; if this fails, then just tell the user how
       # to generate the report.
-      path_to_binary=$(which mysqld 2>>$OPT_d/$d-output);
+      path_to_binary=$(which mysqld);
       if [ "${path_to_binary}" -a -f "${path_to_binary}" ]; then
-         opreport --demangle=smart --symbols --merge tgid session:$d "${path_to_binary}" > $OPT_d/$d-opreport 2>>$OPT_d/$d-output;
+         opreport --demangle=smart --symbols --merge tgid session:$d "${path_to_binary}" > "$OPT_d/$d-opreport"
       else
-         echo "oprofile data saved to $d; you should now be able to get a report" > $OPT_d/$d-opreport
-         echo "by running something like" >> $OPT_d/$d-opreport
-         echo "opreport --demangle=smart --symbols --merge tgid session:$d /path/to/mysqld" >> $OPT_d/$d-opreport
+         echo "oprofile data saved to $d; you should now be able to get a report" > "$OPT_d/$d-opreport"
+         echo "by running something like" >> "$OPT_d/$d-opreport"
+         echo "opreport --demangle=smart --symbols --merge tgid session:$d /path/to/mysqld" >> "$OPT_d/$d-opreport"
       fi
    elif [ "${OPT_s}" = "yes" ]; then
       kill -s 2 ${strace_pid}
       sleep 1
-      kill -s 15 ${strace_pid} 2>>$OPT_d/$d-output;
+      kill -s 15 ${strace_pid}
       # Sometimes strace leaves threads/processes in T status.
       kill -s 18 $p
    fi
 
-   mysql $@ -e "${INNOSTAT}"             >> $OPT_d/$d-innodbstatus2 2>&1 &
-   mysql $@ -e 'SHOW FULL PROCESSLIST\G' >> $OPT_d/$d-processlist2  2>&1 &
+   mysql "$@" -e "${INNOSTAT}"             >> "$OPT_d/$d-innodbstatus2" 2>&1 &
+   mysql "$@" -e 'SHOW FULL PROCESSLIST\G' >> "$OPT_d/$d-processlist2"  2>&1 &
 
-   # mysqladmin in 5.1 has a bunch of obnoxious bugs.  Among them, -c does not
-   # work, so it will continue forever unless we kill it.
-   kill $mysqladmin_pid 2>>$OPT_d/$d-output;
-)200>/tmp/aspersa-collect-lockfile
+   # Kill backgrounded tasks.
+   kill $mysqladmin_pid
+   [ "$error_pid" ] && kill $error_pid
+
+   # Finally, record what system we collected this data from.
+   hostname > "$OPT_d/$d-hostname"
+)200>/tmp/aspersa-collect-lockfile >> "$OPT_d/$d-output" 2>&1
