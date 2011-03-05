@@ -425,7 +425,7 @@ find_checkpoint_age() {
          print lsn - $4;
       }
    }
-   ' $@
+   ' "$@"
 }
 
 find_pending_io_reads() {
@@ -521,7 +521,7 @@ find_max_trx_time() {
    }
    END {
       print max;
-   }' $@
+   }' "$@"
 }
 
 # Summarizes various things about InnoDB status that are not easy to see by eye.
@@ -852,20 +852,20 @@ main() {
    # ########################################################################
    # Fetch some basic info so we can start
    # ########################################################################
-   mysql $@ -ss -e 'SELECT CURRENT_USER()' > /tmp/aspersa
+   mysql "$@" -ss -e 'SELECT CURRENT_USER()' > /tmp/aspersa
    if [ "$?" != "0" ]; then
       echo "Cannot connect to mysql, please specify command-line options."
       temp_files "rm"
       exit 1
    fi
    user="$(cat /tmp/aspersa)";
-   mysql -ss -e 'SHOW /*!40100 GLOBAL*/ VARIABLES' $@ > /tmp/aspersa-mysql-variables
-   mysql -ss -e 'SHOW /*!50000 GLOBAL*/ STATUS' $@ > /tmp/aspersa-mysql-status
-   mysql -ss -e 'SHOW DATABASES' $@ > /tmp/aspersa-mysql-databases 2>/dev/null
-   mysql -ssE -e 'SHOW SLAVE STATUS' $@ > /tmp/aspersa-mysql-slave 2>/dev/null
-   mysql -ssE -e 'SHOW /*!50000 ENGINE*/ INNODB STATUS' $@ > /tmp/aspersa-innodb-status 2>/dev/null
-   mysql -ssE -e 'SHOW FULL PROCESSLIST' $@ > /tmp/aspersa-mysql-processlist 2>/dev/null
-   now="$(mysql -ss -e 'SELECT NOW()' $@)"
+   mysql -ss -e 'SHOW /*!40100 GLOBAL*/ VARIABLES' "$@" > /tmp/aspersa-mysql-variables
+   mysql -ss -e 'SHOW /*!50000 GLOBAL*/ STATUS' "$@" > /tmp/aspersa-mysql-status
+   mysql -ss -e 'SHOW DATABASES' "$@" > /tmp/aspersa-mysql-databases 2>/dev/null
+   mysql -ssE -e 'SHOW SLAVE STATUS' "$@" > /tmp/aspersa-mysql-slave 2>/dev/null
+   mysql -ssE -e 'SHOW /*!50000 ENGINE*/ INNODB STATUS' "$@" > /tmp/aspersa-innodb-status 2>/dev/null
+   mysql -ssE -e 'SHOW FULL PROCESSLIST' "$@" > /tmp/aspersa-mysql-processlist 2>/dev/null
+   now="$(mysql -ss -e 'SELECT NOW()' "$@")"
    port="$(get_var port)"
 
    # ########################################################################
@@ -878,7 +878,7 @@ main() {
    get_mysql_version
 
    uptime="$(get_stat Uptime)"
-   mysql -ss -e "SELECT LEFT(NOW() - INTERVAL ${uptime} SECOND, 16)" $@ \
+   mysql -ss -e "SELECT LEFT(NOW() - INTERVAL ${uptime} SECOND, 16)" "$@" \
       > /tmp/aspersa
    name_val Started "$(get_mysql_uptime)"
 
@@ -909,7 +909,7 @@ main() {
    section "Status_Counters_(Wait_10_Seconds)"
    sleep 10
    # TODO: gather this data in the same format as normal: stats, TS line
-   mysql -ss -e 'SHOW /*!50000 GLOBAL*/ STATUS' $@ \
+   mysql -ss -e 'SHOW /*!50000 GLOBAL*/ STATUS' "$@" \
       | join /tmp/aspersa-mysql-status - > /tmp/aspersa 
    # Make a file with a list of things we want to omit because they aren't
    # counters, they are gauges (in RRDTool terminology).  Gauges are shown
@@ -966,7 +966,7 @@ main() {
    name_val "Response Time Hist."  "$(feat_on enable_query_response_time_stats)"
    name_val "Smooth Flushing"      "$(feat_on innodb_adaptive_checkpoint ne none)"
    name_val "HandlerSocket NoSQL"  "$(feat_on handlersocket_port)"
-   mysql $@ -e 'SELECT FNV_64("a")' >/dev/null 2>&1 && FNV_64="Enabled";
+   mysql "$@" -e 'SELECT FNV_64("a")' >/dev/null 2>&1 && FNV_64="Enabled";
    name_val "Fast Maatkit Hashes"  "${FNV_64:-Unknown}"
 
    # ########################################################################
@@ -1015,7 +1015,7 @@ main() {
       mysqldump --all-databases --no-data --skip-comments \
          --skip-add-locks --skip-add-drop-table --compact \
          --skip-lock-all-tables --skip-lock-tables --skip-set-charset \
-         ${trg_arg} $@ > /tmp/aspersa-mysqldump
+         ${trg_arg} "$@" > /tmp/aspersa-mysqldump
       # Test the result by checking the file, not by the exit status, because we
       # might get partway through and then die, and the info is worth analyzing
       # anyway.
@@ -1154,7 +1154,7 @@ main() {
    # ########################################################################
    section Security
    users="$(mysql -ss \
-      -e 'SELECT COUNT(*), SUM(user=""), SUM(password=""), SUM(password NOT LIKE "*%") FROM mysql.user' $@ 2>/dev/null \
+      -e 'SELECT COUNT(*), SUM(user=""), SUM(password=""), SUM(password NOT LIKE "*%") FROM mysql.user' "$@" 2>/dev/null \
       | $AP_AWK '{printf "%d users, %d anon, %d w/o pw, %d old pw\n", $1, $2, $3, $4}')"
    name_val Users "${users}"
    name_val "Old Passwords" $(get_var old_passwords)
@@ -1165,14 +1165,14 @@ main() {
    section Binary_Logging
    binlog=$(get_var log_bin)
    if [ "${binlog}" ]; then
-      mysql -ss -e 'SHOW MASTER LOGS' $@ > /tmp/aspersa 2>/dev/null
+      mysql -ss -e 'SHOW MASTER LOGS' "$@" > /tmp/aspersa 2>/dev/null
       summarize_binlogs
       format="$(get_var binlog_format)"
       name_val binlog_format "${format:-STATEMENT}"
       name_val expire_logs_days $(get_var expire_logs_days)
       name_val sync_binlog $(get_var sync_binlog)
       name_val server_id $(get_var server_id)
-      mysql -ss -e 'SHOW MASTER STATUS' $@ > /tmp/aspersa 2>/dev/null
+      mysql -ss -e 'SHOW MASTER STATUS' "$@" > /tmp/aspersa 2>/dev/null
       format_binlog_filters
    fi
 
@@ -1231,4 +1231,4 @@ main() {
 
 # Execute the program if it was not included from another file.  This makes it
 # possible to include without executing, and thus test.
-if [ "$(basename "$0")" = "mysql-summary" ]; then main $@; fi
+if [ "$(basename "$0")" = "mysql-summary" ]; then main "$@"; fi
