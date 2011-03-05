@@ -41,6 +41,9 @@ OPROFILE=${OPROFILE:-yes}
 # Collect strace data?
 STRACE=${STRACE:-no}
 
+# Collect tcpdump data?
+TCPDUMP=${TCPDUMP:-yes}
+
 # Send mail to this list of addresses when the script triggers.
 # EMAIL=
 
@@ -158,7 +161,7 @@ while true; do
       log "${NOTE}" "${COLLECT} triggered"
       PREFIX="$(date +%F-%T | tr :- _)"
       echo "${NOTE}" > "${DEST}/${PREFIX}-trigger"
-      ${COLLECT} -d "${DEST}" -i "${DURATION}" -g "${GDB}" -o "${OPROFILE}" -p "${PREFIX}" -s "${STRACE}" ${MYSQLOPTIONS}
+      ${COLLECT} -d "${DEST}" -i "${DURATION}" -g "${GDB}" -o "${OPROFILE}" -p "${PREFIX}" -s "${STRACE}" -t "${TCPDUMP}" ${MYSQLOPTIONS}
       echo "$d sleeping ${SLEEP} seconds to avoid DOS attack"
       sleep ${SLEEP}
    else

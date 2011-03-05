@@ -27,6 +27,7 @@ Options: (required: -digos)
    -o <yes/no>    Collect oprofile data; disables -s.
    -p PREFIX      Store the data into files with this prefix (optional).
    -s <yes/no>    Collect strace data.
+   -t <yes/no>    Collect tcpdump data.
 	USAGE
    exit 1
 }
@@ -57,6 +58,9 @@ for o; do
          ;;
       -s)
          shift; OPT_s="${1}"; shift;
+         ;;
+      -t)
+         shift; OPT_t="${1}"; shift;
          ;;
    esac
 done
@@ -130,6 +134,15 @@ echo "Gathering info for $d"
    INNOSTAT="SHOW /*!40100 ENGINE*/ INNODB STATUS\G"
    mysql "$@" -e "${INNOSTAT}"             >> "$OPT_d/$d-innodbstatus1" 2>&1 &
    mysql "$@" -e 'SHOW FULL PROCESSLIST\G' >> "$OPT_d/$d-processlist1"  2>&1 &
+
+   # If TCP dumping is specified, start that on the server's port.
+   if [ "${OPT_t}" ]; then
+      port=$(awk '/^port/{print $2}' "$OPT_d/$d-variables")
+      if [ "${port}" ]; then
+         tcpdump -i any -s 4096 -w "$OPT_d/$d-tcpdump" port ${port} &
+         tcpdump_pid=$!
+      fi
+   fi
 
    # Next, start oprofile gathering data during the whole rest of this process.
    # The --init should be a no-op if it has already been init-ed.
@@ -210,6 +223,7 @@ echo "Gathering info for $d"
    # Kill backgrounded tasks.
    kill $mysqladmin_pid
    [ "$error_pid" ] && kill $error_pid
+   [ "$tcpdump_pid" ] && kill $tcpdump_pid
 
    # Finally, record what system we collected this data from.
    hostname > "$OPT_d/$d-hostname"
