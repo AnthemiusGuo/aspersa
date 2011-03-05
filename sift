@@ -119,11 +119,12 @@ main() {
          # Format a brief report: busiest device's disk stats, CPU stats
          DEFAULT)
             echo "--diskstats--"
+
             $PR_diskstats -g disk "${BASEDIR}/${PREFIX}-diskstats" \
                | awk '
                   /ts/ { header = $0 }
-                  /\d/ {
-                     io = $3 + $6;
+                  /[0-9]/ {
+                     io  = $3 + $6;
                      if ( io >= mio ) {
                         mio   = io;
                         mseen = $0;
@@ -133,8 +134,66 @@ main() {
                      print header;
                      print mseen;
                   }'
+
+            # Find out which device was the busiest.
+            mdev="$($PR_diskstats -g disk "${BASEDIR}/${PREFIX}-diskstats" \
+               | awk '
+                  /[0-9]/ {
+                     io  = $3 + $6;
+                     if ( io >= mio ) {
+                        mio   = io;
+                        mdev  = $2;
+                     }
+                  }
+                  END {
+                     print mdev;
+                  }')"
+
+            # Print the busy% for that device, rounded to the nearest N%, with
+            # "." as a marker for a repeated value.
+            $PR_diskstats -g sample "${BASEDIR}/${PREFIX}-diskstats" \
+               | awk "
+                  BEGIN {
+                     fuzz = 5;
+                     printf \" ${mdev} \"
+                  }
+                  \$1 = \"${mdev}\" {
+                     busy_rounded = fuzz * sprintf(\"%d\", substr(\$9, 1, length(\$9) - 1) / fuzz);
+                     if ( printed == 1 && prev == busy_rounded ) {
+                        printf \" .\";
+                     }
+                     else {
+                        printf \" %d%%\", busy_rounded;
+                        prev    = busy_rounded;
+                        printed = 1;
+                     }
+                  }"
+            echo
+
             echo "--vmstat--"
             tail -n 3 "${BASEDIR}/${PREFIX}-vmstat-overall" | $PR_align
+
+            # Figure out which column is 'wa' and print this, similar to the
+            # busy% for disks above.
+            wa_col="$(awk '/swpd/{for(i=1;i<=NF;++i){if($i=="wa"){print i; exit}}}' "${BASEDIR}/${PREFIX}-vmstat")"
+            awk "
+               BEGIN {
+                  fuzz = 5;
+                  printf \"wa\"
+               }
+               /[0-9]/ {
+                  wa_rounded = fuzz * sprintf(\"%d\", \$${wa_col} / fuzz);
+                  if ( printed == 1 && prev == wa_rounded ) {
+                     printf \" .\";
+                  }
+                  else {
+                     printf \" %d%%\", wa_rounded;
+                     prev    = wa_rounded;
+                     printed = 1;
+                  }
+               }" "${BASEDIR}/${PREFIX}-vmstat"
+            echo
+
             echo "--innodb--"
             awk '
                /queries inside/ {
@@ -206,6 +265,7 @@ main() {
             echo "    Threads are waiting on:"
             awk '/^[XS]-lock on.*latch/ { print }' \
               "${BASEDIR}/${PREFIX}-innodbstatus1" | sort | uniq -c | sort -rn
+
             echo "--processlist--"
             for word in State Command; do
                echo "    $word"
@@ -213,8 +273,10 @@ main() {
                   "${BASEDIR}/${PREFIX}-processlist1" \
                   | sort | uniq -c | sort -rn | head -n 5
             done
+
             echo "--stack traces--"
             $PR_pmp -l 5 "${BASEDIR}/${PREFIX}-stacktrace" | head -n 5
+
             echo "--oprofile--"
             if [ ! -e "${BASEDIR}/${PREFIX}-opreport" ]; then
                echo "    No opreport file exists"
