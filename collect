@@ -80,10 +80,10 @@ fi
    # Get memory allocation info before anything else.
    if [ "${p}" ]; then
       if pmap --help 2>&1 | grep -- -x >/dev/null 2>&1 ; then
-         pmap -x $p > $d-pmap 2>>$OPT_d/$d-output
+         pmap -x $p > $OPT_d/$d-pmap 2>>$OPT_d/$d-output
       else
          # Some pmap's apparently don't support -x (issue 116).
-         pmap $p > $d-pmap 2>>$OPT_d/$d-output
+         pmap $p > $OPT_d/$d-pmap 2>>$OPT_d/$d-output
       fi
    fi
 
