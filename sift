@@ -108,10 +108,13 @@ main() {
    ACTION="DEFAULT"
    while [ "${KEY}" != "q" ]; do
 
-      # Print the current timestamp and action.  Figure out if we're at the
-      # first or last sample, to make it easy to see.
-      PAGE="$(awk "/./{i++} /${PREFIX}/{c=i} END{print c, \"of\", i}" /tmp/aspersa.sift-prefixes)"
-      echo -e "===================== \033[34m${PREFIX} \033[31m${ACTION}\033[0m (${PAGE}) ========================="
+      if [ "${ACTION}" != "INVALID" ]; then
+         # Print the current host, timestamp and action.  Figure out if we're at
+         # the first or last sample, to make it easy to navigate.
+         PAGE="$(awk "/./{i++} /${PREFIX}/{c=i} END{print c, \"of\", i}" /tmp/aspersa.sift-prefixes)"
+         HOST="$(cat "${BASEDIR}/${PREFIX}-hostname" 2>/dev/null)"
+         echo -e "======== ${HOST:-unknown} at \033[34m${PREFIX} \033[31m${ACTION}\033[0m (${PAGE}) ========"
+      fi
 
       # Take an action based on the current $ACTION
       case "${ACTION}" in
@@ -384,6 +387,9 @@ main() {
             echo "Press a key to continue or choose a different action"
             ;;
 
+         INVALID)
+            ;;
+
       esac
 
       # Capture and handle the interactive key-strokes.
@@ -436,10 +442,16 @@ main() {
          n)
             ACTION="NETWORK"
             ;;
+         q)
+            ;;
          '?')
             print_help
             echo "Press any key to continue"
             read -n 1 -s
+            ;;
+         *)
+            echo "Unknown key '${KEY}'; press ? for help"
+            ACTION="INVALID"
             ;;
       esac
    done
