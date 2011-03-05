@@ -248,10 +248,42 @@ main() {
                /END OF INNODB/ {
                   complete = 1;
                }
+               /^TRANSACTIONS$/ {
+                  tseen = 1;
+               }
+               /^---TRANSACTION/ {
+                  if ( tseen == 1 ) {
+                     if ( $2 ~ /,/ ) {
+                        status = $3;
+                        time   = $4;
+                     }
+                     else {
+                        status = $4;
+                        time   = $5;
+                     }
+                     txns[status]++;
+                     if ( time > txntime[status] ) {
+                        txntime[status] = time;
+                     }
+                  }
+               }
+               /LOCK WAIT/ {
+                  if ( tseen == 1 ) {
+                     txns["LOCK WAIT"]++;
+                     if ( $3 > txntime["LOCK WAIT"] ) {
+                        txntime["LOCK WAIT"] = $3;
+                     }
+                  }
+               }
                END {
                   if ( complete != 1 ) {
                      print "    (innodb status is incomplete)";
                   }
+                  printf "    txns:";
+                  for ( i in txns ) {
+                     printf " %dx%s (%ds)", txns[i], i, txntime[i];
+                  }
+                  print "";
                   if ( inside ) {
                      print "    " inside;
                   }
