@@ -51,7 +51,7 @@ main() {
       BASEDIR="$(echo "${ARG}" | sed -e 's!/$!!')"
    elif [ -f "${ARG}" -o -f "${ARG}-df" -o -f "${ARG}df" ]; then
       BASEDIR="$(dirname "${ARG}")"
-      PREFIX="$(echo "${ARG}" | sed -e 's/-[^-]*$//' -e 's!^.*/!!')"
+      PREFIX="$(echo "${ARG}" | sed -e 's/-[a-z1]*$//' -e 's!^.*/!!')"
    else
       echo "Error: ${ARG} doesn't look like a directory, file, or file prefix"
       exit 1
