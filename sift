@@ -97,7 +97,9 @@ main() {
       awk 'BEGIN { i = 0 } { i++ } END { if ( i % 3 != 0 ) { print "" } }' /tmp/aspersa.sift-prefixes
       echo
       while [ -z "${PREFIX}" -o "$(grep -c "${PREFIX}" /tmp/aspersa.sift-prefixes)" -ne 1 ]; do
-         read -e -i "$(tail -1 /tmp/aspersa.sift-prefixes)" -p "Select a timestamp from the list: " ARG
+         DEFAULT="$(tail -1 /tmp/aspersa.sift-prefixes)"
+         read -e -p "Select a timestamp from the list [${DEFAULT}] " ARG
+         ARG="${ARG:-${DEFAULT}}"
          if [ "$(grep -c "${ARG}" /tmp/aspersa.sift-prefixes)" -eq 1 ]; then
             PREFIX="$(grep "${ARG}" /tmp/aspersa.sift-prefixes)"
          fi
