@@ -1227,6 +1227,9 @@ main() {
    fi
 
    temp_files "rm"
+
+   # Make sure that we signal the end of the tool's output.
+   section The_End
 }
 
 # Execute the program if it was not included from another file.  This makes it
