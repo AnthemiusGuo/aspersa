@@ -1024,7 +1024,7 @@ main() {
       # Test the result by checking the file, not by the exit status, because we
       # might get partway through and then die, and the info is worth analyzing
       # anyway.
-      if $AP_GREP 'CREATE DATABASE' /tmp/aspersa-mysqldump >/dev/null 2>&1; then
+      if $AP_GREP 'CREATE TABLE' /tmp/aspersa-mysqldump >/dev/null 2>&1; then
          format_overall_db_stats
       else
          echo "Skipping schema analysis due to apparent error in dump file"
