@@ -842,7 +842,7 @@ format_overall_db_stats () {
             printf fmt, db;
             for ( j=0;j<num_types;j++ ) {
                type = types[j];
-               printf "%4s", counts[db "," type];
+               printf " %3s", counts[db "," type];
             }
             print "";
          }
