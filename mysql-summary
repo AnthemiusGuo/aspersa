@@ -562,8 +562,8 @@ format_innodb_status () {
 }
 
 # Summarizes per-database statistics for a bunch of different things: count of
-# tables, views, etc.  Data should be in /tmp/aspersa-mysqldump and /tmp/aspersa
-# gets overwritten.
+# tables, views, etc.  $1 is the file name.  $2 is the database name; if none,
+# then there should be multiple databases.
 format_overall_db_stats () {
    echo
    # We keep counts of everything in an associative array keyed by db name, and
@@ -571,6 +571,8 @@ format_overall_db_stats () {
    # we run the awk commands following this one.
    $AP_AWK '
       BEGIN {
+         # In case there is no USE statement in the file.
+         db      = "{chosen}";
          num_dbs = 0;
       }
       /^USE `.*`;$/ {
@@ -581,6 +583,12 @@ format_overall_db_stats () {
          }
       }
       /^CREATE TABLE/ {
+         # Handle single-DB dumps, where there is no USE statement.
+         if (num_dbs == 0) {
+            num_dbs     = 1;
+            db_seen[db] = 1;
+            dbs[0]      = db;
+         }
          counts[db ",tables"]++;
       }
       /CREATE ALGORITHM=/ {
@@ -603,7 +611,7 @@ format_overall_db_stats () {
       }
       END {
          mdb = length("Database");
-         for ( i=0;i<num_dbs;i++ ) {
+         for ( i = 0; i < num_dbs; i++ ) {
             if ( length(dbs[i]) > mdb ) {
                mdb = length(dbs[i]);
             }
@@ -623,6 +631,8 @@ format_overall_db_stats () {
    # Now do the summary of engines per DB
    $AP_AWK '
       BEGIN {
+         # In case there is no USE statement in the file.
+         db          = "{chosen}";
          num_dbs     = 0;
          num_engines = 0;
       }
@@ -634,6 +644,12 @@ format_overall_db_stats () {
          }
       }
       /^\) ENGINE=/ {
+         # Handle single-DB dumps, where there is no USE statement.
+         if (num_dbs == 0) {
+            num_dbs     = 1;
+            db_seen[db] = 1;
+            dbs[0]      = db;
+         }
          engine=substr($2, index($2, "=") + 1);
          if ( engine_seen[engine]++ == 0 ) {
             engines[num_engines] = engine;
@@ -676,6 +692,8 @@ format_overall_db_stats () {
    # word in awk.
    $AP_AWK '
       BEGIN {
+         # In case there is no USE statement in the file.
+         db        = "{chosen}";
          num_dbs   = 0;
          num_idxes = 0;
       }
@@ -687,6 +705,12 @@ format_overall_db_stats () {
          }
       }
       /KEY/ {
+         # Handle single-DB dumps, where there is no USE statement.
+         if (num_dbs == 0) {
+            num_dbs     = 1;
+            db_seen[db] = 1;
+            dbs[0]      = db;
+         }
          idx="BTREE";
          if ( $0 ~ /SPATIAL/ ) {
             idx="SPATIAL";
@@ -740,6 +764,8 @@ format_overall_db_stats () {
    # Now do the summary of datatypes per DB
    $AP_AWK '
       BEGIN {
+         # In case there is no USE statement in the file.
+         db          = "{chosen}";
          num_dbs     = 0;
          num_types = 0;
       }
@@ -751,6 +777,12 @@ format_overall_db_stats () {
          }
       }
       /^  `/ {
+         # Handle single-DB dumps, where there is no USE statement.
+         if (num_dbs == 0) {
+            num_dbs     = 1;
+            db_seen[db] = 1;
+            dbs[0]      = db;
+         }
          str = $0;
          str = substr(str, index(str, "`") + 1);
          str = substr(str, index(str, "`") + 2);
@@ -1013,9 +1045,9 @@ main() {
          trg_arg="${trg_arg} ${triggers}";
       fi
       # Find out which databases to dump
-      echo "There are $($AP_GREP -c . /tmp/aspersa-mysql-databases) databases."
-      echo "Would you like to dump all, or just one?"
-      echo -n "Type the name of the database, or press Enter to dump all of them."
+      num_dbs="$($AP_GREP -c . /tmp/aspersa-mysql-databases)"
+      echo "There are ${num_dbs} databases.  Would you like to dump all, or just one?"
+      echo -n "Type the name of the database, or press Enter to dump all of them. "
       read dbtodump
       mysqldump --no-data --skip-comments \
          --skip-add-locks --skip-add-drop-table --compact \
