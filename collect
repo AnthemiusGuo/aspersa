@@ -108,12 +108,17 @@ echo "Gathering info for $d"
       echo "GDB (-g) was not enabled" >> "$OPT_d/$d-stacktrace"
    fi
 
-   # Get MySQL's variables if possible.  Is MySQL logging its errors to a file?
-   # If so, tail that file after sleeping long enough that we probably complete
-   # SHOW VARIABLES if all's well.  (We don't want to run mysql in the
+   # Get MySQL's variables if possible.  Then sleep long enough that we probably
+   # complete SHOW VARIABLES if all's well.  (We don't want to run mysql in the
    # foreground, because it could hang.)
    mysql "$@" -e 'SHOW GLOBAL VARIABLES' >> "$OPT_d/$d-variables" 2>&1 &
    sleep .2
+   
+   # Get the major.minor version number.  Version 3.23 doesn't matter for our
+   # purposes, and other releases have x.x.x* version conventions so far.
+   VER="$(awk '/^version[^_]/{print substr($2,1,3)}' "$OPT_d/$d-variables")"
+
+   # Is MySQL logging its errors to a file?  If so, tail that file.
    errfile="$(awk '/log_error/{print $2}' "$OPT_d/$d-variables")"
    if [ -z "${errfile}" -a "${p}" ]; then
       # Try getting it from the open filehandle...
@@ -128,12 +133,16 @@ echo "Gathering info for $d"
       echo "Could not detect error file; will not tail MySQL's log file"
    fi
 
-   # Get a sample of SHOW INNODB STATUS and SHOW FULL PROCESSLIST right away, so
-   # we can get these without interaction with the other commands we're about to
-   # run.
+   # Get a sample of these right away, so we can get these without interaction
+   # with the other commands we're about to run.
    INNOSTAT="SHOW /*!40100 ENGINE*/ INNODB STATUS\G"
    mysql "$@" -e "${INNOSTAT}"             >> "$OPT_d/$d-innodbstatus1" 2>&1 &
    mysql "$@" -e 'SHOW FULL PROCESSLIST\G' >> "$OPT_d/$d-processlist1"  2>&1 &
+   if [ "${VER}" > "5.1" ]; then
+      mysql "$@" -e 'SHOW ENGINE INNODB MUTEX' >> "$OPT_d/$d-mutex-status1" 2>&1 &
+   else
+      mysql "$@" -e 'SHOW MUTEX STATUS'        >> "$OPT_d/$d-mutex-status1" 2>&1 &
+   fi
 
    # If TCP dumping is specified, start that on the server's port.
    if [ "${OPT_t}" ]; then
@@ -219,6 +228,11 @@ echo "Gathering info for $d"
 
    mysql "$@" -e "${INNOSTAT}"             >> "$OPT_d/$d-innodbstatus2" 2>&1 &
    mysql "$@" -e 'SHOW FULL PROCESSLIST\G' >> "$OPT_d/$d-processlist2"  2>&1 &
+   if [ "${VER}" > "5.1" ]; then
+      mysql "$@" -e 'SHOW ENGINE INNODB MUTEX' >> "$OPT_d/$d-mutex-status2" 2>&1 &
+   else
+      mysql "$@" -e 'SHOW MUTEX STATUS'        >> "$OPT_d/$d-mutex-status2" 2>&1 &
+   fi
 
    # Kill backgrounded tasks.
    kill $mysqladmin_pid
