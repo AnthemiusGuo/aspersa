@@ -129,6 +129,9 @@ echo "Gathering info for $d"
       echo "The error file seems to be ${errfile}"
       tail -f "${errfile}" >"$OPT_d/$d-log_error" 2>&1 &
       error_pid=$!
+      # Send a mysqladmin debug to the server so we can potentially learn about
+      # locking etc.
+      mysqladmin debug "$@"
    else
       echo "Could not detect error file; will not tail MySQL's log file"
    fi
