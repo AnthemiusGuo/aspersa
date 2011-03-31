@@ -20,10 +20,12 @@ Usage: $0 OPTIONS [MYSQL-OPTIONS]
    The MYSQL-OPTIONS are standard options to connect to MySQL: -uhPpS. Any
    options or arguments that follow this tool's -digos options will be treated
    as options to pass directly to mysql and mysqladmin.
-Options: (required: -digos)
+Options: (required: -dfigmos)
    -d DESTINATION Where to store the resulting data; must already exist.
+   -f PERCENT     Exit if the disk is more than this percent full.
    -i INTERVAL    How many seconds to collect data.
    -g <yes/no>    Collect GDB stack traces.
+   -m MEGABYTES   Exit unless there are this many megabytes free disk space.
    -o <yes/no>    Collect oprofile data; disables -s.
    -p PREFIX      Store the data into files with this prefix (optional).
    -s <yes/no>    Collect strace data.
@@ -32,6 +34,21 @@ Options: (required: -digos)
    exit 1
 }
 
+# Make sure the disk isn't getting too full.  Exit if the disk is more than $1
+# percent full, or there is less than $2 megabytes of free space on $3 drive.
+check_disk_space() {
+   PCT="$1"
+   MB="$2"
+   DEST="$3"
+   avail=$(df -m -P "${DEST}" | awk '/^\//{print $4}');
+   full=$(df -m -P "${DEST}" | awk '/^\//{print $5}' | sed -e 's/%//g');
+   if [ "${avail}" -le "${MB}" -o "${full}" -ge "${PCT}" ]; then
+      echo "Not enough free space (${full}% full, ${avail}MB free)"
+      echo "Wanted less than ${PCT}% full and more than ${MB}MB"
+      return 1
+   fi
+   return 0
+}
 
 for o; do
    case "${o}" in
@@ -44,11 +61,17 @@ for o; do
       -d)
          shift; OPT_d="${1}"; shift;
          ;;
+      -f)
+         shift; OPT_f="${1}"; shift;
+         ;;
       -i)
          shift; OPT_i="${1}"; shift;
          ;;
       -g)
          shift; OPT_g="${1}"; shift;
+         ;;
+      -m)
+         shift; OPT_m="${1}"; shift;
          ;;
       -o)
          shift; OPT_o="${1}"; shift;
@@ -75,6 +98,10 @@ if [ "${OPT_p}" ]; then
 else
    d=$(date +%F-%T | tr :- _);
 fi
+
+# Check disk space up-front.
+check_disk_space "${OPT_f}" "${OPT_m}" "${OPT_d}" || exit 1
+
 echo "Gathering info for $d"
 
 # Make sure there's only one of me.
@@ -190,10 +217,19 @@ echo "Gathering info for $d"
    mysqladmin "$@" ext -i1 -c$OPT_i  >> "$OPT_d/$d-mysqladmin" 2>&1 &
    mysqladmin_pid=$!
 
-   # This loop gathers data for the rest of the duration, and defines the time of
-   # the whole job.
+   # This loop gathers data for the rest of the duration, and defines the time
+   # of the whole job.
+   echo "Loop start: $(date +'TS %s.%N %F %T')"
    for a in `seq 1 $OPT_i`; do
+      # We check the disk, but don't exit, because we need to stop jobs if we
+      # need to exit.
+      check_disk_space "${OPT_f}" "${OPT_m}" "${OPT_d}" || break
+
+      # Synchronize ourselves onto the clock tick, so the sleeps are 1-second
+      sleep $(date +%s.%N | awk '{print 1 - ($1 % 1)}')
       ts="$(date +"TS %s.%N %F %T")"
+
+      # Collect the stuff for this cycle
       (cat /proc/diskstats  2>&1; echo $ts) >> "$OPT_d/$d-diskstats"   &
       (cat /proc/stat       2>&1; echo $ts) >> "$OPT_d/$d-procstat"    &
       (cat /proc/vmstat     2>&1; echo $ts) >> "$OPT_d/$d-procvmstat"  &
@@ -203,8 +239,8 @@ echo "Gathering info for $d"
       (df -h                2>&1; echo $ts) >> "$OPT_d/$d-df"          &
       (netstat -antp        2>&1; echo $ts) >> "$OPT_d/$d-netstat"     &
       (netstat -s           2>&1; echo $ts) >> "$OPT_d/$d-netstat_s"   &
-      sleep 1
    done
+   echo "Loop end: $(date +'TS %s.%N %F %T')"
 
    if [ "${OPT_o}" = "yes" ]; then
       opcontrol --stop

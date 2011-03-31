@@ -149,19 +149,10 @@ while true; do
    # Actually execute the collection script.
    if [ "${matched:-no}" = "yes" -a ${cycles_true} -ge ${CYCLES} ]; then 
 
-      # Make sure the disk isn't getting too full.
-      avail=$(df -m -P "${DEST}" | awk '/^\//{print $4}');
-      full=$(df -m -P "${DEST}" | awk '/^\//{print $5}' | sed -e 's/%//g');
-      if [ "${avail}" -le "${MB_THRESHOLD}" -o "${full}" -ge "${PCT_THRESHOLD}" ]; then
-         NOTE="$d Exiting, not enough free space (${full}%, ${avail}MB free)"
-         log "${NOTE}" "Disk too full"
-         exit 1
-      fi
-
       log "${NOTE}" "${COLLECT} triggered"
       PREFIX="$(date +%F-%T | tr :- _)"
       echo "${NOTE}" > "${DEST}/${PREFIX}-trigger"
-      ${COLLECT} -d "${DEST}" -i "${DURATION}" -g "${GDB}" -o "${OPROFILE}" -p "${PREFIX}" -s "${STRACE}" -t "${TCPDUMP}" ${MYSQLOPTIONS}
+      ${COLLECT} -d "${DEST}" -i "${DURATION}" -g "${GDB}" -o "${OPROFILE}" -p "${PREFIX}" -s "${STRACE}" -t "${TCPDUMP}" ${MYSQLOPTIONS} -f "${PCT_THRESHOLD}" -m "${MB_THRESHOLD}"
       echo "$d sleeping ${SLEEP} seconds to avoid DOS attack"
       sleep ${SLEEP}
    else
