@@ -176,7 +176,7 @@ echo "Gathering info for $d"
    fi
 
    # If TCP dumping is specified, start that on the server's port.
-   if [ "${OPT_t}" ]; then
+   if [ "${OPT_t}" = "yes" ]; then
       port=$(awk '/^port/{print $2}' "$OPT_d/$d-variables")
       if [ "${port}" ]; then
          tcpdump -i any -s 4096 -w "$OPT_d/$d-tcpdump" port ${port} &
