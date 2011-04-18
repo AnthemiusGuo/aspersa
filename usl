@@ -35,7 +35,7 @@ Options:
    -c CONVERSION   Converts the input file into N-vs-C format as specified:
       globalstatus   Convert from MySQL's SHOW GLOBAL STATUS
       tcpdump        Convert from 'tcpdump -tttt -nnq' format
-   -e              Omit the error lines on the final plot.
+   -e              Draw error lines on the final plot.
    -i INTERVAL     When -c is given, group the input into -i second intervals.
    -k KEEPFILE     Save the N-vs-C data in the specified file.
    -l LIMIT        X-axis limit for the final plot.
@@ -150,7 +150,7 @@ convert_globalstatus() {
 
 # Converts tcpdump into concurrency-vs-throughput.  Use a tcpdump command line
 # such as the following:
-#   tcpdump -i lo -tttt -nnq port 3306
+#   sudo tcpdump -s 384 -i any -nnq -tttt -c 10 'tcp port 3306 and (((ip[2:2] - ((ip[0]&0xf)<<2)) - ((tcp[12]&0xf0)>>2)) != 0)'
 #
 # Command-line options (not optional)
 #  -P The TCP port that the server is listening on.
@@ -335,7 +335,7 @@ main() {
             shift; CONV="${1}"; shift;
             ;;
          -e)
-            shift; ERRL="0";
+            shift; ERRL="1";
             ;;
          -i)
             shift; INT="${1}"; shift;
@@ -389,7 +389,7 @@ main() {
       esac
    done
 
-   ERRL=${ERRL:-1}
+   ERRL=${ERRL:-0}
    ADJ=${ADJ:-0}
    INT=${INT:-0}
    MXT=${MXT:-0}
