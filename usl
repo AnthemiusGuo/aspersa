@@ -35,6 +35,7 @@ Options:
    -c CONVERSION   Converts the input file into N-vs-C format as specified:
       globalstatus   Convert from MySQL's SHOW GLOBAL STATUS
       tcpdump        Convert from 'tcpdump -tttt -nnq' format
+   -d              Don't delete the gnuplot files used to generate the charts.
    -e              Draw error lines on the final plot.
    -i INTERVAL     When -c is given, group the input into -i second intervals.
    -k KEEPFILE     Save the N-vs-C data in the specified file.
@@ -334,6 +335,9 @@ main() {
          -c)
             shift; CONV="${1}"; shift;
             ;;
+         -d)
+            DEL="0"; shift;
+            ;;
          -e)
             shift; ERRL="1";
             ;;
@@ -391,6 +395,7 @@ main() {
 
    ERRL=${ERRL:-0}
    ADJ=${ADJ:-0}
+   DEL=${DEL:-1}
    INT=${INT:-0}
    MXT=${MXT:-0}
    TYP=${TYP:-png}
@@ -762,7 +767,9 @@ main() {
    fi
 
    # Remove temp files.
-   rm -f /tmp/aspersa{,-N-C,.params,-gnuplot0,-gnuplot1,-qfit.log,-ufit.log,-usl-input-extended}
+   if [ "${DEL}" = "1" ]; then
+      rm -f /tmp/aspersa{,-N-C,.params,-gnuplot0,-gnuplot1,-qfit.log,-ufit.log,-usl-input-extended}
+   fi
 }
 
 # Execute the program if it was not included from another file.  This makes it
