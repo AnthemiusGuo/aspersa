@@ -1,0 +1,1 @@
+Aspersa has become part of [Percona Toolkit](http://www.percona.com/software/percona-toolkit/), and there will be no further development or releases separate from Percona Toolkit. Support is provided through [Percona's commercial MySQL support and consulting services](http://www.percona.com/mysql-support/).
